@@ -27,7 +27,7 @@ import os
 import requests
 import subprocess
 from nanosaur.prompt_colors import TerminalFormatter
-from nanosaur.utilities import run_command_live, run_command
+from nanosaur.utilities import run_colcon_build, run_rosdep, run_command
 NANOSAUR_WS="nanosaur_ws"
 NANOSAUR_BRANCH="nanosaur2"
 
@@ -74,26 +74,6 @@ def download_rosinstall(url, folder_path, file_name):
         return 
 
 
-def run_vcs_import(folder_path, file_path):
-    # Construct the command to run
-    #run_command_live(["vcs", "import", f"{folder_path} < {file_path}"])
-    run_command(f"vcs import {folder_path} < {file_path}")
-
-
-def run_colcon_build(folder_path):
-    # Move to the folder_path and run the colcon build command
-    try:
-        os.chdir(folder_path)
-        print(f"Changed directory to: {folder_path}")
-        
-        # Run the colcon build command with the necessary flags
-        return run_command_live(["colcon", "build", "--symlink-install", "--merge-install"])
-    
-    except Exception as e:
-        print(f"An error occurred while running the colcon build command: {e}")
-        return False
-
-
 def install_basic(platform, args):
     """Perform a basic installation."""
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
@@ -123,7 +103,7 @@ def install_developer(platform, args):
 
 
 def install_simulation(platform, args):
-    """Install simulaion tools"""
+    """Install simulation tools"""
     force = args.force
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
     print(TerminalFormatter.color_text(f"- Nanosaur simulation tools installation on {device_type}", bold=True))
@@ -139,8 +119,15 @@ def install_simulation(platform, args):
     print(TerminalFormatter.color_text("- Import workspace from simulation.rosinstall", bold=True))
     # run vcs import to sync the workspace
     run_command(f"vcs import {workspace_path_src} < {rosinstall_path}")
+    # rosdep workspace
+    print(TerminalFormatter.color_text(f"- Install all dependencies on workspace {workspace_path}", bold=True))
+    run_rosdep(workspace_path)
     # Build environment
     print(TerminalFormatter.color_text(f"- Build workspace {workspace_path}", bold=True))
-    result = run_colcon_build(workspace_path)
-    print(result)
+    #result = run_colcon_build(workspace_path)
+    #print(result)
+
+def update(platform, args):
+    device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
+    print(TerminalFormatter.color_text(f"- Nanosaur updating on {device_type}", bold=True))
 # EOF

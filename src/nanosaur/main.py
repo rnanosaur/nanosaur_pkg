@@ -74,6 +74,10 @@ def main():
         parser_install_simulation.add_argument('--force', action='store_true', help="Force the installation")
         parser_install_simulation.set_defaults(func=installation.install_simulation)
 
+    # Subcommand: update (with a sub-menu for installation types)
+    parser_update = subparsers.add_parser('update', help="Update all nanosaur devices")
+    parser_update.set_defaults(func=installation.update)
+
     # Parse the arguments
     args = parser.parse_args()
 

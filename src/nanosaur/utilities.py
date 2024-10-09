@@ -23,8 +23,24 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import subprocess
 from nanosaur.prompt_colors import TerminalFormatter
+
+
+def run_command(command):    
+    try:
+        # Run the command and capture the output
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+
+        # Check if there is any output or error message
+        if result.stdout:
+            print(TerminalFormatter.color_text(result.stdout, color='green'))
+        if result.stderr:
+            print(TerminalFormatter.color_text(result.stderr, color='red'))
+    except Exception as e:
+        print(f"An error occurred while running the vcs import command: {e}")
+
 
 def run_command_live(command):
     """
@@ -59,16 +75,20 @@ def run_command_live(command):
         return False
 
 
-def run_command(command):    
-    try:
-        # Run the command and capture the output
-        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+def run_rosdep(folder_path):
+    return run_command_live(["rosdep", "install", f"--from-paths {folder_path}/src", "--ignore-src", "-r", "-y"])
 
-        # Check if there is any output or error message
-        if result.stdout:
-            print(TerminalFormatter.color_text(result.stdout, color='green'))
-        if result.stderr:
-            print(TerminalFormatter.color_text(result.stderr, color='red'))
+
+def run_colcon_build(folder_path):
+    # Move to the folder_path and run the colcon build command
+    try:
+        os.chdir(folder_path)
+        print(f"Changed directory to: {folder_path}")
+        
+        # Run the colcon build command with the necessary flags
+        return run_command_live(["colcon", "build", "--symlink-install", "--merge-install"])
+    
     except Exception as e:
-        print(f"An error occurred while running the vcs import command: {e}")
+        print(f"An error occurred while running the colcon build command: {e}")
+        return False
 # EOF
