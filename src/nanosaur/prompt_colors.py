@@ -47,7 +47,6 @@ class TerminalFormatter:
         'magenta': '45',
         'cyan': '46',
         'white': '47',
-        'reset': '0',
     }
 
     # Define text formatting codes
@@ -55,18 +54,33 @@ class TerminalFormatter:
     ITALIC = '3'
     
     @staticmethod
-    def color_text(text, color='reset', bg_color='reset', bold=False, italic=False):
-        color_code = TerminalFormatter.COLORS.get(color, 'reset')
-        bg_color_code = TerminalFormatter.BACKGROUNDS.get(bg_color, 'reset')
+    def color_text(text, color=None, bg_color=None, bold=False, italic=False):
+        # Start with the style codes list
         style_codes = []
         
+        # Add text color if provided
+        if color and color in TerminalFormatter.COLORS:
+            style_codes.append(TerminalFormatter.COLORS[color])
+        
+        # Add background color if provided
+        if bg_color and bg_color in TerminalFormatter.BACKGROUNDS:
+            style_codes.append(TerminalFormatter.BACKGROUNDS[bg_color])
+        
+        # Add formatting options
         if bold:
             style_codes.append(TerminalFormatter.BOLD)
         if italic:
             style_codes.append(TerminalFormatter.ITALIC)
         
-        styles = ';'.join(style_codes)
-        style_prefix = f"\033[{styles};{color_code};{bg_color_code}m" if styles else f"\033[{color_code};{bg_color_code}m"
+        # Join all the style codes into one sequence
+        if style_codes:
+            style_prefix = f"\033[{';'.join(style_codes)}m"
+        else:
+            style_prefix = ''
+        
+        # Reset code
         reset_code = "\033[0m"
         
+        # Return the styled text
         return f"{style_prefix}{text}{reset_code}"
+# EOF
