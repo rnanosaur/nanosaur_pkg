@@ -24,6 +24,7 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import shlex
 import subprocess
 from nanosaur.prompt_colors import TerminalFormatter
 
@@ -38,8 +39,12 @@ def run_command(command):
             print(TerminalFormatter.color_text(result.stdout, color='green'))
         if result.stderr:
             print(TerminalFormatter.color_text(result.stderr, color='red'))
+            return False
     except Exception as e:
         print(f"An error occurred while running the vcs import command: {e}")
+        return False
+    
+    return True
 
 
 def run_command_live(command):
@@ -48,8 +53,9 @@ def run_command_live(command):
     :param command: List of command arguments (as needed by subprocess.Popen).
     """
     try:
+        command = shlex.split(command)
         # Run the command and stream the output live
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, stdin=open(os.devnull), preexec_fn=os.setsid)
 
         # Stream output live
         for line in process.stdout:
@@ -76,7 +82,7 @@ def run_command_live(command):
 
 
 def run_rosdep(folder_path):
-    return run_command_live(["rosdep", "install", f"--from-paths {folder_path}/src", "--ignore-src", "-r", "-y"])
+    return run_command_live(f"rosdep install --from-paths {folder_path}/src --ignore-src -r -y")
 
 
 def run_colcon_build(folder_path):
@@ -86,7 +92,7 @@ def run_colcon_build(folder_path):
         print(f"Changed directory to: {folder_path}")
         
         # Run the colcon build command with the necessary flags
-        return run_command_live(["colcon", "build", "--symlink-install", "--merge-install"])
+        return run_command_live("colcon build --symlink-install --merge-install")
     
     except Exception as e:
         print(f"An error occurred while running the colcon build command: {e}")

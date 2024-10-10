@@ -32,7 +32,26 @@ NANOSAUR_WS="nanosaur_ws"
 NANOSAUR_BRANCH="nanosaur2"
 
 
-def create_nanosaur_workspace(nanosaur_ws_name):
+def get_workspace_path(nanosaur_ws_name):
+    """
+    Checks if a workspace folder exists in the user's home directory.
+    :param folder_name: The name of the workspace folder to check.
+    :return: The full path to the workspace if it exists, or None if it doesn't.
+    """
+    # Get the user's home directory
+    user_home_dir = os.path.expanduser("~")
+    
+    # Create the full path for the workspace folder in the user's home directory
+    workspace_path = os.path.join(user_home_dir, nanosaur_ws_name)
+    
+    # Check if the workspace folder exists
+    if os.path.exists(workspace_path) and os.path.isdir(workspace_path):
+        return workspace_path
+    else:
+        return None
+
+
+def create_workspace(nanosaur_ws_name):
     # Get the user's home directory
     user_home_dir = os.path.expanduser("~")
     
@@ -78,6 +97,7 @@ def install_basic(platform, args):
     """Perform a basic installation."""
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
     print(f"Nanosaur installation on {device_type}")
+    return True
 
 
 def install_developer(platform, args):
@@ -85,7 +105,7 @@ def install_developer(platform, args):
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
     print(TerminalFormatter.color_text(f"- Nanosaur installation on {device_type}", bold=True))
     # Create workspace
-    workspace_path = create_nanosaur_workspace(NANOSAUR_WS)
+    workspace_path = create_workspace(NANOSAUR_WS)
     workspace_path_src = os.path.join(workspace_path, "src")
     # Download rosinstall for this device
     print(TerminalFormatter.color_text(f"- Download rosinstall", bold=True))
@@ -100,15 +120,16 @@ def install_developer(platform, args):
     print(TerminalFormatter.color_text(f"- Build workspace {workspace_path}", bold=True))
     result = run_colcon_build(workspace_path)
     print(result)
+    return True
 
 
 def install_simulation(platform, args):
     """Install simulation tools"""
     force = args.force
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
-    print(TerminalFormatter.color_text(f"- Nanosaur simulation tools installation on {device_type}", bold=True))
+    print(TerminalFormatter.color_text(f"Nanosaur simulation tools installation on {device_type}", bold=True))
     # Create workspace
-    workspace_path = create_nanosaur_workspace(NANOSAUR_WS)
+    workspace_path = create_workspace(NANOSAUR_WS)
     workspace_path_src = os.path.join(workspace_path, "src")
     # Download rosinstall for this device
     print(TerminalFormatter.color_text(f"- Download rosinstall", bold=True))
@@ -118,16 +139,29 @@ def install_simulation(platform, args):
     # Import workspace
     print(TerminalFormatter.color_text("- Import workspace from simulation.rosinstall", bold=True))
     # run vcs import to sync the workspace
-    run_command(f"vcs import {workspace_path_src} < {rosinstall_path}")
+    if not run_command(f"vcs import {workspace_path_src} < {rosinstall_path}"):
+        return False
     # rosdep workspace
     print(TerminalFormatter.color_text(f"- Install all dependencies on workspace {workspace_path}", bold=True))
-    run_rosdep(workspace_path)
+    if not run_rosdep(workspace_path):
+        return False
     # Build environment
     print(TerminalFormatter.color_text(f"- Build workspace {workspace_path}", bold=True))
-    #result = run_colcon_build(workspace_path)
-    #print(result)
+    if not run_colcon_build(workspace_path):
+        return False
+    # All fine
+    return True
 
 def update(platform, args):
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
-    print(TerminalFormatter.color_text(f"- Nanosaur updating on {device_type}", bold=True))
+    print(TerminalFormatter.color_text(f"Nanosaur updating on {device_type}", bold=True))
+    workspace_path = get_workspace_path(NANOSAUR_WS)
+    if workspace_path is None:
+        print(TerminalFormatter.color_text(f"There are no {NANOSAUR_WS} in this device!", color='red'))
+        return False
+    workspace_path_src = f"{workspace_path}/src"
+    # Build environment
+    print(TerminalFormatter.color_text(f"- Build workspace {workspace_path}", bold=True))
+    if not run_colcon_build(workspace_path):
+        return False
 # EOF
