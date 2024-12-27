@@ -26,9 +26,10 @@
 
 import nanosaur
 from nanosaur import installation
-from jtop import jtop
+from jtop import jtop, JtopException
 import argparse
 import sys
+import subprocess
 
 
 def info(platform, args):
@@ -38,16 +39,26 @@ def info(platform, args):
 
 def main():
     # Extract device information with jtop
-    with jtop() as device:
-        if device.ok():
-            platform = device.board['platform']
+    try:
+        with jtop() as device:
+            if device.ok():
+                platform = device.board['platform']
+    except JtopException as e:
+        print(f"Error: {e}")
+        if subprocess.check_output("id -u", shell=True).strip() != b'0':
+            print("To automatically fix this error, this script must be run as root. Please use 'sudo'.")
+            sys.exit(1)
+        print("Attempting to update the jtop package...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", "jtop"])
+        sys.exit(1)
+    # Determine the device type
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
 
     # Create the argument parser
     parser = argparse.ArgumentParser(
         description="Nanosaur CLI - A command-line interface for the Nanosaur package."
     )
-    
+
     # Define subcommands
     subparsers = parser.add_subparsers(dest='command', help="Available commands")
     # Subcommand: info
