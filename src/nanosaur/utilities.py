@@ -24,77 +24,69 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import shlex
-import subprocess
+import yaml
 from nanosaur.prompt_colors import TerminalFormatter
 
 
-def run_command(command):    
-    try:
-        # Run the command and capture the output
-        result = subprocess.run(command, shell=True, capture_output=True, text=True)
-
-        # Check if there is any output or error message
-        if result.stdout:
-            print(TerminalFormatter.color_text(result.stdout, color='green'))
-        if result.stderr:
-            print(TerminalFormatter.color_text(result.stderr, color='red'))
-            return False
-    except Exception as e:
-        print(f"An error occurred while running the vcs import command: {e}")
-        return False
+class Params:
     
-    return True
-
-
-def run_command_live(command):
-    """
-    General function to execute a command and stream output live.
-    :param command: List of command arguments (as needed by subprocess.Popen).
-    """
-    try:
-        command = shlex.split(command)
-        # Run the command and stream the output live
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, stdin=open(os.devnull), preexec_fn=os.setsid)
-
-        # Stream output live
-        for line in process.stdout:
-            print(line, end="")  # Print stdout line-by-line
-        
-        # Wait for the process to finish
-        process.wait()
-
-        # Stream any errors
-        for line in process.stderr:
-            print(TerminalFormatter.color_text(line, color='red'), end="")  # Print stderr (errors) in red
-
-        # Check the exit status of the command
-        if process.returncode != 0:
-            print(TerminalFormatter.color_text(process.returncode, color='red'))
+    @classmethod
+    def load(cls, default_params, params_file=None):
+        # Load parameters from YAML file if it exists
+        if os.path.exists(params_file):
+            with open(params_file, 'r') as file:
+                params_dict = yaml.safe_load(file)
         else:
-            print(TerminalFormatter.color_text("Command completed successfully", color='green'))
+            params_dict = default_params
 
-        return process.returncode == 0
+        return cls(params_dict, params_file)
     
-    except Exception as e:
-        print(f"An error occurred while running the command: {e}")
-        return False
+    def __init__(self, params_dict, params_file=None):
+        self._params_dict = params_dict
+        self.params_file = params_file
+        for key, value in params_dict.items():
+            setattr(self, key, value)
 
+    def __getitem__(self, key):
+        return self._params_dict[key]
 
-def run_rosdep(folder_path):
-    return run_command_live(f"rosdep install --from-paths {folder_path}/src --ignore-src -r -y")
+    def __setitem__(self, key, value):
+        self._params_dict[key] = value
+        setattr(self, key, value)
+        # save the new value in the file
+        if self.params_file:
+            self.save(self.params_file)
 
+    def __delitem__(self, key):
+        del self._params_dict[key]
+        delattr(self, key)
 
-def run_colcon_build(folder_path):
-    # Move to the folder_path and run the colcon build command
-    try:
-        os.chdir(folder_path)
-        print(f"Changed directory to: {folder_path}")
-        
-        # Run the colcon build command with the necessary flags
-        return run_command_live("colcon build --symlink-install --merge-install")
+    def __contains__(self, key):
+        return key in self._params_dict
+
+    def save(self, file_path):
+        with open(file_path, 'w') as file:
+            yaml.dump(self._params_dict, file)
+
+    def get(self, key, default=None):
+        return getattr(self, key, default)
     
-    except Exception as e:
-        print(f"An error occurred while running the colcon build command: {e}")
-        return False
+    def set(self, key, value):
+        setattr(self, key, value)
+        # save the new value in the file
+        if self.params_file:
+            self.save(self.params_file)
+        return value
+
+    def items(self):
+        return self._params_dict.items()
+
+
+def require_sudo(func):
+    def wrapper(*args, **kwargs):
+        if os.geteuid() != 0:
+            print(TerminalFormatter.color_text("This script must be run as root. Please use 'sudo'.", color='red'))
+            return False
+        return func(*args, **kwargs)
+    return wrapper
 # EOF

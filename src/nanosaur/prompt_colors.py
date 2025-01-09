@@ -57,30 +57,26 @@ class TerminalFormatter:
     def color_text(text, color=None, bg_color=None, bold=False, italic=False):
         # Start with the style codes list
         style_codes = []
-        
+
         # Add text color if provided
         if color and color in TerminalFormatter.COLORS:
             style_codes.append(TerminalFormatter.COLORS[color])
-        
+
         # Add background color if provided
         if bg_color and bg_color in TerminalFormatter.BACKGROUNDS:
             style_codes.append(TerminalFormatter.BACKGROUNDS[bg_color])
-        
+
         # Add formatting options
         if bold:
             style_codes.append(TerminalFormatter.BOLD)
         if italic:
             style_codes.append(TerminalFormatter.ITALIC)
-        
+
         # Join all the style codes into one sequence
-        if style_codes:
-            style_prefix = f"\033[{';'.join(style_codes)}m"
-        else:
-            style_prefix = ''
-        
+        style_prefix = f"\033[{';'.join(style_codes)}m" if style_codes else ''
         # Reset code
         reset_code = "\033[0m"
-        
+
         # Return the styled text
         return f"{style_prefix}{text}{reset_code}"
 # EOF
