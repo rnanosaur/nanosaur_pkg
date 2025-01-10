@@ -56,8 +56,7 @@ class Params:
         self._params_dict[key] = value
         setattr(self, key, value)
         # save the new value in the file
-        if self.params_file:
-            self.save(self.params_file)
+        self.save()
 
     def __delitem__(self, key):
         del self._params_dict[key]
@@ -66,9 +65,10 @@ class Params:
     def __contains__(self, key):
         return key in self._params_dict
 
-    def save(self, file_path):
-        with open(file_path, 'w') as file:
-            yaml.dump(self._params_dict, file)
+    def save(self):
+        if self.params_file:
+            with open(self.params_file, 'w') as file:
+                yaml.dump(self._params_dict, file)
 
     def get(self, key, default=None):
         return getattr(self, key, default)
@@ -76,8 +76,7 @@ class Params:
     def set(self, key, value):
         setattr(self, key, value)
         # save the new value in the file
-        if self.params_file:
-            self.save(self.params_file)
+        self.save()
         return value
 
     def items(self):
@@ -100,18 +99,11 @@ def require_sudo_password(func):
     def wrapper(*args, **kwargs):
         try:
             # Get password
-            print(
-                TerminalFormatter.color_text(
-                    "This function require user password to be executed.",
-                    color='yellow'))
+            print(TerminalFormatter.color_text("This function require user password to be executed.", color='yellow'))
             # Get the username
             username = os.getlogin()
             # Get the password
-            password = getpass.getpass(
-                prompt=f'{
-                    TerminalFormatter.color_text(
-                        "[sudo]",
-                        bold=True)} password for {username}: ')
+            password = getpass.getpass(prompt=f'{TerminalFormatter.color_text("[sudo]", bold=True)} password for {username}: ')
             # Test if the sudo password is valid
             child = pexpect.spawn("sudo -v")
             child.expect("password for")

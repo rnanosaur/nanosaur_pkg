@@ -27,7 +27,7 @@ jobs:
 
     - name: Run autopep8
       run: |
-        autopep8 --in-place --aggressive --aggressive --recursive .
+        autopep8 --in-place --aggressive --aggressive --recursive . --max-line-length 200
 
     - name: Commit changes
       run: |

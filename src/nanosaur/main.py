@@ -32,7 +32,9 @@ from nanosaur import __version__
 from nanosaur.utilities import Params
 from nanosaur import installation
 from nanosaur import simulation
+from nanosaur import control
 
+NANOSAUR_CONFIG_FILE = 'nanosaur.yaml'
 
 # Define default parameters
 DEFAULT_PARAMS = {
@@ -57,7 +59,7 @@ def info(platform, params: Params, args):
 
 def main():
     # Load the parameters
-    params = Params.load(DEFAULT_PARAMS, params_file='nanosaur.yaml')
+    params = Params.load(DEFAULT_PARAMS, params_file=f'{NANOSAUR_CONFIG_FILE}')
 
     # Extract device information with jtop
     try:
@@ -142,6 +144,11 @@ def main():
         parser_simulation_set = simulation_subparsers.add_parser(
             'set', help="Select the simulator you want to use")
         parser_simulation_set.set_defaults(func=simulation.simulation_set)
+
+    # Subcommand: control
+    parser_control = subparsers.add_parser(
+        'control', help="Drive nanosaur")
+    parser_control.set_defaults(func=control.control_keyboard)
 
     # Parse the arguments
     args = parser.parse_args()
