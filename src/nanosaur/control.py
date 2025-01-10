@@ -26,6 +26,8 @@
 import subprocess
 from nanosaur.utilities import Params
 from nanosaur.workspace import get_workspace_path
+
+
 def control_keyboard(platform, params: Params, args):
     """Control the robot using the keyboard."""
     workspace_path = get_workspace_path(params['nanosaur_workspace_name'])
