@@ -1,6 +1,5 @@
 pyyaml
 pexpect
 requests
-catkin_pkg
 python-on-whales
 jetson-stats

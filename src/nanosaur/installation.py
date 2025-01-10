@@ -30,7 +30,7 @@ import pexpect
 import subprocess
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, require_sudo_password
-from nanosaur.workspace import get_workspace_path, create_workspace
+from nanosaur.workspace import get_workspace_path, create_workspace, clean_workspace
 
 
 def download_rosinstall(url, folder_path, file_name):
@@ -251,10 +251,16 @@ def install_simulation(platform, params: Params, args, password=None):
 def update(platform, params: Params, args, password=None):
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
     print(TerminalFormatter.color_text(f"Nanosaur updating on {device_type}", bold=True))
+    # Check if the workspace exists
     workspace_path = get_workspace_path(params['nanosaur_workspace_name'])
     if workspace_path is None:
         print(TerminalFormatter.color_text(f"There are no {params['nanosaur_workspace_name']} in this device!", color='red'))
         return False
+    # Clean workspace if force
+    if  args.force:
+        print(TerminalFormatter.color_text("- Force update", bold=True))
+        # Check if the workspace exists
+        clean_workspace(workspace_path)
     # Build environment
     print(TerminalFormatter.color_text(f"- Build workspace {workspace_path}", bold=True))
     if not run_colcon_build(workspace_path):

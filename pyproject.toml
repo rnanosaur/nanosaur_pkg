@@ -18,6 +18,14 @@ classifiers = [
 requires-python = ">=3.8"
 dynamic = ["dependencies","version"]
 
+[project.optional-dependencies]
+dev = [
+    "catkin_pkg",
+    "empy==3.3.4",
+    "lark",
+    "flake8"
+]
+
 [tool.setuptools.dynamic]
 # Dynamically read requirements
 version = {attr = "nanosaur.__init__.__version__"}
