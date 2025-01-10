@@ -23,11 +23,12 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import subprocess
 from nanosaur.utilities import Params
-import os
-
-
+from nanosaur.workspace import get_workspace_path
 def control_keyboard(platform, params: Params, args):
     """Control the robot using the keyboard."""
-    os.system('ros2 run teleop_twist_keyboard teleop_twist_keyboard')
+    workspace_path = get_workspace_path(params['nanosaur_workspace_name'])
+    bash_file = f'{workspace_path}/install/setup.bash'
+    subprocess.run(f'source {bash_file} && ros2 run teleop_twist_keyboard teleop_twist_keyboard', shell=True, executable='/bin/bash')
 # EOF
