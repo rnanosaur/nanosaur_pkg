@@ -1,3 +1,4 @@
+# PYTHON_ARGCOMPLETE_OK
 # Copyright (C) 2024, Raffaello Bonghi <raffaello@rnext.it>
 # All rights reserved
 # Redistribution and use in source and binary forms, with or without
@@ -24,6 +25,7 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
+import argcomplete
 import sys
 import subprocess
 from jtop import jtop, JtopException
@@ -149,6 +151,9 @@ def main():
     parser_control = subparsers.add_parser(
         'control', help="Drive nanosaur")
     parser_control.set_defaults(func=control.control_keyboard)
+
+    # Enable autocomplete
+    argcomplete.autocomplete(parser)
 
     # Parse the arguments
     args = parser.parse_args()
