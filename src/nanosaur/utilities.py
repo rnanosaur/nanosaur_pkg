@@ -98,7 +98,10 @@ def require_sudo_password(func):
         try:
             # Get password
             print(TerminalFormatter.color_text("This function require user password to be executed.", color='yellow'))
-            password = getpass.getpass(prompt='Please, enter your password: ')
+            # Get the username
+            username = os.getlogin()
+            # Get the password
+            password = getpass.getpass(prompt=f'{TerminalFormatter.color_text("[sudo]", bold=True)} password for {username}: ')
             # Test if the sudo password is valid
             child = pexpect.spawn("sudo -v")
             child.expect("password for")

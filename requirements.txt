@@ -1,2 +1,5 @@
+pyyaml
+pexpect
+requests
 python-on-whales
 jetson-stats
