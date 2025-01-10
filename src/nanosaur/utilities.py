@@ -25,6 +25,8 @@
 
 import os
 import yaml
+import pexpect
+import getpass
 from nanosaur.prompt_colors import TerminalFormatter
 
 
@@ -88,5 +90,29 @@ def require_sudo(func):
             print(TerminalFormatter.color_text("This script must be run as root. Please use 'sudo'.", color='red'))
             return False
         return func(*args, **kwargs)
+    return wrapper
+
+
+def require_sudo_password(func):
+    def wrapper(*args, **kwargs):
+        try:
+            # Get password
+            print(TerminalFormatter.color_text("This function require user password to be executed.", color='yellow'))
+            password = getpass.getpass(prompt='Please, enter your password: ')
+            # Test if the sudo password is valid
+            child = pexpect.spawn("sudo -v")
+            child.expect("password for")
+            child.sendline(password)
+            index = child.expect([pexpect.EOF, pexpect.TIMEOUT], timeout=10)
+            if index != 0:  # Password not accepted
+                print("Error: Incorrect sudo password. Please try again.")
+                return False
+            # Execute function with password
+            return func(*args, password=password, **kwargs)
+        except Exception as e:
+            print(f"Validation error: {e}")
+            return False
+        finally:
+            child.close()
     return wrapper
 # EOF

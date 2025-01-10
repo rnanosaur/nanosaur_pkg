@@ -99,7 +99,7 @@ def simulation_set(platform, params: Params, args):
         if choice.isdigit():
             choice_num = int(choice)
             if choice_num == exit_option:
-                print(TerminalFormatter.color_text("Exiting...", color='yellow'))
+                # print(TerminalFormatter.color_text("Exiting...", color='yellow'))
                 break
             elif 1 <= choice_num <= len(sim_options):
                 params['simulation_tool'] = sim_options[choice_num - 1]
