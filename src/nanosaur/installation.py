@@ -257,7 +257,7 @@ def update(platform, params: Params, args, password=None):
         print(TerminalFormatter.color_text(f"There are no {params['nanosaur_workspace_name']} in this device!", color='red'))
         return False
     # Clean workspace if force
-    if  args.force:
+    if args.force:
         print(TerminalFormatter.color_text("- Force update", bold=True))
         # Check if the workspace exists
         clean_workspace(workspace_path)

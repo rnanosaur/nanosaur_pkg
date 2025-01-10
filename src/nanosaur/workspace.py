@@ -49,9 +49,10 @@ def clean_workspace(nanosaur_ws_name):
     if os.path.exists(workspace_path) and os.path.isdir(workspace_path):
         print(TerminalFormatter.color_text(f"Workspace '{workspace_path}' exists. Cleaning build, install and log folders", color='yellow'))
         os.system(f"sudo rm -rf {workspace_path}/build {workspace_path}/install {workspace_path}/log")
-        print(TerminalFormatter.color_text(f"Workspace '{workspace_path}' cleaned up.",color='green'))
+        print(TerminalFormatter.color_text(f"Workspace '{workspace_path}' cleaned up.", color='green'))
     else:
         print(TerminalFormatter.color_text(f"Folder '{workspace_path}' does not exist.", color='yellow'))
+
 
 def get_workspace_path(nanosaur_ws_name):
     """
