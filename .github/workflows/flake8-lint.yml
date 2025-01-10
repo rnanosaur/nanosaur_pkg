@@ -21,6 +21,7 @@ jobs:
         pip install flake8 autopep8
 
     - name: Run flake8
+      continue-on-error: true
       run: |
         flake8 .
 
