@@ -34,18 +34,26 @@ simulation_tools = {
     "Gazebo": "ros2 launch nanosaur_ignition ignition.launch.py"
 }
 
+
 def simulation_start(platform, params: Params, args):
     """Install the simulation tools."""
-    
+
     nanosaur_ws_path = get_workspace_path(params['nanosaur_workspace_name'])
     bash_file = f'{nanosaur_ws_path}/install/setup.bash'
     # Check which simulation tool is selected
     if 'simulation_tool' not in params:
-        print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
+        print(
+            TerminalFormatter.color_text(
+                "No simulation tool selected. Please run simulation set first.",
+                color='red'))
         return False
-    
+
     if params['simulation_tool'] not in simulation_tools:
-        print(TerminalFormatter.color_text(f"Unknown simulation tool: {params['simulation_tool']}", color='red'))
+        print(
+            TerminalFormatter.color_text(
+                f"Unknown simulation tool: {
+                    params['simulation_tool']}",
+                color='red'))
         return False
 
     command = simulation_tools[params['simulation_tool']]
@@ -62,14 +70,19 @@ def simulation_start(platform, params: Params, args):
 
         # Stream output live
         for line in process.stdout:
-            print(line.decode('utf-8'), end="")  # Decode and print stdout line-by-line
-        
+            # Decode and print stdout line-by-line
+            print(line.decode('utf-8'), end="")
+
         # Wait for the process to finish
         process.wait()
 
         # Stream any errors
         for line in process.stderr:
-            print(TerminalFormatter.color_text(line.decode('utf-8'), color='red'), end="")  # Print stderr (errors) in red
+            print(
+                TerminalFormatter.color_text(
+                    line.decode('utf-8'),
+                    color='red'),
+                end="")  # Print stderr (errors) in red
 
         return process.returncode == 0
     except KeyboardInterrupt as e:
@@ -78,24 +91,29 @@ def simulation_start(platform, params: Params, args):
         print(f"An error occurred while running the command: {e}")
         return False
 
+
 def simulation_set(platform, params: Params, args):
     """Set the simulation tools."""
     while True:
         print("Set the simulation tools:")
         # List of simulation environments
         sim_options = list(simulation_tools.keys())
-        
+
         # Print options from list
         for i, value in enumerate(sim_options, 1):
             if 'simulation_tool' in params and params['simulation_tool'] == value:
-                print(f"{i}. {TerminalFormatter.color_text(value, color='green')} [Current]")
+                print(
+                    f"{i}. {
+                        TerminalFormatter.color_text(
+                            value,
+                            color='green')} [Current]")
             else:
                 print(f"{i}. {value}")
         exit_option = len(sim_options) + 1
         print(f"{exit_option}. Exit")
-        
+
         choice = input("Enter your choice: ")
-        
+
         if choice.isdigit():
             choice_num = int(choice)
             if choice_num == exit_option:
@@ -103,11 +121,18 @@ def simulation_set(platform, params: Params, args):
                 break
             elif 1 <= choice_num <= len(sim_options):
                 params['simulation_tool'] = sim_options[choice_num - 1]
-                print(TerminalFormatter.color_text(f"Selected {sim_options[choice_num - 1]}", color='green'))
+                print(TerminalFormatter.color_text(
+                    f"Selected {sim_options[choice_num - 1]}", color='green'))
                 break
             else:
-                print(TerminalFormatter.color_text(f"Invalid choice. Please enter a number between 1 and {exit_option}.", color='red'))
+                print(
+                    TerminalFormatter.color_text(
+                        f"Invalid choice. Please enter a number between 1 and {exit_option}.",
+                        color='red'))
         else:
-            print(TerminalFormatter.color_text("Invalid choice. Please enter a number.", color='red'))
+            print(
+                TerminalFormatter.color_text(
+                    "Invalid choice. Please enter a number.",
+                    color='red'))
     return True
     # EOF

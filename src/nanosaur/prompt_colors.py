@@ -52,7 +52,7 @@ class TerminalFormatter:
     # Define text formatting codes
     BOLD = '1'
     ITALIC = '3'
-    
+
     @staticmethod
     def color_text(text, color=None, bg_color=None, bold=False, italic=False):
         # Start with the style codes list

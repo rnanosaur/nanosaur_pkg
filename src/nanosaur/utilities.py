@@ -31,7 +31,7 @@ from nanosaur.prompt_colors import TerminalFormatter
 
 
 class Params:
-    
+
     @classmethod
     def load(cls, default_params, params_file=None):
         # Load parameters from YAML file if it exists
@@ -42,7 +42,7 @@ class Params:
             params_dict = default_params
 
         return cls(params_dict, params_file)
-    
+
     def __init__(self, params_dict, params_file=None):
         self._params_dict = params_dict
         self.params_file = params_file
@@ -72,7 +72,7 @@ class Params:
 
     def get(self, key, default=None):
         return getattr(self, key, default)
-    
+
     def set(self, key, value):
         setattr(self, key, value)
         # save the new value in the file
@@ -87,7 +87,10 @@ class Params:
 def require_sudo(func):
     def wrapper(*args, **kwargs):
         if os.geteuid() != 0:
-            print(TerminalFormatter.color_text("This script must be run as root. Please use 'sudo'.", color='red'))
+            print(
+                TerminalFormatter.color_text(
+                    "This script must be run as root. Please use 'sudo'.",
+                    color='red'))
             return False
         return func(*args, **kwargs)
     return wrapper
@@ -97,11 +100,18 @@ def require_sudo_password(func):
     def wrapper(*args, **kwargs):
         try:
             # Get password
-            print(TerminalFormatter.color_text("This function require user password to be executed.", color='yellow'))
+            print(
+                TerminalFormatter.color_text(
+                    "This function require user password to be executed.",
+                    color='yellow'))
             # Get the username
             username = os.getlogin()
             # Get the password
-            password = getpass.getpass(prompt=f'{TerminalFormatter.color_text("[sudo]", bold=True)} password for {username}: ')
+            password = getpass.getpass(
+                prompt=f'{
+                    TerminalFormatter.color_text(
+                        "[sudo]",
+                        bold=True)} password for {username}: ')
             # Test if the sudo password is valid
             child = pexpect.spawn("sudo -v")
             child.expect("password for")

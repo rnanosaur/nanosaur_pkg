@@ -26,6 +26,7 @@
 import os
 from nanosaur.prompt_colors import TerminalFormatter
 
+
 def get_workspace_path(nanosaur_ws_name):
     """
     Checks if a workspace folder exists in the user's home directory.
@@ -39,10 +40,11 @@ def get_workspace_path(nanosaur_ws_name):
     else:
         # Get the current user's home directory
         user_home_dir = os.path.expanduser("~")
-    
-    # Create the full path for the workspace folder in the user's home directory
+
+    # Create the full path for the workspace folder in the user's home
+    # directory
     workspace_path = os.path.join(user_home_dir, nanosaur_ws_name)
-    
+
     # Check if the workspace folder exists
     if os.path.exists(workspace_path) and os.path.isdir(workspace_path):
         return workspace_path
@@ -58,17 +60,24 @@ def create_workspace(nanosaur_ws_name):
     else:
         # Get the current user's home directory
         user_home_dir = os.path.expanduser("~")
-    
-    # Create the full path for the workspace folder in the user's home directory
+
+    # Create the full path for the workspace folder in the user's home
+    # directory
     workspace_path = os.path.join(user_home_dir, nanosaur_ws_name)
     workspace_path_src = os.path.join(workspace_path, "src")
 
     # Check if folder exists, if not, create it
     if not os.path.exists(workspace_path_src):
         os.makedirs(workspace_path_src)
-        print(TerminalFormatter.color_text(f"Folder '{workspace_path_src}' created.", color='green'))
+        print(
+            TerminalFormatter.color_text(
+                f"Folder '{workspace_path_src}' created.",
+                color='green'))
     else:
-        print(TerminalFormatter.color_text(f"Folder '{workspace_path_src}' already exists.", color='yellow'))
-    
+        print(
+            TerminalFormatter.color_text(
+                f"Folder '{workspace_path_src}' already exists.",
+                color='yellow'))
+
     return workspace_path
 # EOF
