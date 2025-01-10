@@ -31,7 +31,7 @@ from nanosaur.utilities import Params
 # Dictionary of simulation tools and their commands
 simulation_tools = {
     "Isaac Sim": "ros2 launch nanosaur_isaac_sim isaac_sim.launch.py",
-    "Gazebo": "ros2 launch nanosaur_ignition ignition.launch.py"
+    "Gazebo": "ros2 launch nanosaur_gazebo gazebo.launch.py"
 }
 
 
