@@ -32,6 +32,7 @@ from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, require_sudo_password
 from nanosaur.workspace import get_workspace_path, create_workspace
 
+
 def download_rosinstall(url, folder_path, file_name):
     # Create the full file path
     file_path = os.path.join(folder_path, file_name)
@@ -127,10 +128,10 @@ def run_rosdep(folder_path, password):
 
 
 def run_colcon_build(folder_path):
-    
+
     ros2_distro = 'humble'
     ros2_sources = f'/opt/ros/{ros2_distro}/setup.bash'
-    
+
     # Move to the folder_path and run the colcon build command
     try:
         os.chdir(folder_path)
