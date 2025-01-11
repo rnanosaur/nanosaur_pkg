@@ -32,6 +32,8 @@ from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, require_sudo_password
 from nanosaur.workspace import get_workspace_path, create_workspace, clean_workspace
 
+ros2_distro = 'humble'
+ros2_sources = f'/opt/ros/{ros2_distro}/setup.bash'
 
 def download_rosinstall(url, folder_path, file_name):
     # Create the full file path
@@ -97,10 +99,7 @@ def run_rosdep(folder_path, password):
         return False
     result = False
     try:
-        child = pexpect.spawn(
-            f"rosdep install --from-paths {folder_path}/src --ignore-src -r -y",
-            encoding='utf-8',
-            timeout=None)
+        child = pexpect.spawn(f"bash -c 'source {ros2_sources} && rosdep install --from-paths {folder_path}/src --ignore-src -r -y'", encoding='utf-8', timeout=None)
         # Stream all command output to the terminal in real time
         child.logfile = sys.stdout
         # Wait for password prompt with timeout
@@ -128,9 +127,6 @@ def run_rosdep(folder_path, password):
 
 
 def run_colcon_build(folder_path):
-
-    ros2_distro = 'humble'
-    ros2_sources = f'/opt/ros/{ros2_distro}/setup.bash'
 
     # Move to the folder_path and run the colcon build command
     try:
