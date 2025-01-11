@@ -24,6 +24,7 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import argparse
 import argcomplete
 import sys
@@ -61,7 +62,8 @@ def info(platform, params: Params, args):
 
 def main():
     # Load the parameters
-    params = Params.load(DEFAULT_PARAMS, params_file=f'{NANOSAUR_CONFIG_FILE}')
+    user_home_dir = os.path.expanduser("~")
+    params = Params.load(DEFAULT_PARAMS, params_file=f'{user_home_dir}/{NANOSAUR_CONFIG_FILE}')
 
     # Extract device information with jtop
     try:

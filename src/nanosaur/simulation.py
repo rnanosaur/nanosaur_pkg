@@ -97,7 +97,11 @@ def simulation_set(platform, params: Params, args):
         exit_option = len(sim_options) + 1
         print(f"{exit_option}. Exit")
 
-        choice = input("Enter your choice: ")
+        try:
+            choice = input("Enter your choice: ")
+        except KeyboardInterrupt:
+            print(TerminalFormatter.color_text("Exiting...", color='yellow'))
+            return False
 
         if choice.isdigit():
             choice_num = int(choice)

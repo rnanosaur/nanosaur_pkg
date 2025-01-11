@@ -24,6 +24,7 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import copy
 import yaml
 import pexpect
 import getpass
@@ -45,6 +46,7 @@ class Params:
 
     def __init__(self, params_dict, params_file=None):
         self._params_dict = params_dict
+        self._default_params = copy.deepcopy(params_dict)
         self.params_file = params_file
         for key, value in params_dict.items():
             setattr(self, key, value)
@@ -66,7 +68,8 @@ class Params:
         return key in self._params_dict
 
     def save(self):
-        if self.params_file:
+        if self.params_file and self._params_dict != self._default_params:
+            print(TerminalFormatter.color_text(f"Saving parameters to {self.params_file}", color='yellow'))
             with open(self.params_file, 'w') as file:
                 yaml.dump(self._params_dict, file)
 
