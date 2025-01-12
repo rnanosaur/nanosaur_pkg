@@ -69,10 +69,10 @@ def clean_workspace(nanosaur_ws_name, password):
             elif index == 2:  # Timeout
                 print(TerminalFormatter.color_text("Error: Sudo prompt timed out. Please try again.", color='red'))
                 result = False
-            
+
             # Stream all command output to the terminal in real time
             child.logfile = sys.stdout
-                
+
         except pexpect.ExceptionPexpect as e:
             print(TerminalFormatter.color_text(f"Error running rm {str(e)}", color='red'))
             result = False
@@ -85,6 +85,7 @@ def clean_workspace(nanosaur_ws_name, password):
     else:
         print(TerminalFormatter.color_text(f"Folder '{workspace_path}' does not exist.", color='yellow'))
     return False
+
 
 def get_workspace_path(nanosaur_ws_name):
     """
