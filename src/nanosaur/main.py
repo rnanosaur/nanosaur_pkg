@@ -101,6 +101,7 @@ def main():
     install_subparsers = parser_install.add_subparsers(
         dest='install_type', help="Installation types")
 
+    # Subcommand: install update
     parser_install_developer = install_subparsers.add_parser(
         'update', help="Update the installation")
     parser_install_developer.add_argument(
@@ -135,6 +136,10 @@ def main():
             '--force', action='store_true', help="Force the installation")
         parser_install_simulation.set_defaults(
             func=installation.install_simulation)
+
+    parser_install_clean = install_subparsers.add_parser(
+        'clean', help="Clean the workspace")
+    parser_install_clean.set_defaults(func=installation.clean)
 
     # Subcommand: update (with a sub-menu for installation types)
     if device_type == 'desktop':

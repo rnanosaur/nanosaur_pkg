@@ -4,7 +4,7 @@
 
 **nanosaur** The smallest [NVIDIA Jetson](https://developer.nvidia.com/buy-jetson) dinosaur robot, **open-source**, fully **3D printable**, based on [**ROS 2**](https://www.ros.org/) & [**Isaac ROS**](https://developer.nvidia.com/isaac-ros-gems).
 
-<small>Designed & made by [Raffaello Bonghi](https://rnext.it)</small>
+*Designed & made by [Raffaello Bonghi](https://rnext.it)*
 
 [![nanosaur](https://nanosaur.ai/assets/images/banner.jpg)](https://nanosaur.ai)
 

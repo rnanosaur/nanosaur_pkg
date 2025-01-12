@@ -107,7 +107,9 @@ def run_rosdep(folder_path, password):
         index = child.expect(
             ['password for', pexpect.EOF, pexpect.TIMEOUT], timeout=30)
         if index == 0:
+            child.logfile = None  # Disable logging to hide password
             child.sendline(password)
+            child.logfile = sys.stdout  # Re-enable logging
             # Wait for completion
             child.expect(pexpect.EOF, timeout=300)
             result = True
@@ -245,6 +247,20 @@ def install_simulation(platform, params: Params, args, password=None):
     return True
 
 
+@require_sudo_password
+def clean(platform, params: Params, args, password=None):
+    device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
+    print(TerminalFormatter.color_text(f"Nanosaur cleaning on {device_type}", bold=True))
+    # Check if the workspace exists
+    workspace_path = get_workspace_path(params['nanosaur_workspace_name'])
+    if workspace_path is None:
+        print(TerminalFormatter.color_text(f"There are no {params['nanosaur_workspace_name']} in this device!", color='red'))
+        return False
+    # Clean workspace
+    clean_workspace(workspace_path, password)
+    return True
+
+
 def update(platform, params: Params, args, password=None):
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
     print(TerminalFormatter.color_text(f"Nanosaur updating on {device_type}", bold=True))
@@ -257,7 +273,7 @@ def update(platform, params: Params, args, password=None):
     if args.force:
         print(TerminalFormatter.color_text("- Force update", bold=True))
         # Check if the workspace exists
-        clean_workspace(workspace_path)
+        clean_workspace(workspace_path, password)
     # Build environment
     print(TerminalFormatter.color_text(f"- Build workspace {workspace_path}", bold=True))
     if not run_colcon_build(workspace_path):

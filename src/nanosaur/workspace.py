@@ -24,10 +24,12 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import sys
+import pexpect
 from nanosaur.prompt_colors import TerminalFormatter
 
 
-def clean_workspace(nanosaur_ws_name):
+def clean_workspace(nanosaur_ws_name, password):
     """
     Checks if a workspace folder exists in the user's home directory.
     :param folder_name: The name of the workspace folder to check.
@@ -48,11 +50,41 @@ def clean_workspace(nanosaur_ws_name):
     # Check if the workspace folder exists
     if os.path.exists(workspace_path) and os.path.isdir(workspace_path):
         print(TerminalFormatter.color_text(f"Workspace '{workspace_path}' exists. Cleaning build, install and log folders", color='yellow'))
-        os.system(f"sudo rm -rf {workspace_path}/build {workspace_path}/install {workspace_path}/log")
+        result = False
+        try:
+            child = pexpect.spawn(f"sudo rm -rf {workspace_path}/build {workspace_path}/install {workspace_path}/log", encoding='utf-8', timeout=None)
+            # Wait for password prompt with timeout
+            index = child.expect(
+                ['password for', pexpect.EOF, pexpect.TIMEOUT], timeout=30)
+            if index == 0:
+                child.logfile = None  # Disable logging to hide password
+                child.sendline(password)
+                child.logfile = sys.stdout  # Re-enable logging
+                # Wait for completion
+                child.expect(pexpect.EOF, timeout=300)
+                result = True
+            elif index == 1:  # Command finished without password prompt
+                print("Command finished without asking for a password.")
+                result = True
+            elif index == 2:  # Timeout
+                print(TerminalFormatter.color_text("Error: Sudo prompt timed out. Please try again.", color='red'))
+                result = False
+            
+            # Stream all command output to the terminal in real time
+            child.logfile = sys.stdout
+                
+        except pexpect.ExceptionPexpect as e:
+            print(TerminalFormatter.color_text(f"Error running rm {str(e)}", color='red'))
+            result = False
+        finally:
+            # Ensure the process is closed
+            if child.isalive():
+                child.close()
         print(TerminalFormatter.color_text(f"Workspace '{workspace_path}' cleaned up.", color='green'))
+        return result
     else:
         print(TerminalFormatter.color_text(f"Folder '{workspace_path}' does not exist.", color='yellow'))
-
+    return False
 
 def get_workspace_path(nanosaur_ws_name):
     """
