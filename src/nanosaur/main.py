@@ -43,6 +43,7 @@ NANOSAUR_CONFIG_FILE = 'nanosaur.yaml'
 DEFAULT_PARAMS = {
     'nanosaur_workspace_name': 'nanosaur_ws',
     'nanosaur_branch': 'nanosaur2',
+    'robot_name': 'nanosaur',
 }
 
 
