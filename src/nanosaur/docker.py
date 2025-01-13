@@ -27,6 +27,7 @@
 from python_on_whales import docker
 from nanosaur.utilities import Params
 
+
 def start_docker(platform, params: Params, args):
     """Start the docker container."""
     output = docker.run("hello-world")
