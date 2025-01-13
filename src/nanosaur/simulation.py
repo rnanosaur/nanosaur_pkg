@@ -54,7 +54,7 @@ def simulation_start(platform, params: Params, args):
     try:
         # Combine sourcing the bash file with running the command
         process = subprocess.Popen(
-            f"source {bash_file} && {command}",
+            f"source {bash_file} && {command} namespace:={params['robot_name']}",
             shell=True,
             executable="/bin/bash",
             stdout=subprocess.PIPE,
