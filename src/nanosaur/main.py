@@ -28,7 +28,6 @@ import os
 import argparse
 import argcomplete
 import sys
-import subprocess
 from jtop import jtop, JtopException
 
 from nanosaur import __version__
