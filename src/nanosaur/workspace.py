@@ -288,6 +288,7 @@ def clean(platform, params: Params, args, password=None):
     clean_workspace(workspace_path, password)
     return True
 
+
 @conditional_sudo_password
 def update(platform, params: Params, args, password=None):
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"

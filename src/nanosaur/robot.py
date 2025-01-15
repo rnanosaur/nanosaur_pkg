@@ -38,12 +38,12 @@ simulation_tools = {
 def start_robot_simulation(params):
     nanosaur_ws_path = workspace.get_workspace_path(params['nanosaur_workspace_name'])
     bash_file = f'{nanosaur_ws_path}/install/setup.bash'
-    
+
     # Check which simulation tool is selected
     if 'simulation_tool' not in params:
         print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
         return False
-    
+
     command = simulation_tools[params['simulation_tool']]
 
     try:
@@ -74,6 +74,7 @@ def start_robot_simulation(params):
     except Exception as e:
         print(f"An error occurred while running the command: {e}")
         return False
+
 
 def robot_start(platform, params: Params, args):
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
