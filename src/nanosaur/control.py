@@ -36,5 +36,6 @@ def control_keyboard(platform, params: Params, args):
     # Read the robot name
     robot_name = params['robot_name']
     print(TerminalFormatter.color_text(f"Control the robot {robot_name} using the keyboard", color='green'))
-    subprocess.run(f'source {bash_file} && ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args --remap /cmd_vel:=/{robot_name}/key_vel', shell=True, executable='/bin/bash')
+    subprocess.run(f'source {bash_file} && ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args --remap /cmd_vel:=/{robot_name}/key_vel',
+                   shell=True, executable='/bin/bash')
 # EOF

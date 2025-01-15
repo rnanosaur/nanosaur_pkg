@@ -145,7 +145,7 @@ def simulation_install(platform, params: Params, args, password=None):
     print(TerminalFormatter.color_text(f"- Install all dependencies on workspace {workspace_path}", bold=True))
     if not workspace.run_rosdep(workspace_path, password):
         print(TerminalFormatter.color_text("Failed to install dependencies", color='red'))
-        return False        
+        return False
     # Build environment
     print(TerminalFormatter.color_text(f"- Build workspace {workspace_path}", bold=True))
     if not workspace.run_colcon_build(workspace_path):
