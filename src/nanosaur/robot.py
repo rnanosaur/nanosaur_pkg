@@ -26,6 +26,7 @@
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params
 
+
 def config_robot_name(platform, params: Params, args):
     """Configure the robot name."""
     # Check if the robot name is provided
