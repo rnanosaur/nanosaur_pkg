@@ -1,5 +1,5 @@
 # PYTHON_ARGCOMPLETE_OK
-# Copyright (C) 2024, Raffaello Bonghi <raffaello@rnext.it>
+# Copyright (C) 2025, Raffaello Bonghi <raffaello@rnext.it>
 # All rights reserved
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -34,6 +34,7 @@ from nanosaur import __version__
 from nanosaur.utilities import Params
 from nanosaur import workspace
 from nanosaur import simulation
+from nanosaur import robot
 from nanosaur import control
 from nanosaur.workspace import get_workspace_path
 from nanosaur.prompt_colors import TerminalFormatter
@@ -45,6 +46,7 @@ DEFAULT_PARAMS = {
     'nanosaur_workspace_name': 'nanosaur_ws',
     'nanosaur_branch': 'nanosaur2',
     'robot_name': 'nanosaur',
+    'domain_id': 0,
 }
 
 
@@ -157,6 +159,19 @@ def main():
         # Add simulation subcommand
         parser_simulation = parser_simulation_menu(subparsers)
 
+    # Subcommand: config (with a sub-menu for configuration options)
+    parser_config = subparsers.add_parser('config', help="Configure Nanosaur settings")
+    config_subparsers = parser_config.add_subparsers(dest='config_type', help="Configuration options")
+
+    # Add config robot_name subcommand
+    parser_config_robot_name = config_subparsers.add_parser('robot_name', help="Set the robot name")
+    parser_config_robot_name.add_argument('robot_name', type=str, help="The name of the robot")
+    parser_config_robot_name.set_defaults(func=robot.config_robot_name)
+    # Add config domain_id subcommand
+    parser_config_domain_id = config_subparsers.add_parser('domain_id', help="Set the domain ID")
+    parser_config_domain_id.add_argument('domain_id', type=int, help="The domain ID")
+    parser_config_domain_id.set_defaults(func=robot.config_domain_id)
+
     # Subcommand: drive
     parser_drive = subparsers.add_parser('drive', help="Drive Nanosaur")
     parser_drive.set_defaults(func=control.control_keyboard)
@@ -175,6 +190,10 @@ def main():
     # Handle install subcommand without an install_type
     if args.command in ['simulation', 'sim'] and args.simulation_type is None:
         parser_simulation.print_help()
+        sys.exit(1)
+
+    if args.command in ['config'] and args.config_type is None:
+        parser_config.print_help()
         sys.exit(1)
 
     # Execute the corresponding function based on the subcommand
