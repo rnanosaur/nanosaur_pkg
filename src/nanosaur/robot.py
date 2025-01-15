@@ -36,11 +36,11 @@ simulation_tools = {
 
 
 class Robot:
-    
+
     @classmethod
     def load(cls, params):
         return cls(params['robot']) if 'robot' in params and params['robot'] else cls()
-    
+
     def __init__(self, robot_config=None):
         if robot_config is None:
             robot_config = {
@@ -50,12 +50,13 @@ class Robot:
         # Load the robot configuration
         for key, value in robot_config.items():
             setattr(self, key, value)
-        
+
     def __repr__(self):
         return f"Robot(name={self.name}, domain_id={self.domain_id})"
 
     def to_dict(self):
         return self.__dict__
+
 
 def start_robot_simulation(params):
     nanosaur_ws_path = workspace.get_workspace_path(params['nanosaur_workspace_name'])
@@ -147,6 +148,7 @@ def robot_reset(platform, params: Params, args):
     del params['robot']
     print(TerminalFormatter.color_text("Robot configuration reset", color='green'))
     return True
+
 
 def control_keyboard(platform, params: Params, args):
     """Control the robot using the keyboard."""
