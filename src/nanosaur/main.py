@@ -35,7 +35,6 @@ from nanosaur.utilities import Params
 from nanosaur import workspace
 from nanosaur import simulation
 from nanosaur import robot
-from nanosaur import control
 from nanosaur.workspace import get_workspace_path
 from nanosaur.prompt_colors import TerminalFormatter
 
@@ -159,22 +158,25 @@ def main():
         # Add simulation subcommand
         parser_simulation = parser_simulation_menu(subparsers)
 
-    # Subcommand: config (with a sub-menu for configuration options)
-    parser_config = subparsers.add_parser('config', help="Configure Nanosaur settings")
-    config_subparsers = parser_config.add_subparsers(dest='config_type', help="Configuration options")
+    # Subcommand: robot (with a sub-menu for robot operations)
+    parser_robot = subparsers.add_parser('robot', help="Manage the Nanosaur robot")
+    robot_subparsers = parser_robot.add_subparsers(dest='robot_type', help="Robot operations")
 
-    # Add config robot_name subcommand
-    parser_config_robot_name = config_subparsers.add_parser('robot_name', help="Set the robot name")
-    parser_config_robot_name.add_argument('robot_name', type=str, help="The name of the robot")
-    parser_config_robot_name.set_defaults(func=robot.config_robot_name)
-    # Add config domain_id subcommand
-    parser_config_domain_id = config_subparsers.add_parser('domain_id', help="Set the domain ID")
-    parser_config_domain_id.add_argument('domain_id', type=int, help="The domain ID")
-    parser_config_domain_id.set_defaults(func=robot.config_domain_id)
+    # Add robot drive subcommand
+    parser_robot_drive = robot_subparsers.add_parser('drive', help="Drive the robot")
+    parser_robot_drive.set_defaults(func=robot.control_keyboard)
+    # Add robot start subcommand
+    parser_robot_start = robot_subparsers.add_parser('start', help="Start the robot")
+    parser_robot_start.set_defaults(func=robot.robot_start)
 
-    # Subcommand: drive
-    parser_drive = subparsers.add_parser('drive', help="Drive Nanosaur")
-    parser_drive.set_defaults(func=control.control_keyboard)
+    # Add robot name subcommand
+    parser_robot_name = robot_subparsers.add_parser('name', help="Set the robot name")
+    parser_robot_name.add_argument('name', type=str, help="Name of the robot")
+    parser_robot_name.set_defaults(func=robot.robot_set_name)
+    # Add robot domain id subcommand
+    parser_robot_domain_id = robot_subparsers.add_parser('domain_id', help="Set the robot domain ID")
+    parser_robot_domain_id.add_argument('domain_id', type=int, help="Domain ID of the robot")
+    parser_robot_domain_id.set_defaults(func=robot.robot_set_domain_id)
 
     # Enable tab completion
     argcomplete.autocomplete(parser)
@@ -192,8 +194,8 @@ def main():
         parser_simulation.print_help()
         sys.exit(1)
 
-    if args.command in ['config'] and args.config_type is None:
-        parser_config.print_help()
+    if args.command in ['robot'] and args.robot_type is None:
+        parser_robot.print_help()
         sys.exit(1)
 
     # Execute the corresponding function based on the subcommand

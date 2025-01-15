@@ -128,4 +128,13 @@ def require_sudo_password(func):
             if child is not None:
                 child.close()
     return wrapper
+
+
+def conditional_sudo_password(func):
+    def wrapper(platform, params, args):
+        if args.force:
+            return require_sudo_password(func)(platform, params, args)
+        else:
+            return func(platform, params, args)
+    return wrapper
 # EOF

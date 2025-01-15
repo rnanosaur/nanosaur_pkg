@@ -29,7 +29,7 @@ import pexpect
 import requests
 import subprocess
 from nanosaur.prompt_colors import TerminalFormatter
-from nanosaur.utilities import Params, require_sudo_password
+from nanosaur.utilities import Params, require_sudo_password, conditional_sudo_password
 
 ros2_distro = 'humble'
 ros2_sources = f'/opt/ros/{ros2_distro}/setup.bash'
@@ -288,7 +288,7 @@ def clean(platform, params: Params, args, password=None):
     clean_workspace(workspace_path, password)
     return True
 
-
+@conditional_sudo_password
 def update(platform, params: Params, args, password=None):
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
     print(TerminalFormatter.color_text(f"Nanosaur updating on {device_type}", bold=True))

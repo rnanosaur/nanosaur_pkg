@@ -30,7 +30,7 @@ from nanosaur.utilities import Params, require_sudo_password
 
 # Dictionary of simulation tools and their commands
 simulation_tools = {
-    "Isaac Sim": "ros2 launch nanosaur_isaac_sim isaac_sim.launch.py",
+    "Isaac Sim": "ros2 launch isaac_sim_wrapper isaac_sim_server.launch.py",
     "Gazebo": "ros2 launch nanosaur_gazebo gazebo.launch.py"
 }
 
@@ -54,7 +54,7 @@ def simulation_start(platform, params: Params, args):
     try:
         # Combine sourcing the bash file with running the command
         process = subprocess.Popen(
-            f"source {bash_file} && {command} namespace:={params['robot_name']}",
+            f"source {bash_file} && {command}",
             shell=True,
             executable="/bin/bash",
             stdout=subprocess.PIPE,
