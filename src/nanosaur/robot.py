@@ -34,6 +34,11 @@ simulation_tools = {
     "Gazebo": "ros2 launch nanosaur_gazebo nanosaur_bridge.launch.py"
 }
 
+DEFAULT_ROBOT_CONFIG = {
+    'name': 'nanosaur',
+    'domain_id': 0
+}
+
 
 class Robot:
 
@@ -43,10 +48,7 @@ class Robot:
 
     def __init__(self, robot_config=None):
         if robot_config is None:
-            robot_config = {
-                'name': 'nanosaur',
-                'domain_id': 0
-            }
+            robot_config = DEFAULT_ROBOT_CONFIG
         # Load the robot configuration
         for key, value in robot_config.items():
             setattr(self, key, value)
