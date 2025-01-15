@@ -124,7 +124,7 @@ class RobotList:
                 if r.name == robot.name:
                     return False
             return True
-        
+
         if is_robot(robot):
             self.robots.append(robot)
             return True

@@ -182,7 +182,7 @@ def main():
     # Add robot reset subcommand
     parser_robot_reset = robot_subparsers.add_parser('reset', help="Reset the robot configuration")
     parser_robot_reset.set_defaults(func=robot.robot_reset)
-    
+
     # Subcommand: swarm (with a sub-menu for swarm operations)
     parser_swarm = subparsers.add_parser('swarm', help="Manage swarm Nanosaur robots")
     swarm_subparsers = parser_swarm.add_subparsers(dest='swarm_type', help="Robot operations")
@@ -213,7 +213,7 @@ def main():
     if args.command in ['robot'] and args.robot_type is None:
         parser_robot.print_help()
         sys.exit(1)
-    
+
     if args.command in ['swarm'] and args.swarm_type is None:
         parser_swarm.print_help()
         sys.exit(1)
