@@ -26,7 +26,7 @@ jobs:
 
     - name: Run autopep8 to format the code
       run: |
-        autopep8 --in-place --aggressive --aggressive --recursive . --max-line-length 180 --select W293
+        autopep8 --in-place --recursive --max-line-length 180 --ignore W503 .
 
     - name: Commit changes
       run: |
