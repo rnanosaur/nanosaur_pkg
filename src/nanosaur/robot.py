@@ -173,7 +173,7 @@ def start_robot_simulation(params):
     try:
         # Combine sourcing the bash file with running the command
         process = subprocess.Popen(
-            f"source {bash_file} && {command} namespace:={robot.name}",
+            f"source {bash_file} && ROS_DOMAIN_ID={robot.domain_id} {command} namespace:={robot.name}",
             shell=True,
             executable="/bin/bash",
             stdout=subprocess.PIPE,
