@@ -69,6 +69,9 @@ class Params:
     def __contains__(self, key):
         return key in self._params_dict
 
+    def __repr__(self):
+        return str(self._params_dict)
+
     def save(self):
         if self.params_file and self._params_dict != self._default_params:
             print(TerminalFormatter.color_text(f"Saving parameters to {self.params_file}", color='yellow'))

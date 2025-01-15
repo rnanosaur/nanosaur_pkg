@@ -27,6 +27,7 @@ import subprocess
 from nanosaur import workspace
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params
+import copy
 
 
 simulation_tools = {
@@ -46,9 +47,11 @@ class Robot:
     def load(cls, params):
         return cls(params['robot']) if 'robot' in params and params['robot'] else cls()
 
-    def __init__(self, robot_config=None):
+    def __init__(self, robot_config=None, name=None):
         if robot_config is None:
-            robot_config = DEFAULT_ROBOT_CONFIG
+            robot_config = copy.deepcopy(DEFAULT_ROBOT_CONFIG)
+        if name is not None:
+            robot_config['name'] = name
         # Load the robot configuration
         for key, value in robot_config.items():
             setattr(self, key, value)
@@ -61,6 +64,34 @@ class Robot:
 
 
 class RobotList:
+
+    @classmethod
+    def get_idx_by_name(cls, params, robot_name):
+        return cls.load(params)._get_idx_by_name(robot_name)
+
+    @classmethod
+    def add_robot(cls, params, robot):
+        robot_list = cls.load(params)
+        if robot_list._add_robot(robot):
+            params['robots'] = robot_list.to_dict()
+            params['robot_idx'] = params.get('robot_idx', 0) + 1
+            return True
+        return False
+
+    @classmethod
+    def remove_robot(cls, params):
+        robot_list = cls.load(params)
+        idx = params.get('robot_idx', 0)
+        if idx == 0:
+            if 'robots' in params:
+                del params['robots']
+            if 'robot_idx' in params:
+                del params['robot_idx']
+        else:
+            robot_list._remove_robot(idx)
+            params['robots'] = robot_list.to_dict()
+            if 'robot_idx' in params and params['robot_idx'] > 0:
+                params['robot_idx'] -= 1
 
     @classmethod
     def update_robot(cls, params, robot):
@@ -87,11 +118,26 @@ class RobotList:
         else:
             self.robots = [Robot(robot) for robot in robots]
 
-    def add_robot(self, robot):
-        self.robots.append(robot)
+    def _add_robot(self, robot):
+        def is_robot(robot):
+            for r in self.robots:
+                if r.name == robot.name:
+                    return False
+            return True
+        
+        if is_robot(robot):
+            self.robots.append(robot)
+            return True
+        return False
 
-    def remove_robot(self, robot):
-        self.robots.remove(robot)
+    def _remove_robot(self, idx):
+        if idx < len(self.robots):
+            del self.robots[idx]
+            return True
+        return False
+
+    def _get_idx_by_name(self, name):
+        return next((i for i, robot in enumerate(self.robots) if robot.name == name), None)
 
     def _get_robot_by_idx(self, idx):
         return self.robots[idx]
@@ -199,9 +245,33 @@ def robot_set_domain_id(platform, params: Params, args):
 def robot_reset(platform, params: Params, args):
     """Reset the robot configuration."""
     # Reset the robot configuration
-    del params['robot']
+    RobotList.remove_robot(params)
     print(TerminalFormatter.color_text("Robot configuration reset", color='green'))
     return True
+
+
+def robot_new(platform, params: Params, args):
+    """Add a new robot configuration."""
+    # Create a new robot configuration
+    robot = Robot(name=args.name)
+    if RobotList.add_robot(params, robot):
+        print(TerminalFormatter.color_text("New robot configuration added", color='green'))
+        return True
+    print(TerminalFormatter.color_text("Robot configuration already exists", color='red'))
+
+
+def robot_idx_set(platform, params: Params, args):
+    """Set the robot index."""
+    if args.robot_name is not None:
+        idx = RobotList.get_idx_by_name(params, args.robot_name)
+        if idx is not None:
+            params['robot_idx'] = idx
+            print(TerminalFormatter.color_text(f"Robot index set to: {idx}", color='green'))
+            return True
+        print(TerminalFormatter.color_text("Robot not found", color='red'))
+    else:
+        robot = RobotList.load(params)._get_robot_by_idx(params.get('robot_idx', 0))
+        print(f"Current robot index: {params.get('robot_idx', 0)} name: {robot.name}")
 
 
 def control_keyboard(platform, params: Params, args):
