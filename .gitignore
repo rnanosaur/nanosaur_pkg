@@ -86,3 +86,6 @@ env.bak/
 
 # IDEs
 .idea/
+
+# test files
+test.py

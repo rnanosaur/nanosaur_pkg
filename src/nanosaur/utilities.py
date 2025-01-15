@@ -100,6 +100,7 @@ def require_sudo(func):
 
 def require_sudo_password(func):
     def wrapper(*args, **kwargs):
+        child = None
         try:
             # Get password
             print(TerminalFormatter.color_text("This function require user password to be executed.", color='yellow'))
@@ -120,7 +121,11 @@ def require_sudo_password(func):
         except Exception as e:
             print(f"Validation error: {e}")
             return False
+        except KeyboardInterrupt:
+            print(TerminalFormatter.color_text("Exiting...", color='yellow'))
+            return False
         finally:
-            child.close()
+            if child is not None:
+                child.close()
     return wrapper
 # EOF

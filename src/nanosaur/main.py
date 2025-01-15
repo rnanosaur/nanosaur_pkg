@@ -33,9 +33,11 @@ from jtop import jtop, JtopException
 
 from nanosaur import __version__
 from nanosaur.utilities import Params
-from nanosaur import installation
+from nanosaur import workspace
 from nanosaur import simulation
 from nanosaur import control
+from nanosaur.workspace import get_workspace_path
+from nanosaur.prompt_colors import TerminalFormatter
 
 NANOSAUR_CONFIG_FILE = 'nanosaur.yaml'
 
@@ -60,12 +62,55 @@ def info(platform, params: Params, args):
     for key, value in platform.items():
         print(f"  {key}: {value}")
 
+def install(platform, params: Params, args):
+    device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
+    print(TerminalFormatter.color_text(f"Installing Nanosaur for {device_type}...", color='green'))
+    if device_type == 'desktop':
+        simulation.simulation_install(platform, params, args)
+    elif device_type == 'robot':
+        print(TerminalFormatter.color_text("Robot installation not supported yet.", color='red'))
+
+def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser: 
+    parser_workspace = subparsers.add_parser(
+        'workspace', aliases=["ws"], help="Manage the Nanosaur workspace")
+    workspace_subparsers = parser_workspace.add_subparsers(
+        dest='workspace_type', help="Workspace types")
+    # Add workspace clean subcommand
+    parser_workspace_clean = workspace_subparsers.add_parser(
+        'clean', help="Clean the workspace")
+    parser_workspace_clean.add_argument(
+        '--force', action='store_true', help="Force the workspace clean")
+    parser_workspace_clean.set_defaults(func=workspace.clean)
+    # Add workspace update subcommand
+    parser_workspace_update = workspace_subparsers.add_parser(
+        'update', help="Update the workspace")
+    parser_workspace_update.add_argument(
+        '--force', action='store_true', help="Force the update")
+    parser_workspace_update.set_defaults(func=workspace.update)
+    return parser_workspace
+
+def parser_simulation_menu(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    parser_simulation = subparsers.add_parser(
+        'simulation', aliases=["sim"], help="Work with simulation tools")
+    simulation_subparsers = parser_simulation.add_subparsers(
+        dest='simulation_type', help="Simulation types")
+
+    # Add simulation start subcommand
+    parser_simulation_start = simulation_subparsers.add_parser(
+        'start', help="Start the selected simulation")
+    parser_simulation_start.set_defaults(func=simulation.simulation_start)
+
+    # Add simulation set subcommand
+    parser_simulation_set = simulation_subparsers.add_parser(
+        'set', help="Select the simulator you want to use")
+    parser_simulation_set.set_defaults(func=simulation.simulation_set)
+    return parser_simulation
 
 def main():
     # Load the parameters
     user_home_dir = os.path.expanduser("~")
     params = Params.load(DEFAULT_PARAMS, params_file=f'{user_home_dir}/{NANOSAUR_CONFIG_FILE}')
-
+    
     # Extract device information with jtop
     try:
         with jtop() as device:
@@ -73,106 +118,59 @@ def main():
                 platform = device.board['platform']
     except JtopException as e:
         print(f"Error: {e}")
-        if subprocess.check_output("id -u", shell=True).strip() != b'0':
-            print(
-                "To automatically fix this error, this script must be run as root. Please use 'sudo'.")
-            sys.exit(1)
-        print("Attempting to update the jtop package...")
-        subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", "--upgrade", "jtop"])
         sys.exit(1)
+        
     # Determine the device type
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
-
+    
     # Create the argument parser
     parser = argparse.ArgumentParser(
         description="Nanosaur CLI - A command-line interface for the Nanosaur package.")
 
     # Define subcommands
-    subparsers = parser.add_subparsers(
-        dest='command', help="Available commands")
+    subparsers = parser.add_subparsers(dest='command', help="Available commands")
+
     # Subcommand: info
-    parser_info = subparsers.add_parser(
-        'info', help="Show version information")
+    parser_info = subparsers.add_parser('info', help="Show version information")
     parser_info.set_defaults(func=info)
+    
+    # Subcommand: install (hidden if workspace already exists)
+    if get_workspace_path(params['nanosaur_workspace_name']) is None:
+        parser_install = subparsers.add_parser('install', help="Install the Nanosaur workspace")
+    else:
+        parser_install = subparsers.add_parser('install')
+    # Add simulation install subcommand
+    parser_install.add_argument('--developer', action='store_true', help="Install developer workspace")
+    parser_install.add_argument('--force', action='store_true', help="Force the update")
+    parser_install.set_defaults(func=install)
+    
+    # Subcommand: workspace (with a sub-menu for workspace operations)
+    if get_workspace_path(params['nanosaur_workspace_name']) is not None:
+        # Add workspace subcommand
+        parser_workspace = parser_workspace_menu(subparsers)
+    
+    # Subcommand: simulation (with a sub-menu for simulation types)
+    if device_type == 'desktop' and get_workspace_path(params['nanosaur_workspace_name']) is not None:
+        # Add simulation subcommand
+        parser_simulation = parser_simulation_menu(subparsers)
 
-    # Subcommand: install (with a sub-menu for installation types)
-    parser_install = subparsers.add_parser(
-        'install', help="Run the installation process")
-    install_subparsers = parser_install.add_subparsers(
-        dest='install_type', help="Installation types")
+    # Subcommand: drive
+    parser_drive = subparsers.add_parser('drive', help="Drive Nanosaur")
+    parser_drive.set_defaults(func=control.control_keyboard)
 
-    # Subcommand: install update
-    parser_install_developer = install_subparsers.add_parser(
-        'update', help="Update the installation")
-    parser_install_developer.add_argument(
-        '--force',
-        action='store_true',
-        help="Force the installation")
-    parser_install_developer.set_defaults(func=installation.update)
-
-    # Subcommand: install basic
-    parser_install_basic = install_subparsers.add_parser(
-        'basic', help="Perform a basic installation")
-    parser_install_basic.add_argument(
-        '--force',
-        action='store_true',
-        help="Force the installation")
-    parser_install_basic.set_defaults(func=installation.install_basic)
-
-    # Subcommand: install developer
-    parser_install_developer = install_subparsers.add_parser(
-        'developer', help="Perform the developer installation")
-    parser_install_developer.add_argument(
-        '--force',
-        action='store_true',
-        help="Force the installation")
-    parser_install_developer.set_defaults(func=installation.install_developer)
-
-    # Subcommand: install simulation
-    if device_type == 'desktop':
-        parser_install_simulation = install_subparsers.add_parser(
-            'simulation', help="Install the simulation tools")
-        parser_install_simulation.add_argument(
-            '--force', action='store_true', help="Force the installation")
-        parser_install_simulation.set_defaults(
-            func=installation.install_simulation)
-
-    parser_install_clean = install_subparsers.add_parser(
-        'clean', help="Clean the workspace")
-    parser_install_clean.set_defaults(func=installation.clean)
-
-    # Subcommand: update (with a sub-menu for installation types)
-    if device_type == 'desktop':
-        parser_simulation = subparsers.add_parser(
-            'simulation', help="Update all nanosaur devices")
-        simulation_subparsers = parser_simulation.add_subparsers(
-            dest='simulation_type', help="Simulation types")
-        parser_simulation_start = simulation_subparsers.add_parser(
-            'start', help="Start the simulation selected")
-        parser_simulation_start.set_defaults(func=simulation.simulation_start)
-        parser_simulation_set = simulation_subparsers.add_parser(
-            'set', help="Select the simulator you want to use")
-        parser_simulation_set.set_defaults(func=simulation.simulation_set)
-
-    # Subcommand: control
-    parser_control = subparsers.add_parser(
-        'control', help="Drive nanosaur")
-    parser_control.set_defaults(func=control.control_keyboard)
-
-    # Enable autocomplete
+    # Enable tab completion
     argcomplete.autocomplete(parser)
 
     # Parse the arguments
     args = parser.parse_args()
 
-    # Handle install subcommand without an install_type
-    if args.command == 'install' and args.install_type is None:
-        parser_install.print_help()
+    # Handle workspace subcommand without a workspace_type
+    if args.command in ['workspace', 'ws'] and args.workspace_type is None:
+        parser_workspace.print_help()
         sys.exit(1)
 
     # Handle install subcommand without an install_type
-    if args.command == 'simulation' and args.simulation_type is None:
+    if args.command in ['simulation', 'sim'] and args.simulation_type is None:
         parser_simulation.print_help()
         sys.exit(1)
 
