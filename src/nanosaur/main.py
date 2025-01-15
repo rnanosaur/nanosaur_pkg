@@ -62,6 +62,7 @@ def info(platform, params: Params, args):
     for key, value in platform.items():
         print(f"  {key}: {value}")
 
+
 def install(platform, params: Params, args):
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
     print(TerminalFormatter.color_text(f"Installing Nanosaur for {device_type}...", color='green'))
@@ -70,7 +71,8 @@ def install(platform, params: Params, args):
     elif device_type == 'robot':
         print(TerminalFormatter.color_text("Robot installation not supported yet.", color='red'))
 
-def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser: 
+
+def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     parser_workspace = subparsers.add_parser(
         'workspace', aliases=["ws"], help="Manage the Nanosaur workspace")
     workspace_subparsers = parser_workspace.add_subparsers(
@@ -89,6 +91,7 @@ def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.Ar
     parser_workspace_update.set_defaults(func=workspace.update)
     return parser_workspace
 
+
 def parser_simulation_menu(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     parser_simulation = subparsers.add_parser(
         'simulation', aliases=["sim"], help="Work with simulation tools")
@@ -106,11 +109,12 @@ def parser_simulation_menu(subparsers: argparse._SubParsersAction) -> argparse.A
     parser_simulation_set.set_defaults(func=simulation.simulation_set)
     return parser_simulation
 
+
 def main():
     # Load the parameters
     user_home_dir = os.path.expanduser("~")
     params = Params.load(DEFAULT_PARAMS, params_file=f'{user_home_dir}/{NANOSAUR_CONFIG_FILE}')
-    
+
     # Extract device information with jtop
     try:
         with jtop() as device:
@@ -119,10 +123,10 @@ def main():
     except JtopException as e:
         print(f"Error: {e}")
         sys.exit(1)
-        
+
     # Determine the device type
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
-    
+
     # Create the argument parser
     parser = argparse.ArgumentParser(
         description="Nanosaur CLI - A command-line interface for the Nanosaur package.")
@@ -133,7 +137,7 @@ def main():
     # Subcommand: info
     parser_info = subparsers.add_parser('info', help="Show version information")
     parser_info.set_defaults(func=info)
-    
+
     # Subcommand: install (hidden if workspace already exists)
     if get_workspace_path(params['nanosaur_workspace_name']) is None:
         parser_install = subparsers.add_parser('install', help="Install the Nanosaur workspace")
@@ -143,12 +147,12 @@ def main():
     parser_install.add_argument('--developer', action='store_true', help="Install developer workspace")
     parser_install.add_argument('--force', action='store_true', help="Force the update")
     parser_install.set_defaults(func=install)
-    
+
     # Subcommand: workspace (with a sub-menu for workspace operations)
     if get_workspace_path(params['nanosaur_workspace_name']) is not None:
         # Add workspace subcommand
         parser_workspace = parser_workspace_menu(subparsers)
-    
+
     # Subcommand: simulation (with a sub-menu for simulation types)
     if device_type == 'desktop' and get_workspace_path(params['nanosaur_workspace_name']) is not None:
         # Add simulation subcommand
