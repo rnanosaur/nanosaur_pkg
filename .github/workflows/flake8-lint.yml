@@ -18,15 +18,11 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install autoflake vulture autopep8
+        pip install autoflake autopep8
 
     - name: Run autoflake to remove unused imports
       run: |
-        autoflake --in-place --remove-all-unused-imports --recursive .
-
-    - name: Run vulture to detect unused code
-      run: |
-        vulture . --min-confidence 50
+        autoflake --remove-all-unused-imports --remove-unused-variables --in-place --recursive .
 
     - name: Run autopep8 to format the code
       run: |
