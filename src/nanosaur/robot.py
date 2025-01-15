@@ -59,8 +59,9 @@ class Robot:
     def to_dict(self):
         return self.__dict__
 
+
 class RobotList:
-    
+
     @classmethod
     def update_robot(cls, params, robot):
         robot_list = cls.load(params)
@@ -69,7 +70,7 @@ class RobotList:
             params['robots'] = robot_list.to_dict()
             return True
         return False
-    
+
     @classmethod
     def get_robot(cls, params, idx=None):
         if idx is None:
@@ -85,19 +86,19 @@ class RobotList:
             self.robots = [Robot()]
         else:
             self.robots = [Robot(robot) for robot in robots]
-    
+
     def add_robot(self, robot):
         self.robots.append(robot)
-    
+
     def remove_robot(self, robot):
         self.robots.remove(robot)
-        
+
     def _get_robot_by_idx(self, idx):
         return self.robots[idx]
-        
+
     def _get_robot_by_name(self, name):
         return next((robot for robot in self.robots if robot.name == name), None)
-    
+
     def _update_robot(self, robot, idx):
         if idx < len(self.robots):
             self.robots[idx] = robot
@@ -106,9 +107,10 @@ class RobotList:
 
     def __repr__(self):
         return f"RobotList({self.robots})"
-    
+
     def to_dict(self):
         return [robot.to_dict() for robot in self.robots]
+
 
 def start_robot_simulation(params):
     nanosaur_ws_path = workspace.get_workspace_path(params['nanosaur_workspace_name'])
