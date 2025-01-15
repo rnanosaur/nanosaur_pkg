@@ -284,6 +284,7 @@ def robot_list(platform, params: Params, args):
             print(f"{i}. {robot}")
     return True
 
+
 def control_keyboard(platform, params: Params, args):
     """Control the robot using the keyboard."""
     workspace_path = workspace.get_workspace_path(params['nanosaur_workspace_name'])
