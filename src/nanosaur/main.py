@@ -160,7 +160,7 @@ def main():
         parser_simulation = parser_simulation_menu(subparsers, params)
 
     # Subcommand: robot (with a sub-menu for robot operations)
-    robot_data = robot.Robot.load(params)
+    robot_data = robot.RobotList.get_robot(params)
     parser_robot = subparsers.add_parser('robot', help=f"Manage the Nanosaur robot [{robot_data.name}]")
     robot_subparsers = parser_robot.add_subparsers(dest='robot_type', help="Robot operations")
 

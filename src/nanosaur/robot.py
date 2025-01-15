@@ -59,6 +59,56 @@ class Robot:
     def to_dict(self):
         return self.__dict__
 
+class RobotList:
+    
+    @classmethod
+    def update_robot(cls, params, robot):
+        robot_list = cls.load(params)
+        idx = params.get('robot_idx', 0)
+        if robot_list._update_robot(robot, idx):
+            params['robots'] = robot_list.to_dict()
+            return True
+        return False
+    
+    @classmethod
+    def get_robot(cls, params, idx=None):
+        if idx is None:
+            idx = params.get('robot_idx', 0)
+        return cls.load(params)._get_robot_by_idx(idx)
+
+    @classmethod
+    def load(cls, params):
+        return cls() if 'robots' not in params else cls(params['robots'])
+
+    def __init__(self, robots=None):
+        if robots is None:
+            self.robots = [Robot()]
+        else:
+            self.robots = [Robot(robot) for robot in robots]
+    
+    def add_robot(self, robot):
+        self.robots.append(robot)
+    
+    def remove_robot(self, robot):
+        self.robots.remove(robot)
+        
+    def _get_robot_by_idx(self, idx):
+        return self.robots[idx]
+        
+    def _get_robot_by_name(self, name):
+        return next((robot for robot in self.robots if robot.name == name), None)
+    
+    def _update_robot(self, robot, idx):
+        if idx < len(self.robots):
+            self.robots[idx] = robot
+            return True
+        return False
+
+    def __repr__(self):
+        return f"RobotList({self.robots})"
+    
+    def to_dict(self):
+        return [robot.to_dict() for robot in self.robots]
 
 def start_robot_simulation(params):
     nanosaur_ws_path = workspace.get_workspace_path(params['nanosaur_workspace_name'])
@@ -70,7 +120,7 @@ def start_robot_simulation(params):
     # Check if the simulation tool is valid and get the command
     command = simulation_tools[params['simulation_tool']]
     # Load the robot configuration
-    robot = Robot.load(params)
+    robot = RobotList.get_robot(params)
     print(TerminalFormatter.color_text(f"Starting {robot.name} ID={robot.domain_id}", color='green'))
     try:
         # Combine sourcing the bash file with running the command
@@ -118,13 +168,13 @@ def robot_start(platform, params: Params, args):
 def robot_set_name(platform, params: Params, args):
     """Configure the robot name."""
     # Check if the robot name is provided
-    robot = Robot.load(params)
+    robot = RobotList.get_robot(params)
     if not args.name:
         print(f"Current robot name: {robot.name}")
         return True
     # Update the robot name
     robot.name = args.name
-    params['robot'] = robot.to_dict()
+    RobotList.update_robot(params, robot)
     print(TerminalFormatter.color_text(f"Robot name set to: {robot.name}", color='green'))
     return True
 
@@ -132,14 +182,14 @@ def robot_set_name(platform, params: Params, args):
 def robot_set_domain_id(platform, params: Params, args):
     """Configure the domain ID."""
     # Check if the domain ID is provided
-    robot = Robot.load(params)
+    robot = RobotList.get_robot(params)
     if not args.domain_id:
         print(f"Current robot domain_id: {robot.domain_id}")
         return True
 
     # Update the domain ID
     robot.domain_id = args.domain_id
-    params['robot'] = robot.to_dict()
+    RobotList.update_robot(params, robot)
     print(TerminalFormatter.color_text(f"Domain ID set to: {robot.domain_id}", color='green'))
     return True
 
@@ -157,7 +207,7 @@ def control_keyboard(platform, params: Params, args):
     workspace_path = workspace.get_workspace_path(params['nanosaur_workspace_name'])
     bash_file = f'{workspace_path}/install/setup.bash'
     # Read the robot name
-    robot = Robot.load(params)
+    robot = RobotList.get_robot(params)
     print(TerminalFormatter.color_text(f"Control the robot {robot.name} using the keyboard", color='green'))
     subprocess.run(f'source {bash_file} && ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args --remap /cmd_vel:=/{robot.name}/key_vel',
                    shell=True, executable='/bin/bash')

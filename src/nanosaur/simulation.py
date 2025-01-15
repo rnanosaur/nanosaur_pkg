@@ -122,8 +122,6 @@ def simulation_set(platform, params: Params, args):
 @require_sudo_password
 def simulation_install(platform, params: Params, args, password=None):
     """Install simulation tools"""
-    args.force
-
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
     print(TerminalFormatter.color_text(f"Nanosaur simulation tools installation on {device_type}", bold=True))
     # Create workspace
