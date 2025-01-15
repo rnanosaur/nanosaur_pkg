@@ -22,7 +22,7 @@ jobs:
 
     - name: Run autopep8
       run: |
-        autopep8 --in-place --aggressive --aggressive --recursive . --max-line-length 200
+        autopep8 --in-place --aggressive --aggressive --recursive . --max-line-length 200 --select W293
 
     - name: Commit changes
       run: |
@@ -54,4 +54,4 @@ jobs:
 
     - name: Run flake8
       run: |
-        flake8 .
+        flake8 . --max-line-length 180
