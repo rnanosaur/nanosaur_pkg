@@ -18,11 +18,15 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install autopep8
+        pip install autoflake autopep8
+
+    - name: Run autoflake
+      run: |
+        autoflake --in-place --remove-all-unused-imports --recursive .
 
     - name: Run autopep8
       run: |
-        autopep8 --in-place --aggressive --aggressive --recursive . --max-line-length 200 --select W293
+        autopep8 --in-place --aggressive --aggressive --recursive . --max-line-length 180 --select W293
 
     - name: Commit changes
       run: |
