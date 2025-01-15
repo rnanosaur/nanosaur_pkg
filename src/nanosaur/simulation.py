@@ -74,7 +74,7 @@ def simulation_start(platform, params: Params, args):
             print(TerminalFormatter.color_text(line.decode('utf-8'), color='red'), end="")  # Print stderr (errors) in red
 
         return process.returncode == 0
-    except KeyboardInterrupt as e:
+    except KeyboardInterrupt:
         return False
     except Exception as e:
         print(f"An error occurred while running the command: {e}")
@@ -122,7 +122,7 @@ def simulation_set(platform, params: Params, args):
 @require_sudo_password
 def simulation_install(platform, params: Params, args, password=None):
     """Install simulation tools"""
-    force = args.force
+    args.force
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
     print(TerminalFormatter.color_text(f"Nanosaur simulation tools installation on {device_type}", bold=True))
     # Create workspace
