@@ -74,7 +74,7 @@ def simulation_start(platform, params: Params, args):
             print(TerminalFormatter.color_text(line.decode('utf-8'), color='red'), end="")  # Print stderr (errors) in red
 
         return process.returncode == 0
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as e:
         return False
     except Exception as e:
         print(f"An error occurred while running the command: {e}")
@@ -122,7 +122,8 @@ def simulation_set(platform, params: Params, args):
 @require_sudo_password
 def simulation_install(platform, params: Params, args, password=None):
     """Install simulation tools"""
-    args.force
+    force = args.force
+
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
     print(TerminalFormatter.color_text(f"Nanosaur simulation tools installation on {device_type}", bold=True))
     # Create workspace
@@ -144,7 +145,7 @@ def simulation_install(platform, params: Params, args, password=None):
     print(TerminalFormatter.color_text(f"- Install all dependencies on workspace {workspace_path}", bold=True))
     if not workspace.run_rosdep(workspace_path, password):
         print(TerminalFormatter.color_text("Failed to install dependencies", color='red'))
-        return False
+        return False        
     # Build environment
     print(TerminalFormatter.color_text(f"- Build workspace {workspace_path}", bold=True))
     if not workspace.run_colcon_build(workspace_path):
