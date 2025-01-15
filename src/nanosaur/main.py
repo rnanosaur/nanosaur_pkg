@@ -44,8 +44,6 @@ NANOSAUR_CONFIG_FILE = 'nanosaur.yaml'
 DEFAULT_PARAMS = {
     'nanosaur_workspace_name': 'nanosaur_ws',
     'nanosaur_branch': 'nanosaur2',
-    'robot_name': 'nanosaur',
-    'domain_id': 0,
 }
 
 
@@ -92,9 +90,12 @@ def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.Ar
     return parser_workspace
 
 
-def parser_simulation_menu(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
+    # Get the simulation tool from the parameters
+    simulation_type = params.get('simulation_tool', "NOT SELECTED")
+    # Add simulation subcommand
     parser_simulation = subparsers.add_parser(
-        'simulation', aliases=["sim"], help="Work with simulation tools")
+        'simulation', aliases=["sim"], help=f"Work with simulation tools [{simulation_type}]")
     simulation_subparsers = parser_simulation.add_subparsers(
         dest='simulation_type', help="Simulation types")
 
@@ -156,10 +157,11 @@ def main():
     # Subcommand: simulation (with a sub-menu for simulation types)
     if device_type == 'desktop' and get_workspace_path(params['nanosaur_workspace_name']) is not None:
         # Add simulation subcommand
-        parser_simulation = parser_simulation_menu(subparsers)
+        parser_simulation = parser_simulation_menu(subparsers, params)
 
     # Subcommand: robot (with a sub-menu for robot operations)
-    parser_robot = subparsers.add_parser('robot', help="Manage the Nanosaur robot")
+    robot_data = robot.Robot.load(params)
+    parser_robot = subparsers.add_parser('robot', help=f"Manage the Nanosaur robot [{robot_data.name}]")
     robot_subparsers = parser_robot.add_subparsers(dest='robot_type', help="Robot operations")
 
     # Add robot drive subcommand
@@ -170,14 +172,16 @@ def main():
     parser_robot_start.set_defaults(func=robot.robot_start)
 
     # Add robot name subcommand
-    parser_robot_name = robot_subparsers.add_parser('name', help="Set the robot name")
-    parser_robot_name.add_argument('name', type=str, help="Name of the robot")
+    parser_robot_name = robot_subparsers.add_parser('name', help=f"Set the robot name [{robot_data.name}]")
+    parser_robot_name.add_argument('name', type=str, nargs='?', help="Name of the robot (default: nanosaur)")
     parser_robot_name.set_defaults(func=robot.robot_set_name)
     # Add robot domain id subcommand
-    parser_robot_domain_id = robot_subparsers.add_parser('domain_id', help="Set the robot domain ID")
-    parser_robot_domain_id.add_argument('domain_id', type=int, help="Domain ID of the robot")
+    parser_robot_domain_id = robot_subparsers.add_parser('domain_id', help=f"Set the robot domain ID [{robot_data.domain_id}]")
+    parser_robot_domain_id.add_argument('domain_id', type=int, nargs='?', help="Domain ID of the robot (default: 0)")
     parser_robot_domain_id.set_defaults(func=robot.robot_set_domain_id)
-
+    # Add robot reset subcommand
+    parser_robot_reset = robot_subparsers.add_parser('reset', help="Reset the robot configuration")
+    parser_robot_reset.set_defaults(func=robot.robot_reset)
     # Enable tab completion
     argcomplete.autocomplete(parser)
 

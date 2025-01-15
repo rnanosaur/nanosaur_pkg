@@ -35,21 +35,44 @@ simulation_tools = {
 }
 
 
+class Robot:
+    
+    @classmethod
+    def load(cls, params):
+        return cls(params['robot']) if 'robot' in params and params['robot'] else cls()
+    
+    def __init__(self, robot_config=None):
+        if robot_config is None:
+            robot_config = {
+                'name': 'nanosaur',
+                'domain_id': 0
+            }
+        # Load the robot configuration
+        for key, value in robot_config.items():
+            setattr(self, key, value)
+        
+    def __repr__(self):
+        return f"Robot(name={self.name}, domain_id={self.domain_id})"
+
+    def to_dict(self):
+        return self.__dict__
+
 def start_robot_simulation(params):
     nanosaur_ws_path = workspace.get_workspace_path(params['nanosaur_workspace_name'])
     bash_file = f'{nanosaur_ws_path}/install/setup.bash'
-
     # Check which simulation tool is selected
     if 'simulation_tool' not in params:
         print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
         return False
-
+    # Check if the simulation tool is valid and get the command
     command = simulation_tools[params['simulation_tool']]
-
+    # Load the robot configuration
+    robot = Robot.load(params)
+    print(TerminalFormatter.color_text(f"Starting {robot.name} ID={robot.domain_id}", color='green'))
     try:
         # Combine sourcing the bash file with running the command
         process = subprocess.Popen(
-            f"source {bash_file} && {command} namespace:={params['robot_name']}",
+            f"source {bash_file} && {command} namespace:={robot.name}",
             shell=True,
             executable="/bin/bash",
             stdout=subprocess.PIPE,
@@ -78,8 +101,7 @@ def start_robot_simulation(params):
 
 def robot_start(platform, params: Params, args):
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
-    robot_name = params['robot_name']
-    print(TerminalFormatter.color_text(f"Starting the {robot_name}", color='green'))
+    # Check the device type
     if device_type == "desktop":
         # Start the robot simulation
         start_robot_simulation(params)
@@ -93,36 +115,46 @@ def robot_start(platform, params: Params, args):
 def robot_set_name(platform, params: Params, args):
     """Configure the robot name."""
     # Check if the robot name is provided
-    if not args.robot_name:
-        print(TerminalFormatter.color_text("Please provide a robot name", color='red'))
-        return False
-
+    robot = Robot.load(params)
+    if not args.name:
+        print(f"Current robot name: {robot.name}")
+        return True
     # Update the robot name
-    params['robot_name'] = args.robot_name
-    print(TerminalFormatter.color_text(f"Robot name set to: {args.robot_name}", color='green'))
+    robot.name = args.name
+    params['robot'] = robot.to_dict()
+    print(TerminalFormatter.color_text(f"Robot name set to: {robot.name}", color='green'))
     return True
 
 
 def robot_set_domain_id(platform, params: Params, args):
     """Configure the domain ID."""
     # Check if the domain ID is provided
+    robot = Robot.load(params)
     if not args.domain_id:
-        print(TerminalFormatter.color_text("Please provide a domain ID", color='red'))
-        return False
+        print(f"Current robot domain_id: {robot.domain_id}")
+        return True
 
     # Update the domain ID
-    params['domain_id'] = args.domain_id
-    print(TerminalFormatter.color_text(f"Domain ID set to: {args.domain_id}", color='green'))
+    robot.domain_id = args.domain_id
+    params['robot'] = robot.to_dict()
+    print(TerminalFormatter.color_text(f"Domain ID set to: {robot.domain_id}", color='green'))
     return True
 
+
+def robot_reset(platform, params: Params, args):
+    """Reset the robot configuration."""
+    # Reset the robot configuration
+    del params['robot']
+    print(TerminalFormatter.color_text("Robot configuration reset", color='green'))
+    return True
 
 def control_keyboard(platform, params: Params, args):
     """Control the robot using the keyboard."""
     workspace_path = workspace.get_workspace_path(params['nanosaur_workspace_name'])
     bash_file = f'{workspace_path}/install/setup.bash'
     # Read the robot name
-    robot_name = params['robot_name']
-    print(TerminalFormatter.color_text(f"Control the robot {robot_name} using the keyboard", color='green'))
-    subprocess.run(f'source {bash_file} && ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args --remap /cmd_vel:=/{robot_name}/key_vel',
+    robot = Robot.load(params)
+    print(TerminalFormatter.color_text(f"Control the robot {robot.name} using the keyboard", color='green'))
+    subprocess.run(f'source {bash_file} && ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args --remap /cmd_vel:=/{robot.name}/key_vel',
                    shell=True, executable='/bin/bash')
 # EOF

@@ -63,6 +63,8 @@ class Params:
     def __delitem__(self, key):
         del self._params_dict[key]
         delattr(self, key)
+        # save the new value in the file
+        self.save()
 
     def __contains__(self, key):
         return key in self._params_dict
