@@ -194,6 +194,9 @@ def main():
     parser_robot_set = swarm_subparsers.add_parser('set', help="Set which robot to control")
     parser_robot_set.add_argument('robot_name', type=str, nargs='?', help="Name of the robot to control")
     parser_robot_set.set_defaults(func=robot.robot_idx_set)
+    # Add robot list subcommand
+    parser_robot_list = swarm_subparsers.add_parser('list', help="List all robots in the swarm")
+    parser_robot_list.set_defaults(func=robot.robot_list)
     # Enable tab completion
     argcomplete.autocomplete(parser)
 

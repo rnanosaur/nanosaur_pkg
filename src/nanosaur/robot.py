@@ -274,6 +274,16 @@ def robot_idx_set(platform, params: Params, args):
         print(f"Current robot index: {params.get('robot_idx', 0)} name: {robot.name}")
 
 
+def robot_list(platform, params: Params, args):
+    """List the robot configurations."""
+    robot_list = RobotList.load(params)
+    for i, robot in enumerate(robot_list.robots):
+        if i == params.get('robot_idx', 0):
+            print(TerminalFormatter.color_text(f"{i}. {robot}", color='green'))
+        else:
+            print(f"{i}. {robot}")
+    return True
+
 def control_keyboard(platform, params: Params, args):
     """Control the robot using the keyboard."""
     workspace_path = workspace.get_workspace_path(params['nanosaur_workspace_name'])
