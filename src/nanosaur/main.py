@@ -189,7 +189,14 @@ def main():
     parser_robot_drive.set_defaults(func=robot.control_keyboard)
     # Add robot start subcommand
     parser_robot_start = robot_subparsers.add_parser('start', help="Start the robot")
+    parser_robot_start.add_argument(
+        '--developer', '--dev', action='store_true', help="Run in developer mode")
+    parser_robot_start.add_argument(
+        '--build', action='store_true', help="Rebuild docker before starting")
     parser_robot_start.set_defaults(func=robot.robot_start)
+    # Add robot stop subcommand
+    parser_robot_stop = robot_subparsers.add_parser('stop', help="Stop the robot")
+    parser_robot_stop.set_defaults(func=robot.robot_stop)
 
     # Add robot name subcommand
     parser_robot_name = robot_subparsers.add_parser('name', help=f"Set the robot name [{robot_data.name}]")

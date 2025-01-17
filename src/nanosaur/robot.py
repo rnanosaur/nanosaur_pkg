@@ -25,6 +25,7 @@
 
 import subprocess
 from nanosaur import workspace
+from nanosaur import docker
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params
 import copy
@@ -205,13 +206,27 @@ def robot_start(platform, params: Params, args):
     # Check the device type
     if device_type == "desktop":
         # Start the robot simulation
-        start_robot_simulation(params)
+        if args.developer:
+            start_robot_simulation(params)
+        else:
+            docker.docker_start(platform, params, args)
     elif device_type == "robot":
         print(TerminalFormatter.color_text("Not yet implemented", color='yellow'))
     else:
         print(TerminalFormatter.color_text("Unknown device type", color='red'))
     return True
 
+
+def robot_stop(platform, params: Params, args):
+    device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
+    # Check the device type
+    if device_type == "desktop":
+        docker.docker_stop(platform, params, args)
+    elif device_type == "robot":
+        print(TerminalFormatter.color_text("Not yet implemented", color='yellow'))
+    else:
+        print(TerminalFormatter.color_text("Unknown device type", color='red'))
+    return True
 
 def robot_set_name(platform, params: Params, args):
     """Configure the robot name."""
