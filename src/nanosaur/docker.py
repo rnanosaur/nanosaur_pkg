@@ -33,11 +33,11 @@ import os
 
 def docker_start(platform, params: Params, args):
     """Start the docker container."""
-    
+
     if not docker.compose.is_installed():
         print(TerminalFormatter.color_text("Please install Docker and Docker Compose before running the simulation.", color='red'))
         return False
-    
+
     workspace_path = workspace.get_workspace_path(params['nanosaur_workspace_name'])
     if workspace_path is not None:
         # Create a DockerClient object with the docker-compose file
@@ -47,7 +47,6 @@ def docker_start(platform, params: Params, args):
     else:
         nanosaur_compose = docker
         env_path = ".env"
-    
 
     uid = os.getuid()
     gid = os.getgid()
@@ -58,18 +57,19 @@ def docker_start(platform, params: Params, args):
         # Check which simulation tool is selected and save it in the .env file
         simulation_tool = params['simulation_tool'].lower().replace(' ', '_')
         env_file.write(f"SIMULATION={simulation_tool}\n")
-    
+
     print(TerminalFormatter.color_text(f"Starting the Docker container for {simulation_tool}", color='green'))
-    
+
     if args.build:
         print(TerminalFormatter.color_text("Building the Docker container...", color='green'))
         nanosaur_compose.compose.build()
     # Start the container in detached mode
     nanosaur_compose.compose.up(detach=True)
 
+
 def docker_stop(platform, params: Params, args):
     """Stop the docker container."""
-    
+
     if not docker.compose.is_installed():
         print(TerminalFormatter.color_text("Please install Docker and Docker Compose before running the simulation.", color='red'))
         return False

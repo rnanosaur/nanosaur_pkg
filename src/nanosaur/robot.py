@@ -228,6 +228,7 @@ def robot_stop(platform, params: Params, args):
         print(TerminalFormatter.color_text("Unknown device type", color='red'))
     return True
 
+
 def robot_set_name(platform, params: Params, args):
     """Configure the robot name."""
     # Check if the robot name is provided
