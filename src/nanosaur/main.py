@@ -186,9 +186,9 @@ def main():
         parser_workspace = parser_workspace_menu(subparsers)
 
     # Subcommand: simulation (with a sub-menu for simulation types)
-    # if device_type == 'desktop' and get_workspace_path(params['nanosaur_workspace_name']) is not None:
-    #    # Add simulation subcommand
-    parser_simulation = parser_simulation_menu(subparsers, params)
+    if device_type == 'desktop':
+        # Add simulation subcommand
+        parser_simulation = parser_simulation_menu(subparsers, params)
 
     # Subcommand: robot (with a sub-menu for robot operations)
     robot_data = robot.RobotList.get_robot(params)
