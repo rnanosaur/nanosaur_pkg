@@ -46,8 +46,9 @@ COLCON_DEFAULTS = {
     }
 }
 
+
 def run_dev_script(platform, params: Params, args):
-     
+
     perception_path = get_workspace_path(params, params['perception_ws_name'])
     isaac_ros_common_path = os.path.join(perception_path, 'src', 'isaac_ros_common')
     # Get the path to the Isaac ROS common package
@@ -70,9 +71,9 @@ def run_dev_script(platform, params: Params, args):
 
     # Open a pseudo-terminal
     master_fd, slave_fd = pty.openpty()
-    
+
     nanosaur_home_path = get_nanosaur_home(params['nanosaur_home'])
-    
+
     # Start the subprocess with the slave side of the pseudo-terminal as its stdio
     process = subprocess.Popen(
         ["./scripts/run_dev.sh", "-d", nanosaur_home_path],
@@ -87,15 +88,15 @@ def run_dev_script(platform, params: Params, args):
         while True:
             # Use select to handle input/output
             rlist, _, _ = select.select([sys.stdin, master_fd], [], [])
-            
+
             if sys.stdin in rlist:  # Check for input from the user
                 user_input = os.read(sys.stdin.fileno(), 1024)  # Read input from the terminal
-                
+
                 # Check for CTRL-D
                 if b'\x04' in user_input:  # CTRL-D (End of Transmission)
                     os.write(master_fd, b'\x04')  # Send CTRL-D to the subprocess
                     break  # Exit the loop after sending CTRL-D
-                
+
                 os.write(master_fd, user_input)  # Write input to the subprocess
 
             if master_fd in rlist:  # Check for output from the subprocess
@@ -116,8 +117,9 @@ def run_dev_script(platform, params: Params, args):
         restore_terminal()  # Restore terminal settings
         os.close(master_fd)
         os.close(slave_fd)
-    
+
     print(TerminalFormatter.color_text("Dev script finished", color='green'))
+
 
 def clean_workspace(nanosaur_ws_name, password):
     """
