@@ -97,6 +97,10 @@ def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.Ar
     parser_workspace_update.add_argument(
         '--all-platforms', '--all', action='store_true', help="Clean all workspaces")
     parser_workspace_update.set_defaults(func=workspace.update)
+    # Add workspace perception subcommand
+    parser_workspace_perception = workspace_subparsers.add_parser(
+        'perception', help="Start the Isaac ROS docker container")
+    parser_workspace_perception.set_defaults(func=workspace.run_dev_script)
     return parser_workspace
 
 
