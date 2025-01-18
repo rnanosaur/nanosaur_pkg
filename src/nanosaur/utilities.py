@@ -30,6 +30,126 @@ import pexpect
 import getpass
 from nanosaur.prompt_colors import TerminalFormatter
 
+DEFAULT_ROBOT_CONFIG = {
+    'name': 'nanosaur',
+    'domain_id': 0
+}
+
+class Robot:
+
+    @classmethod
+    def load(cls, params):
+        return cls(params['robot']) if 'robot' in params and params['robot'] else cls()
+
+    def __init__(self, robot_config=None, name=None):
+        if robot_config is None:
+            robot_config = copy.deepcopy(DEFAULT_ROBOT_CONFIG)
+        if name is not None:
+            robot_config['name'] = name
+        # Load the robot configuration
+        for key, value in robot_config.items():
+            setattr(self, key, value)
+
+    def __repr__(self):
+        return f"Robot(name={self.name}, domain_id={self.domain_id})"
+
+    def to_dict(self):
+        return self.__dict__
+
+
+class RobotList:
+
+    @classmethod
+    def get_idx_by_name(cls, params, robot_name):
+        return cls.load(params)._get_idx_by_name(robot_name)
+
+    @classmethod
+    def add_robot(cls, params, robot):
+        robot_list = cls.load(params)
+        if robot_list._add_robot(robot):
+            params['robots'] = robot_list.to_dict()
+            params['robot_idx'] = params.get('robot_idx', 0) + 1
+            return True
+        return False
+
+    @classmethod
+    def remove_robot(cls, params):
+        robot_list = cls.load(params)
+        idx = params.get('robot_idx', 0)
+        if idx == 0:
+            if 'robots' in params:
+                del params['robots']
+            if 'robot_idx' in params:
+                del params['robot_idx']
+        else:
+            robot_list._remove_robot(idx)
+            params['robots'] = robot_list.to_dict()
+            if 'robot_idx' in params and params['robot_idx'] > 0:
+                params['robot_idx'] -= 1
+
+    @classmethod
+    def update_robot(cls, params, robot):
+        robot_list = cls.load(params)
+        idx = params.get('robot_idx', 0)
+        if robot_list._update_robot(robot, idx):
+            params['robots'] = robot_list.to_dict()
+            return True
+        return False
+
+    @classmethod
+    def get_robot(cls, params, idx=None):
+        if idx is None:
+            idx = params.get('robot_idx', 0)
+        return cls.load(params)._get_robot_by_idx(idx)
+
+    @classmethod
+    def load(cls, params):
+        return cls() if 'robots' not in params else cls(params['robots'])
+
+    def __init__(self, robots=None):
+        if robots is None:
+            self.robots = [Robot()]
+        else:
+            self.robots = [Robot(robot) for robot in robots]
+
+    def _add_robot(self, robot):
+        def is_robot(robot):
+            for r in self.robots:
+                if r.name == robot.name:
+                    return False
+            return True
+
+        if is_robot(robot):
+            self.robots.append(robot)
+            return True
+        return False
+
+    def _remove_robot(self, idx):
+        if idx < len(self.robots):
+            del self.robots[idx]
+            return True
+        return False
+
+    def _get_idx_by_name(self, name):
+        return next((i for i, robot in enumerate(self.robots) if robot.name == name), None)
+
+    def _get_robot_by_idx(self, idx):
+        return self.robots[idx]
+
+    def _get_robot_by_name(self, name):
+        return next((robot for robot in self.robots if robot.name == name), None)
+
+    def _update_robot(self, robot, idx):
+        if idx < len(self.robots):
+            self.robots[idx] = robot
+            return True
+        return False
+
+    def __repr__(self):
+        return f"RobotList({self.robots})"
+
+    def to_dict(self):
+        return [robot.to_dict() for robot in self.robots]
 
 class Params:
 
