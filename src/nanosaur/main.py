@@ -77,6 +77,7 @@ def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.Ar
     workspace_subparsers = parser_workspace.add_subparsers(
         dest='workspace_type', help="Workspace types")
     # Add workspace clean subcommand
+
     def add_workspace_subcommand(name, help_text, func):
         parser = workspace_subparsers.add_parser(name, help=help_text)
         parser.add_argument('workspace', type=str, nargs='?', help="Specify the workspace to clean")
@@ -87,7 +88,7 @@ def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.Ar
     # Add workspace clean subcommand
     parser_workspace_clean = add_workspace_subcommand('clean', "Clean the workspace", workspace.clean)
     parser_workspace_clean.add_argument('--perception', action='store_true', help="Clean the perception workspace")
-    parser_workspace_update = add_workspace_subcommand('update', "Update the workspace", workspace.update)
+    add_workspace_subcommand('update', "Update the workspace", workspace.update)
     # Add workspace perception subcommand
     parser_workspace_perception = workspace_subparsers.add_parser(
         'perception', help="Start the Isaac ROS docker container")
