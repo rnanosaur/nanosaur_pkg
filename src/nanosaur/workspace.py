@@ -85,7 +85,7 @@ def run_dev_script(platform, params: Params, args):
 
     try:
         set_raw_mode()
-        
+
         # Automatically send the "cd" command after Docker starts
         cd_command = f"cd {params['perception_ws_name']}\n"  # Create the cd command dynamically
         os.write(master_fd, cd_command.encode())  # Send the command to the subprocess
