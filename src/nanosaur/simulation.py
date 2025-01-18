@@ -26,7 +26,7 @@
 import subprocess
 from nanosaur import workspace
 from nanosaur.prompt_colors import TerminalFormatter
-from nanosaur.utilities import Params, require_sudo_password
+from nanosaur.utilities import Params
 
 # Dictionary of simulation tools and their commands
 simulation_tools = {
