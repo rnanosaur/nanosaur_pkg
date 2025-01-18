@@ -24,7 +24,6 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
 import argparse
 import argcomplete
 import sys
@@ -35,7 +34,6 @@ from nanosaur.utilities import Params
 from nanosaur import workspace
 from nanosaur import simulation
 from nanosaur import robot
-from nanosaur.utilities import require_sudo_password
 from nanosaur.prompt_colors import TerminalFormatter
 
 NANOSAUR_CONFIG_FILE_NAME = 'nanosaur.yaml'
@@ -63,6 +61,7 @@ def info(platform, params: Params, args):
     print("\nPlatform Information:")
     for key, value in platform.items():
         print(f"  {key}: {value}")
+
 
 def install(platform, params: Params, args, password=None):
     if args.developer:
@@ -170,7 +169,7 @@ def main():
     parser_info.set_defaults(func=info)
 
     # Subcommand: install (hidden if workspace already exists)
-    #if get_workspace_path(params['nanosaur_workspace_name']) is None:
+    # if get_workspace_path(params['nanosaur_workspace_name']) is None:
     if 'developer_mode' not in params and not params['developer_mode']:
         parser_install = subparsers.add_parser('install', help="Install the Nanosaur workspace")
     else:
@@ -187,7 +186,7 @@ def main():
         parser_workspace = parser_workspace_menu(subparsers)
 
     # Subcommand: simulation (with a sub-menu for simulation types)
-    #if device_type == 'desktop' and get_workspace_path(params['nanosaur_workspace_name']) is not None:
+    # if device_type == 'desktop' and get_workspace_path(params['nanosaur_workspace_name']) is not None:
     #    # Add simulation subcommand
     parser_simulation = parser_simulation_menu(subparsers, params)
 

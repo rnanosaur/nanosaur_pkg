@@ -30,6 +30,7 @@ import pexpect
 import getpass
 from nanosaur.prompt_colors import TerminalFormatter
 
+
 class Params:
 
     @classmethod
@@ -100,6 +101,7 @@ class Params:
     def items(self):
         return self._params_dict.items()
 
+
 def create_nanosaur_home(nanosaur_home):
     # Get the current user's home directory
     user_home_dir = os.path.expanduser("~")
@@ -111,10 +113,12 @@ def create_nanosaur_home(nanosaur_home):
         print(TerminalFormatter.color_text(f"Folder '{nanosaur_home_path}' created.", color='green'))
     return nanosaur_home_path
 
+
 def get_nanosaur_home(nanosaur_home):
     # Get the current user's home directory
     user_home_dir = os.path.expanduser("~")
     return os.path.join(user_home_dir, nanosaur_home)
+
 
 def require_sudo(func):
     def wrapper(*args, **kwargs):

@@ -66,7 +66,7 @@ def clean_workspace(nanosaur_ws_name, password):
     if os.path.exists(workspace_path) and os.path.isdir(workspace_path):
         subfolders = ['build', 'install', 'log']
         subfolders_exist = all(os.path.exists(os.path.join(workspace_path, subfolder)) for subfolder in subfolders)
-        
+
         if subfolders_exist:
             print(TerminalFormatter.color_text(f"Workspace '{workspace_path}' and subfolders exist. Cleaning build, install and log folders", color='yellow'))
             result = False
@@ -165,6 +165,7 @@ def build_workspace(branch, workspace_path, rosinstall_name, password, skip_rosd
     # All fine
     return True
 
+
 @require_sudo_password
 def create_developer_workspace(platform, params: Params, args, password=None):
     # determine the device type
@@ -174,7 +175,7 @@ def create_developer_workspace(platform, params: Params, args, password=None):
     branch = params['nanosaur_branch']
     # Create the Nanosaur home folder
     nanosaur_home_path = create_nanosaur_home(nanosaur_home)
-    
+
     # Create the shared source folder
     nanosaur_shared_src = os.path.join(nanosaur_home_path, "shared_src")
     # Check if folder exists, if not, create it
@@ -196,7 +197,7 @@ def create_developer_workspace(platform, params: Params, args, password=None):
     if not vcs_status:
         print(TerminalFormatter.color_text("Failed to import workspace", color='red'))
         return False
-    
+
     # Make the robot workspace
     if device_type == "robot" or args.all_platforms:
         # Make the robot workspace
@@ -356,21 +357,21 @@ def clean(platform, params: Params, args, password=None):
         workspace = args.workspace
     else:
         workspace = "robot" if platform['Machine'] == 'jetson' else "desktop"
-    
+
     if workspace == 'robot' or args.all_platforms:
         robot_ws_name = params['robot_ws_name']
         robot_ws_path = get_workspace_path(params, robot_ws_name)
         print(TerminalFormatter.color_text(f"- Clean robot workspace {robot_ws_name}", bold=True))
         # Clean workspace
         clean_workspace(robot_ws_path, password)
-    
+
     if workspace == 'desktop' or args.all_platforms:
         simulation_ws_name = params['simulation_ws_name']
         simulation_ws_path = get_workspace_path(params, simulation_ws_name)
         print(TerminalFormatter.color_text(f"- Clean simulation workspace {simulation_ws_name}", bold=True))
         # Clean workspace
         clean_workspace(simulation_ws_path, password)
-    
+
     if args.perception or args.all_platforms:
         perception_ws_name = params['perception_ws_name']
         perception_ws_path = get_workspace_path(params, perception_ws_name)
@@ -395,7 +396,7 @@ def update(platform, params: Params, args, password=None):
         # Build environment
         if not run_colcon_build(robot_ws_path):
             return False
-    
+
     if workspace == 'desktop' or args.all_platforms:
         simulation_ws_name = params['simulation_ws_name']
         simulation_ws_path = get_workspace_path(params, simulation_ws_name)
