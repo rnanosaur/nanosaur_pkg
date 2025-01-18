@@ -35,14 +35,18 @@ from nanosaur.utilities import Params
 from nanosaur import workspace
 from nanosaur import simulation
 from nanosaur import robot
-from nanosaur.workspace import get_workspace_path
+from nanosaur.utilities import require_sudo_password
 from nanosaur.prompt_colors import TerminalFormatter
 
-NANOSAUR_CONFIG_FILE = 'nanosaur.yaml'
+NANOSAUR_CONFIG_FILE_NAME = 'nanosaur.yaml'
+NANOSAUR_HOME_NAME = 'nanosaur'
 
 # Define default parameters
 DEFAULT_PARAMS = {
-    'nanosaur_workspace_name': 'nanosaur_ws',
+    'nanosaur_home': NANOSAUR_HOME_NAME,
+    'robot_ws_name': 'robot_ws',
+    'simulation_ws_name': 'simulation_ws',
+    'perception_ws_name': 'perception_ws',
     'nanosaur_branch': 'nanosaur2',
 }
 
@@ -60,14 +64,11 @@ def info(platform, params: Params, args):
     for key, value in platform.items():
         print(f"  {key}: {value}")
 
-
-def install(platform, params: Params, args):
-    device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
-    print(TerminalFormatter.color_text(f"Installing Nanosaur for {device_type}...", color='green'))
-    if device_type == 'desktop':
-        simulation.simulation_install(platform, params, args)
-    elif device_type == 'robot':
-        print(TerminalFormatter.color_text("Robot installation not supported yet.", color='red'))
+def install(platform, params: Params, args, password=None):
+    if args.developer:
+        workspace.create_developer_workspace(platform, params, args)
+    else:
+        print(TerminalFormatter.color_text("Not implemented yet", color='red'))
 
 
 def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
@@ -79,13 +80,23 @@ def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.Ar
     parser_workspace_clean = workspace_subparsers.add_parser(
         'clean', help="Clean the workspace")
     parser_workspace_clean.add_argument(
+        'workspace', type=str, nargs='?', help="Specify the workspace to clean")
+    parser_workspace_clean.add_argument(
         '--force', action='store_true', help="Force the workspace clean")
+    parser_workspace_clean.add_argument(
+        '--all-platforms', '--all', action='store_true', help="Clean all workspaces")
+    parser_workspace_clean.add_argument(
+        '--perception', action='store_true', help="Clean the perception workspace")
     parser_workspace_clean.set_defaults(func=workspace.clean)
     # Add workspace update subcommand
     parser_workspace_update = workspace_subparsers.add_parser(
         'update', help="Update the workspace")
     parser_workspace_update.add_argument(
+        'workspace', type=str, nargs='?', help="Specify the workspace to clean")
+    parser_workspace_update.add_argument(
         '--force', action='store_true', help="Force the update")
+    parser_workspace_update.add_argument(
+        '--all-platforms', '--all', action='store_true', help="Clean all workspaces")
     parser_workspace_update.set_defaults(func=workspace.update)
     return parser_workspace
 
@@ -133,8 +144,7 @@ def parser_swarm_menu(subparsers: argparse._SubParsersAction, params: Params) ->
 
 def main():
     # Load the parameters
-    user_home_dir = os.path.expanduser("~")
-    params = Params.load(DEFAULT_PARAMS, params_file=f'{user_home_dir}/{NANOSAUR_CONFIG_FILE}')
+    params = Params.load(DEFAULT_PARAMS, home_folder=NANOSAUR_HOME_NAME, params_file_name=NANOSAUR_CONFIG_FILE_NAME)
 
     # Extract device information with jtop
     try:
@@ -160,24 +170,26 @@ def main():
     parser_info.set_defaults(func=info)
 
     # Subcommand: install (hidden if workspace already exists)
-    if get_workspace_path(params['nanosaur_workspace_name']) is None:
+    #if get_workspace_path(params['nanosaur_workspace_name']) is None:
+    if 'developer_mode' not in params and not params['developer_mode']:
         parser_install = subparsers.add_parser('install', help="Install the Nanosaur workspace")
     else:
         parser_install = subparsers.add_parser('install')
     # Add simulation install subcommand
-    parser_install.add_argument('--developer', action='store_true', help="Install developer workspace")
+    parser_install.add_argument('--developer', '--dev', action='store_true', help="Install developer workspace")
     parser_install.add_argument('--force', action='store_true', help="Force the update")
+    parser_install.add_argument('--all-platforms', action='store_true', help="Install for all platforms")
     parser_install.set_defaults(func=install)
 
     # Subcommand: workspace (with a sub-menu for workspace operations)
-    if get_workspace_path(params['nanosaur_workspace_name']) is not None:
+    if 'developer_mode' in params and params['developer_mode']:
         # Add workspace subcommand
         parser_workspace = parser_workspace_menu(subparsers)
 
     # Subcommand: simulation (with a sub-menu for simulation types)
-    if device_type == 'desktop' and get_workspace_path(params['nanosaur_workspace_name']) is not None:
-        # Add simulation subcommand
-        parser_simulation = parser_simulation_menu(subparsers, params)
+    #if device_type == 'desktop' and get_workspace_path(params['nanosaur_workspace_name']) is not None:
+    #    # Add simulation subcommand
+    parser_simulation = parser_simulation_menu(subparsers, params)
 
     # Subcommand: robot (with a sub-menu for robot operations)
     robot_data = robot.RobotList.get_robot(params)
