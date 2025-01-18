@@ -127,13 +127,8 @@ def clean_workspace(nanosaur_ws_name, password):
     :param folder_name: The name of the workspace folder to check.
     :return: The full path to the workspace if it exists, or None if it doesn't.
     """
-    # Check if the script is running with sudo
-    if os.geteuid() == 0:
-        # Get the original user's home directory
-        user_home_dir = os.path.expanduser(f"~{os.getenv('SUDO_USER')}")
-    else:
-        # Get the current user's home directory
-        user_home_dir = os.path.expanduser("~")
+    # Get the current user's home directory
+    user_home_dir = os.path.expanduser("~")
 
     # Create the full path for the workspace folder in the user's home
     # directory
@@ -438,23 +433,26 @@ def clean(platform, params: Params, args, password=None):
     if workspace == 'robot' or args.all_platforms:
         robot_ws_name = params['robot_ws_name']
         robot_ws_path = get_workspace_path(params, robot_ws_name)
-        print(TerminalFormatter.color_text(f"- Clean robot workspace {robot_ws_name}", bold=True))
-        # Clean workspace
-        clean_workspace(robot_ws_path, password)
+        if robot_ws_path is not None:
+            print(TerminalFormatter.color_text(f"- Clean robot workspace {robot_ws_name}", bold=True))
+            # Clean workspace
+            clean_workspace(robot_ws_path, password)
 
     if workspace == 'desktop' or args.all_platforms:
         simulation_ws_name = params['simulation_ws_name']
         simulation_ws_path = get_workspace_path(params, simulation_ws_name)
-        print(TerminalFormatter.color_text(f"- Clean simulation workspace {simulation_ws_name}", bold=True))
-        # Clean workspace
-        clean_workspace(simulation_ws_path, password)
+        if simulation_ws_path is not None:
+            print(TerminalFormatter.color_text(f"- Clean simulation workspace {simulation_ws_name}", bold=True))
+            # Clean workspace
+            clean_workspace(simulation_ws_path, password)
 
     if args.perception or args.all_platforms:
         perception_ws_name = params['perception_ws_name']
         perception_ws_path = get_workspace_path(params, perception_ws_name)
-        print(TerminalFormatter.color_text(f"- Clean perception workspace {perception_ws_name}", bold=True))
-        # Clean workspace
-        clean_workspace(perception_ws_path, password)
+        if perception_ws_path is not None:
+            print(TerminalFormatter.color_text(f"- Clean perception workspace {perception_ws_name}", bold=True))
+            # Clean workspace
+            clean_workspace(perception_ws_path, password)
 
     return True
 
@@ -469,18 +467,20 @@ def update(platform, params: Params, args, password=None):
     if workspace == 'robot' or args.all_platforms:
         robot_ws_name = params['robot_ws_name']
         robot_ws_path = get_workspace_path(params, robot_ws_name)
-        print(TerminalFormatter.color_text(f"- Update robot workspace {robot_ws_name}", bold=True))
-        # Build environment
-        if not run_colcon_build(robot_ws_path):
-            return False
+        if robot_ws_path is not None:
+            print(TerminalFormatter.color_text(f"- Update robot workspace {robot_ws_name}", bold=True))
+            # Build environment
+            if not run_colcon_build(robot_ws_path):
+                return False
 
     if workspace == 'desktop' or args.all_platforms:
         simulation_ws_name = params['simulation_ws_name']
         simulation_ws_path = get_workspace_path(params, simulation_ws_name)
-        print(TerminalFormatter.color_text(f"- Update simulation workspace {simulation_ws_name}", bold=True))
-        # Build environment
-        if not run_colcon_build(simulation_ws_path):
-            return False
+        if simulation_ws_path is not None:
+            print(TerminalFormatter.color_text(f"- Update simulation workspace {simulation_ws_name}", bold=True))
+            # Build environment
+            if not run_colcon_build(simulation_ws_path):
+                return False
 
     return True
 # EOF
