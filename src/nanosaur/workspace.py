@@ -211,9 +211,9 @@ def create_workspace(nanosaur_home_path, ws_name):
     return ws_name_path
 
 
-def build_workspace(branch, workspace_path, rosinstall_name, password, skip_rosdep=False, skip_build=False):
+def build_workspace(nanosaur_raw_github_repo, branch, workspace_path, rosinstall_name, password, skip_rosdep=False, skip_build=False):
     # Download rosinstall for this device
-    url = f"https://raw.githubusercontent.com/rnanosaur/nanosaur/{branch}/nanosaur/rosinstall/{rosinstall_name}.rosinstall"
+    url = f"{nanosaur_raw_github_repo}/{branch}/nanosaur/rosinstall/{rosinstall_name}.rosinstall"
     rosinstall_path = download_rosinstall(url, workspace_path, f"{rosinstall_name}.rosinstall")
     if rosinstall_path is not None:
         print(TerminalFormatter.color_text(f"- Fill {rosinstall_name} from {rosinstall_name}.rosinstall", bold=True))
@@ -249,6 +249,7 @@ def create_developer_workspace(platform, params: Params, args, password=None):
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
     # Get the Nanosaur home folder and branch
     nanosaur_home = params['nanosaur_home']
+    nanosaur_raw_github_repo = params['nanosaur_raw_github_repo']
     branch = params['nanosaur_branch']
     # Create the Nanosaur home folder
     nanosaur_home_path = create_nanosaur_home(nanosaur_home)
@@ -260,7 +261,7 @@ def create_developer_workspace(platform, params: Params, args, password=None):
         os.makedirs(nanosaur_shared_src)
         print(TerminalFormatter.color_text(f"Shared src folder created in {nanosaur_home_path}.", color='green'))
     # Download rosinstall for this device
-    url = f"https://raw.githubusercontent.com/rnanosaur/nanosaur/{branch}/nanosaur/rosinstall/shared.rosinstall"
+    url = f"{nanosaur_raw_github_repo}/{branch}/nanosaur/rosinstall/shared.rosinstall"
     rosinstall_path = download_rosinstall(url, nanosaur_shared_src, "shared.rosinstall")
     if rosinstall_path is not None:
         print(TerminalFormatter.color_text("- Fill shared src from shared.rosinstall", bold=True))
@@ -279,13 +280,13 @@ def create_developer_workspace(platform, params: Params, args, password=None):
     if device_type == "robot" or args.all_platforms:
         # Make the robot workspace
         ws_name_path = create_workspace(nanosaur_home_path, params['robot_ws_name'])
-        if not build_workspace(branch, ws_name_path, device_type, password):
+        if not build_workspace(nanosaur_raw_github_repo, branch, ws_name_path, device_type, password):
             return False
     # Make the simulation workspace
     if device_type == "desktop" or args.all_platforms:
         # Make the simulation workspace
         ws_name_path = create_workspace(nanosaur_home_path, params['simulation_ws_name'])
-        if not build_workspace(branch, ws_name_path, device_type, password):
+        if not build_workspace(nanosaur_raw_github_repo, branch, ws_name_path, device_type, password):
             return False
 
     # Make the perception workspace

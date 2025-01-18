@@ -45,6 +45,7 @@ DEFAULT_PARAMS = {
     'robot_ws_name': 'robot_ws',
     'simulation_ws_name': 'simulation_ws',
     'perception_ws_name': 'perception_ws',
+    'nanosaur_raw_github_repo': 'https://raw.githubusercontent.com/rnanosaur/nanosaur',
     'nanosaur_branch': 'nanosaur2',
 }
 

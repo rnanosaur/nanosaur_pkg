@@ -133,8 +133,8 @@ def robot_list(platform, params: Params, args):
 
 def control_keyboard(platform, params: Params, args):
     """Control the robot using the keyboard."""
-    workspace_path = workspace.get_workspace_path(params['nanosaur_workspace_name'])
-    bash_file = f'{workspace_path}/install/setup.bash'
+    nanosaur_ws_path = workspace.get_workspace_path(params, params['simulation_ws_name'])
+    bash_file = f'{nanosaur_ws_path}/install/setup.bash'
     # Read the robot name
     robot = RobotList.get_robot(params)
     print(TerminalFormatter.color_text(f"Control the robot {robot.name} using the keyboard", color='green'))
