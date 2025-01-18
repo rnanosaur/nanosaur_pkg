@@ -77,27 +77,17 @@ def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.Ar
     workspace_subparsers = parser_workspace.add_subparsers(
         dest='workspace_type', help="Workspace types")
     # Add workspace clean subcommand
-    parser_workspace_clean = workspace_subparsers.add_parser(
-        'clean', help="Clean the workspace")
-    parser_workspace_clean.add_argument(
-        'workspace', type=str, nargs='?', help="Specify the workspace to clean")
-    parser_workspace_clean.add_argument(
-        '--force', action='store_true', help="Force the workspace clean")
-    parser_workspace_clean.add_argument(
-        '--all-platforms', '--all', action='store_true', help="Clean all workspaces")
-    parser_workspace_clean.add_argument(
-        '--perception', action='store_true', help="Clean the perception workspace")
-    parser_workspace_clean.set_defaults(func=workspace.clean)
-    # Add workspace update subcommand
-    parser_workspace_update = workspace_subparsers.add_parser(
-        'update', help="Update the workspace")
-    parser_workspace_update.add_argument(
-        'workspace', type=str, nargs='?', help="Specify the workspace to clean")
-    parser_workspace_update.add_argument(
-        '--force', action='store_true', help="Force the update")
-    parser_workspace_update.add_argument(
-        '--all-platforms', '--all', action='store_true', help="Clean all workspaces")
-    parser_workspace_update.set_defaults(func=workspace.update)
+    def add_workspace_subcommand(name, help_text, func):
+        parser = workspace_subparsers.add_parser(name, help=help_text)
+        parser.add_argument('workspace', type=str, nargs='?', help="Specify the workspace to clean")
+        parser.add_argument('--force', action='store_true', help="Force the workspace clean")
+        parser.add_argument('--all-platforms', '--all', action='store_true', help="Clean all workspaces")
+        parser.set_defaults(func=func)
+        return parser
+    # Add workspace clean subcommand
+    parser_workspace_clean = add_workspace_subcommand('clean', "Clean the workspace", workspace.clean)
+    parser_workspace_clean.add_argument('--perception', action='store_true', help="Clean the perception workspace")
+    parser_workspace_update = add_workspace_subcommand('update', "Update the workspace", workspace.update)
     # Add workspace perception subcommand
     parser_workspace_perception = workspace_subparsers.add_parser(
         'perception', help="Start the Isaac ROS docker container")
