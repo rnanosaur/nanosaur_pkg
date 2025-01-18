@@ -49,7 +49,7 @@ COLCON_DEFAULTS = {
 
 def run_dev_script(platform, params: Params, args):
 
-    perception_path = get_workspace_path(params, params['perception_ws_name'])
+    perception_path = get_workspace_path(params, params['ws_perception_name'])
     isaac_ros_common_path = os.path.join(perception_path, 'src', 'isaac_ros_common')
     # Get the path to the Isaac ROS common package
     os.chdir(isaac_ros_common_path)
@@ -87,7 +87,7 @@ def run_dev_script(platform, params: Params, args):
         set_raw_mode()
 
         # Automatically send the "cd" command after Docker starts
-        cd_command = f"cd {params['perception_ws_name']}\n"  # Create the cd command dynamically
+        cd_command = f"cd {params['ws_perception_name']}\n"  # Create the cd command dynamically
         os.write(master_fd, cd_command.encode())  # Send the command to the subprocess
 
         while True:
@@ -279,18 +279,18 @@ def create_developer_workspace(platform, params: Params, args, password=None):
     # Make the robot workspace
     if device_type == "robot" or args.all_platforms:
         # Make the robot workspace
-        ws_name_path = create_workspace(nanosaur_home_path, params['robot_ws_name'])
+        ws_name_path = create_workspace(nanosaur_home_path, params['ws_robot_name'])
         if not build_workspace(nanosaur_raw_github_repo, branch, ws_name_path, device_type, password):
             return False
     # Make the simulation workspace
     if device_type == "desktop" or args.all_platforms:
         # Make the simulation workspace
-        ws_name_path = create_workspace(nanosaur_home_path, params['simulation_ws_name'])
+        ws_name_path = create_workspace(nanosaur_home_path, params['ws_simulation_name'])
         if not build_workspace(nanosaur_raw_github_repo, branch, ws_name_path, device_type, password):
             return False
 
     # Make the perception workspace
-    ws_name_path = create_workspace(nanosaur_home_path, params['perception_ws_name'])
+    ws_name_path = create_workspace(nanosaur_home_path, params['ws_perception_name'])
     build_workspace(branch, ws_name_path, 'perception', password, skip_rosdep=True, skip_build=True)
     # Set params in developer mode
     params['developer_mode'] = True
@@ -437,7 +437,7 @@ def clean(platform, params: Params, args, password=None):
         workspace = "robot" if platform['Machine'] == 'jetson' else "desktop"
 
     if workspace == 'robot' or args.all_platforms:
-        robot_ws_name = params['robot_ws_name']
+        robot_ws_name = params['ws_robot_name']
         robot_ws_path = get_workspace_path(params, robot_ws_name)
         if robot_ws_path is not None:
             print(TerminalFormatter.color_text(f"- Clean robot workspace {robot_ws_name}", bold=True))
@@ -445,7 +445,7 @@ def clean(platform, params: Params, args, password=None):
             clean_workspace(robot_ws_path, password)
 
     if workspace == 'desktop' or args.all_platforms:
-        simulation_ws_name = params['simulation_ws_name']
+        simulation_ws_name = params['ws_simulation_name']
         simulation_ws_path = get_workspace_path(params, simulation_ws_name)
         if simulation_ws_path is not None:
             print(TerminalFormatter.color_text(f"- Clean simulation workspace {simulation_ws_name}", bold=True))
@@ -453,7 +453,7 @@ def clean(platform, params: Params, args, password=None):
             clean_workspace(simulation_ws_path, password)
 
     if args.perception or args.all_platforms:
-        perception_ws_name = params['perception_ws_name']
+        perception_ws_name = params['ws_perception_name']
         perception_ws_path = get_workspace_path(params, perception_ws_name)
         if perception_ws_path is not None:
             print(TerminalFormatter.color_text(f"- Clean perception workspace {perception_ws_name}", bold=True))
@@ -471,7 +471,7 @@ def update(platform, params: Params, args, password=None):
         workspace = "robot" if platform['Machine'] == 'jetson' else "desktop"
 
     if workspace == 'robot' or args.all_platforms:
-        robot_ws_name = params['robot_ws_name']
+        robot_ws_name = params['ws_robot_name']
         robot_ws_path = get_workspace_path(params, robot_ws_name)
         if robot_ws_path is not None:
             print(TerminalFormatter.color_text(f"- Update robot workspace {robot_ws_name}", bold=True))
@@ -480,7 +480,7 @@ def update(platform, params: Params, args, password=None):
                 return False
 
     if workspace == 'desktop' or args.all_platforms:
-        simulation_ws_name = params['simulation_ws_name']
+        simulation_ws_name = params['ws_simulation_name']
         simulation_ws_path = get_workspace_path(params, simulation_ws_name)
         if simulation_ws_path is not None:
             print(TerminalFormatter.color_text(f"- Update simulation workspace {simulation_ws_name}", bold=True))

@@ -42,7 +42,7 @@ simulation_tools = {
 
 
 def start_robot_simulation(params):
-    nanosaur_ws_path = workspace.get_workspace_path(params, params['simulation_ws_name'])
+    nanosaur_ws_path = workspace.get_workspace_path(params, params['ws_simulation_name'])
     bash_file = f'{nanosaur_ws_path}/install/setup.bash'
     # Check which simulation tool is selected
     if 'simulation_tool' not in params:
@@ -86,7 +86,7 @@ def start_robot_simulation(params):
 def simulation_start(platform, params: Params, args):
     """Install the simulation tools."""
 
-    nanosaur_ws_path = workspace.get_workspace_path(params, params['simulation_ws_name'])
+    nanosaur_ws_path = workspace.get_workspace_path(params, params['ws_simulation_name'])
     bash_file = f'{nanosaur_ws_path}/install/setup.bash'
     # Check which simulation tool is selected
     if 'simulation_tool' not in params:

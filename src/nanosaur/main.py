@@ -41,12 +41,12 @@ NANOSAUR_HOME_NAME = 'nanosaur'
 
 # Define default parameters
 DEFAULT_PARAMS = {
-    'nanosaur_home': NANOSAUR_HOME_NAME,
-    'robot_ws_name': 'robot_ws',
-    'simulation_ws_name': 'simulation_ws',
-    'perception_ws_name': 'perception_ws',
-    'nanosaur_raw_github_repo': 'https://raw.githubusercontent.com/rnanosaur/nanosaur',
     'nanosaur_branch': 'nanosaur2',
+    'nanosaur_home': NANOSAUR_HOME_NAME,
+    'nanosaur_raw_github_repo': 'https://raw.githubusercontent.com/rnanosaur/nanosaur',
+    'ws_perception_name': 'perception_ws',
+    'ws_robot_name': 'robot_ws',
+    'ws_simulation_name': 'simulation_ws',
 }
 
 
