@@ -201,7 +201,7 @@ def main():
     # Add robot start subcommand
     parser_robot_start = robot_subparsers.add_parser('start', help="Start the robot")
     parser_robot_start.add_argument(
-        '--developer', '--dev', action='store_true', help="Run in developer mode")
+        '--container', action='store_true', help="Run from container")
     parser_robot_start.add_argument(
         '--build', action='store_true', help="Rebuild docker before starting")
     parser_robot_start.set_defaults(func=robot.robot_start)

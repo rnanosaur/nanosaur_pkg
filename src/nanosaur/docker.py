@@ -38,7 +38,7 @@ def docker_start(platform, params: Params, args):
         print(TerminalFormatter.color_text("Please install Docker and Docker Compose before running the simulation.", color='red'))
         return False
 
-    workspace_path = workspace.get_workspace_path(params['nanosaur_workspace_name'])
+    workspace_path = workspace.get_workspace_path(params, params['simulation_ws_name'])
     if workspace_path is not None:
         # Create a DockerClient object with the docker-compose file
         print(TerminalFormatter.color_text(f"Starting workspace src folder in {workspace_path}", color='yellow'))
@@ -74,7 +74,7 @@ def docker_stop(platform, params: Params, args):
         print(TerminalFormatter.color_text("Please install Docker and Docker Compose before running the simulation.", color='red'))
         return False
 
-    workspace_path = workspace.get_workspace_path(params['nanosaur_workspace_name'])
+    workspace_path = workspace.get_workspace_path(params, params['simulation_ws_name'])
     if workspace_path is not None:
         # Create a DockerClient object with the docker-compose file
         print(TerminalFormatter.color_text(f"Starting docker from container {workspace_path}", color='yellow'))

@@ -38,7 +38,7 @@ simulation_tools = {
 def simulation_start(platform, params: Params, args):
     """Install the simulation tools."""
 
-    nanosaur_ws_path = workspace.get_workspace_path(params['nanosaur_workspace_name'])
+    nanosaur_ws_path = workspace.get_workspace_path(params, params['simulation_ws_name'])
     bash_file = f'{nanosaur_ws_path}/install/setup.bash'
     # Check which simulation tool is selected
     if 'simulation_tool' not in params:
@@ -116,39 +116,5 @@ def simulation_set(platform, params: Params, args):
                 print(TerminalFormatter.color_text(f"Invalid choice. Please enter a number between 1 and {exit_option}.", color='red'))
         else:
             print(TerminalFormatter.color_text("Invalid choice. Please enter a number.", color='red'))
-    return True
-
-
-@require_sudo_password
-def simulation_install(platform, params: Params, args, password=None):
-    """Install simulation tools"""
-    device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
-    print(TerminalFormatter.color_text(f"Nanosaur simulation tools installation on {device_type}", bold=True))
-    # Create workspace
-    workspace_path = workspace.create_workspace(params['nanosaur_workspace_name'])
-    # Download rosinstall for this device
-    print(TerminalFormatter.color_text("- Download rosinstall", bold=True))
-    branch = params['nanosaur_branch']
-    url = f"https://raw.githubusercontent.com/rnanosaur/nanosaur/{branch}/nanosaur/rosinstall/simulation.rosinstall"
-    rosinstall_path = workspace.download_rosinstall(
-        url, workspace_path, "simulation.rosinstall")
-    # Import workspace
-    print(TerminalFormatter.color_text("- Import workspace from simulation.rosinstall", bold=True))
-    # run vcs import to sync the workspace
-    vcs_status = workspace.run_vcs_import(workspace_path, rosinstall_path)
-    if not vcs_status:
-        print(TerminalFormatter.color_text("Failed to import workspace", color='red'))
-        return False
-    # rosdep workspace
-    print(TerminalFormatter.color_text(f"- Install all dependencies on workspace {workspace_path}", bold=True))
-    if not workspace.run_rosdep(workspace_path, password):
-        print(TerminalFormatter.color_text("Failed to install dependencies", color='red'))
-        return False
-    # Build environment
-    print(TerminalFormatter.color_text(f"- Build workspace {workspace_path}", bold=True))
-    if not workspace.run_colcon_build(workspace_path):
-        print(TerminalFormatter.color_text("Failed to build workspace", color='red'))
-        return False
-    # All fine
     return True
 # EOF

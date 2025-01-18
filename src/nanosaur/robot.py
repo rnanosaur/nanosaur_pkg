@@ -160,7 +160,7 @@ class RobotList:
 
 
 def start_robot_simulation(params):
-    nanosaur_ws_path = workspace.get_workspace_path(params['nanosaur_workspace_name'])
+    nanosaur_ws_path = workspace.get_workspace_path(params, params['simulation_ws_name'])
     bash_file = f'{nanosaur_ws_path}/install/setup.bash'
     # Check which simulation tool is selected
     if 'simulation_tool' not in params:
@@ -206,10 +206,10 @@ def robot_start(platform, params: Params, args):
     # Check the device type
     if device_type == "desktop":
         # Start the robot simulation
-        if args.developer:
-            start_robot_simulation(params)
-        else:
+        if args.container:
             docker.docker_start(platform, params, args)
+        else:
+            start_robot_simulation(params)
     elif device_type == "robot":
         print(TerminalFormatter.color_text("Not yet implemented", color='yellow'))
     else:
