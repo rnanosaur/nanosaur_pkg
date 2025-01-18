@@ -35,6 +35,7 @@ DEFAULT_ROBOT_CONFIG = {
     'domain_id': 0
 }
 
+
 class Robot:
 
     @classmethod
@@ -150,6 +151,7 @@ class RobotList:
 
     def to_dict(self):
         return [robot.to_dict() for robot in self.robots]
+
 
 class Params:
 

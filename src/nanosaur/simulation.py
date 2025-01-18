@@ -83,7 +83,6 @@ def start_robot_simulation(params):
         return False
 
 
-
 def simulation_start(platform, params: Params, args):
     """Install the simulation tools."""
 
