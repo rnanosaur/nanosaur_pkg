@@ -452,7 +452,7 @@ def clean(platform, params: Params, args, password=None):
             # Clean workspace
             clean_workspace(simulation_ws_path, password)
 
-    if args.perception or args.all_platforms:
+    if workspace == 'perception' or args.all_platforms:
         perception_ws_name = params['ws_perception_name']
         perception_ws_path = get_workspace_path(params, perception_ws_name)
         if perception_ws_path is not None:

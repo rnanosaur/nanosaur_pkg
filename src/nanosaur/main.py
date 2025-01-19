@@ -86,8 +86,7 @@ def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.Ar
         parser.set_defaults(func=func)
         return parser
     # Add workspace clean subcommand
-    parser_workspace_clean = add_workspace_subcommand('clean', "Clean the workspace", workspace.clean)
-    parser_workspace_clean.add_argument('--perception', action='store_true', help="Clean the perception workspace")
+    add_workspace_subcommand('clean', "Clean the workspace", workspace.clean)
     add_workspace_subcommand('update', "Update the workspace", workspace.update)
     # Add workspace perception subcommand
     parser_workspace_perception = workspace_subparsers.add_parser(
