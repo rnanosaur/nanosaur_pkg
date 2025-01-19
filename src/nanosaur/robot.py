@@ -140,4 +140,19 @@ def control_keyboard(platform, params: Params, args):
     print(TerminalFormatter.color_text(f"Control the robot {robot.name} using the keyboard", color='green'))
     subprocess.run(f'source {bash_file} && ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args --remap /cmd_vel:=/{robot.name}/key_vel',
                    shell=True, executable='/bin/bash')
+    
+
+def robot_display(platform, params: Params, args):
+    """Display the robot configuration."""
+    nanosaur_ws_path = workspace.get_workspace_path(params, params['ws_simulation_name'])
+    bash_file = f'{nanosaur_ws_path}/install/setup.bash'
+    # Read the robot name
+    robot = RobotList.get_robot(params)
+    print(TerminalFormatter.color_text(f"Display the robot {robot.name}", color='green'))
+    try:
+        subprocess.run(f'source {bash_file} && ros2 launch nanosaur_visualization robot_display.launch.py robot_name:={robot.name}',
+                       shell=True, executable='/bin/bash')
+    except KeyboardInterrupt:
+        print(TerminalFormatter.color_text("Process interrupted by user", color='yellow'))
+    return True
 # EOF

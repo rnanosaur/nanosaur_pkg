@@ -190,6 +190,9 @@ def main():
     parser_robot = subparsers.add_parser('robot', help=f"Manage the Nanosaur robot [{robot_data.name}]")
     robot_subparsers = parser_robot.add_subparsers(dest='robot_type', help="Robot operations")
 
+    # Add robot display subcommand
+    parser_robot_display = robot_subparsers.add_parser('display', help="Display the robot configuration")
+    parser_robot_display.set_defaults(func=robot.robot_display)
     # Add robot drive subcommand
     parser_robot_drive = robot_subparsers.add_parser('drive', help="Drive the robot")
     parser_robot_drive.set_defaults(func=robot.control_keyboard)
