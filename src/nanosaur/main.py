@@ -99,6 +99,8 @@ def info(platform, params: Params, args):
     print(f"  {TerminalFormatter.color_text('Nanosaur package:', bold=True)} {__version__}")
     print(f"  {TerminalFormatter.color_text('Nanosaur version (branch):', bold=True)} {params['nanosaur_branch']}")
     print(f"  {TerminalFormatter.color_text('Nanosaur home:', bold=True)} {get_nanosaur_home(params['nanosaur_home'])}")
+    config_file_path = Params.get_params_file(params['nanosaur_home'], NANOSAUR_CONFIG_FILE_NAME)
+    print(f"  {TerminalFormatter.color_text('Nanosaur config file:', bold=True)} {config_file_path}")
 
 
 def install(platform, params: Params, args, password=None):
