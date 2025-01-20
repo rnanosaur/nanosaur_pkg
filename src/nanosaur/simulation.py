@@ -55,7 +55,7 @@ def start_robot_simulation(params):
     print(TerminalFormatter.color_text(f"Starting {robot}", color='green'))
 
     # Print the command to be run
-    print(f"ROS_DOMAIN_ID={robot.domain_id} {command} {robot.config_to_ros()}")    
+    print(f"ROS_DOMAIN_ID={robot.domain_id} {command} {robot.config_to_ros()}")
 
     try:
         # Combine sourcing the bash file with running the command
