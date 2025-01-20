@@ -147,6 +147,7 @@ def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Param
     parser_simulation_set.set_defaults(func=simulation.simulation_set)
     return parser_simulation
 
+
 def parser_robot_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     robot_data = robot.RobotList.get_robot(params)
     parser_robot = subparsers.add_parser('robot', help=f"Manage the Nanosaur robot [{robot_data.name}]")
@@ -192,6 +193,7 @@ def parser_robot_menu(subparsers: argparse._SubParsersAction, params: Params) ->
     parser_robot_reset.set_defaults(func=robot.robot_reset)
 
     return parser_robot
+
 
 def parser_swarm_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     # Get the robot index from the parameters

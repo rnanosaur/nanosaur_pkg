@@ -58,7 +58,8 @@ def robot_remove(platform, params: Params, args):
         robot = RobotList.load(params)._get_robot_by_idx(params.get('robot_idx', 0))
         args.robot_name = robot.name
 
-    confirmation = input(f"Are you sure you want to {TerminalFormatter.color_text('**remove**', color='red', bold=True)} the robot configuration for {TerminalFormatter.color_text(args.robot_name, color='green', bold=True)}? (yes/no): ")
+    confirmation = input(
+        f"Are you sure you want to {TerminalFormatter.color_text('**remove**', color='red', bold=True)} the robot configuration for {TerminalFormatter.color_text(args.robot_name, color='green', bold=True)}? (yes/no): ")
     if confirmation.lower() == 'yes':
         RobotList.remove_robot(params, params.get('robot_idx', 0))
         print(TerminalFormatter.color_text("Robot configuration removed", color='green'))
