@@ -52,13 +52,23 @@ def robot_idx_set(platform, params: Params, args):
         print(f"Current robot index: {params.get('robot_idx', 0)} name: {robot.name}")
 
 
+def robot_remove(platform, params: Params, args):
+    """Remove a robot configuration."""
+    if args.robot_name is None:
+        robot = RobotList.load(params)._get_robot_by_idx(params.get('robot_idx', 0))
+        args.robot_name = robot.name
+
+    confirmation = input(f"Are you sure you want to {TerminalFormatter.color_text('**remove**', color='red', bold=True)} the robot configuration for {TerminalFormatter.color_text(args.robot_name, color='green', bold=True)}? (yes/no): ")
+    if confirmation.lower() == 'yes':
+        RobotList.remove_robot(params, params.get('robot_idx', 0))
+        print(TerminalFormatter.color_text("Robot configuration removed", color='green'))
+        return True
+    else:
+        print(TerminalFormatter.color_text("Robot configuration removal canceled", color='yellow'))
+
+
 def robot_list(platform, params: Params, args):
     """List the robot configurations."""
-    robot_list = RobotList.load(params)
-    for i, robot in enumerate(robot_list.robots):
-        if i == params.get('robot_idx', 0):
-            print(TerminalFormatter.color_text(f"{i}. {robot}", color='green'))
-        else:
-            print(f"{i}. {robot}")
+    RobotList.load(params).print_all_robots(params.get('robot_idx', 0))
     return True
 # EOF

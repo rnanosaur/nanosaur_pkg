@@ -64,12 +64,9 @@ def info(platform, params: Params, args):
     robot_data = robot.RobotList.get_robot(params)
     robot_data.verbose()
     # Print other robots if they exist
-    if len(robot_list.robots) > 1:
-        print("\nOther robots:")
-        for i, rb in enumerate(robot_list.robots):
-            if i != params.get('robot_idx', 0):
-                print(f"{i}. {rb}")
-
+    if len(robot_list.robots) > 1 or args.verbose:
+        print()
+        robot_list.print_all_robots(params.get('robot_idx', 0))
     # Print simulation tools if they exist
     if 'simulation_tool' in params:
         print(f"\n{TerminalFormatter.color_text('Simulation Tool:', bold=True)} {params['simulation_tool']}")
@@ -86,13 +83,8 @@ def info(platform, params: Params, args):
 
     # Print all robot configurations
     if args.verbose:
-        # Print configuration parameters
-        print("\nConfiguration:")
-        for key, value in params.items():
-            if value:  # Only print if value is not empty
-                print(f"  {key}: {value}")
         # Print device information
-        print("\nPlatform Information:")
+        print(TerminalFormatter.color_text("\nPlatform Information:", bold=True))
         for key, value in platform.items():
             print(f"  {key}: {value}")
     # Print version information
@@ -155,6 +147,51 @@ def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Param
     parser_simulation_set.set_defaults(func=simulation.simulation_set)
     return parser_simulation
 
+def parser_robot_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
+    robot_data = robot.RobotList.get_robot(params)
+    parser_robot = subparsers.add_parser('robot', help=f"Manage the Nanosaur robot [{robot_data.name}]")
+    robot_subparsers = parser_robot.add_subparsers(dest='robot_type', help="Robot operations")
+    # Add robot display subcommand
+    parser_robot_display = robot_subparsers.add_parser('display', help="Display the robot configuration")
+    parser_robot_display.set_defaults(func=robot.robot_display)
+    # Add robot drive subcommand
+    parser_robot_drive = robot_subparsers.add_parser('drive', help="Drive the robot")
+    parser_robot_drive.set_defaults(func=robot.control_keyboard)
+    # Add robot start subcommand
+    parser_robot_start = robot_subparsers.add_parser('start', help="Start the robot")
+    parser_robot_start.add_argument(
+        '--container', action='store_true', help="Run from container")
+    parser_robot_start.add_argument(
+        '--build', action='store_true', help="Rebuild docker before starting")
+    parser_robot_start.set_defaults(func=robot.robot_start)
+    # Add robot stop subcommand
+    parser_robot_stop = robot_subparsers.add_parser('stop', help="Stop the robot")
+    parser_robot_stop.set_defaults(func=robot.robot_stop)
+    # Add robot name subcommand
+    parser_robot_name = robot_subparsers.add_parser('name', help=f"Set the robot name [{robot_data.name}]")
+    parser_robot_name.add_argument('name', type=str, nargs='?', help="Name of the robot (default: nanosaur)")
+    parser_robot_name.set_defaults(func=robot.robot_set_name)
+    # Add robot domain id subcommand
+    parser_robot_domain_id = robot_subparsers.add_parser('domain_id', help=f"Set the robot domain ID [{robot_data.domain_id}]")
+    parser_robot_domain_id.add_argument('domain_id', type=int, nargs='?', help="Domain ID of the robot (default: 0)")
+    parser_robot_domain_id.set_defaults(func=robot.robot_set_domain_id)
+    # Add robot camera subcommand
+    parser_robot_camera = robot_subparsers.add_parser('camera', help=f"Set the robot camera type [{robot_data.camera_type}]")
+    parser_robot_camera.add_argument('--new-camera', type=str, help=f"Specify the new camera configuration (options: {', '.join(CAMERA_CHOICES)})")
+    parser_robot_camera.set_defaults(func=robot.robot_set_camera)
+    # Add robot lidar subcommand
+    parser_robot_lidar = robot_subparsers.add_parser('lidar', help=f"Set the robot lidar type [{robot_data.lidar_type}]")
+    parser_robot_lidar.add_argument('--new-lidar', type=str, choices=LIDAR_CHOICES, help=f"Specify the new lidar configuration (options: {', '.join(LIDAR_CHOICES)})")
+    parser_robot_lidar.set_defaults(func=robot.robot_set_lidar)
+    # Add robot engines subcommand
+    parser_robot_engines = robot_subparsers.add_parser('engines', help=f"Configure the robot engines [{', '.join(robot_data.engines)}]")
+    parser_robot_engines.add_argument('--new-engine', type=str, help="Specify the new engine configuration")
+    parser_robot_engines.set_defaults(func=robot.robot_configure_engines)
+    # Add robot reset subcommand
+    parser_robot_reset = robot_subparsers.add_parser('reset', help="Reset the robot configuration")
+    parser_robot_reset.set_defaults(func=robot.robot_reset)
+
+    return parser_robot
 
 def parser_swarm_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     # Get the robot index from the parameters
@@ -170,6 +207,10 @@ def parser_swarm_menu(subparsers: argparse._SubParsersAction, params: Params) ->
     parser_robot_set = swarm_subparsers.add_parser('set', help=f"Set which robot to control [{idx_swarm}]")
     parser_robot_set.add_argument('robot_name', type=str, nargs='?', help="Name of the robot to control")
     parser_robot_set.set_defaults(func=swarm.robot_idx_set)
+    # Add robot remove subcommand
+    parser_robot_remove = swarm_subparsers.add_parser('remove', help="Remove a robot from the swarm")
+    parser_robot_remove.add_argument('robot_name', type=str, nargs='?', help="Name of the robot to remove")
+    parser_robot_remove.set_defaults(func=swarm.robot_remove)
     # Add robot list subcommand
     parser_robot_list = swarm_subparsers.add_parser('list', help="List all robots in the swarm")
     parser_robot_list.set_defaults(func=swarm.robot_list)
@@ -226,51 +267,8 @@ def main():
         # Add simulation subcommand
         parser_simulation = parser_simulation_menu(subparsers, params)
 
-    # Subcommand: robot (with a sub-menu for robot operations)
-    robot_data = robot.RobotList.get_robot(params)
-    parser_robot = subparsers.add_parser('robot', help=f"Manage the Nanosaur robot [{robot_data.name}]")
-    robot_subparsers = parser_robot.add_subparsers(dest='robot_type', help="Robot operations")
-
-    # Add robot display subcommand
-    parser_robot_display = robot_subparsers.add_parser('display', help="Display the robot configuration")
-    parser_robot_display.set_defaults(func=robot.robot_display)
-    # Add robot drive subcommand
-    parser_robot_drive = robot_subparsers.add_parser('drive', help="Drive the robot")
-    parser_robot_drive.set_defaults(func=robot.control_keyboard)
-    # Add robot start subcommand
-    parser_robot_start = robot_subparsers.add_parser('start', help="Start the robot")
-    parser_robot_start.add_argument(
-        '--container', action='store_true', help="Run from container")
-    parser_robot_start.add_argument(
-        '--build', action='store_true', help="Rebuild docker before starting")
-    parser_robot_start.set_defaults(func=robot.robot_start)
-    # Add robot stop subcommand
-    parser_robot_stop = robot_subparsers.add_parser('stop', help="Stop the robot")
-    parser_robot_stop.set_defaults(func=robot.robot_stop)
-
-    # Add robot name subcommand
-    parser_robot_name = robot_subparsers.add_parser('name', help=f"Set the robot name [{robot_data.name}]")
-    parser_robot_name.add_argument('name', type=str, nargs='?', help="Name of the robot (default: nanosaur)")
-    parser_robot_name.set_defaults(func=robot.robot_set_name)
-    # Add robot domain id subcommand
-    parser_robot_domain_id = robot_subparsers.add_parser('domain_id', help=f"Set the robot domain ID [{robot_data.domain_id}]")
-    parser_robot_domain_id.add_argument('domain_id', type=int, nargs='?', help="Domain ID of the robot (default: 0)")
-    parser_robot_domain_id.set_defaults(func=robot.robot_set_domain_id)
-    # Add robot camera subcommand
-    parser_robot_camera = robot_subparsers.add_parser('camera', help=f"Set the robot camera type [{robot_data.camera_type}]")
-    parser_robot_camera.add_argument('--new-camera', type=str, help=f"Specify the new camera configuration (options: {', '.join(CAMERA_CHOICES)})")
-    parser_robot_camera.set_defaults(func=robot.robot_set_camera)
-    # Add robot lidar subcommand
-    parser_robot_lidar = robot_subparsers.add_parser('lidar', help=f"Set the robot lidar type [{robot_data.lidar_type}]")
-    parser_robot_lidar.add_argument('--new-lidar', type=str, choices=LIDAR_CHOICES, help=f"Specify the new lidar configuration (options: {', '.join(LIDAR_CHOICES)})")
-    parser_robot_lidar.set_defaults(func=robot.robot_set_lidar)
-    # Add robot engines subcommand
-    parser_robot_engines = robot_subparsers.add_parser('engines', help=f"Configure the robot engines [{', '.join(robot_data.engines)}]")
-    parser_robot_engines.add_argument('--new-engine', type=str, help="Specify the new engine configuration")
-    parser_robot_engines.set_defaults(func=robot.robot_configure_engines)
-    # Add robot reset subcommand
-    parser_robot_reset = robot_subparsers.add_parser('reset', help="Reset the robot configuration")
-    parser_robot_reset.set_defaults(func=robot.robot_reset)
+    # Add robot subcommand
+    parser_robot = parser_robot_menu(subparsers, params)
 
     if device_type == 'desktop':
         # Subcommand: swarm (with a sub-menu for swarm operations)
@@ -282,22 +280,18 @@ def main():
     # Parse the arguments
     args = parser.parse_args()
 
-    # Handle workspace subcommand without a workspace_type
-    if args.command in ['workspace', 'ws'] and args.workspace_type is None:
-        parser_workspace.print_help()
-        sys.exit(1)
+    # Handle subcommands without a specific type
+    subcommand_map = {
+        'workspace': parser_workspace,
+        'ws': parser_workspace,
+        'simulation': parser_simulation,
+        'sim': parser_simulation,
+        'robot': parser_robot,
+        'swarm': parser_swarm
+    }
 
-    # Handle install subcommand without an install_type
-    if args.command in ['simulation', 'sim'] and args.simulation_type is None:
-        parser_simulation.print_help()
-        sys.exit(1)
-
-    if args.command in ['robot'] and args.robot_type is None:
-        parser_robot.print_help()
-        sys.exit(1)
-
-    if args.command in ['swarm'] and args.swarm_type is None:
-        parser_swarm.print_help()
+    if args.command in subcommand_map and getattr(args, f"{args.command}_type", None) is None:
+        subcommand_map[args.command].print_help()
         sys.exit(1)
 
     # Execute the corresponding function based on the subcommand

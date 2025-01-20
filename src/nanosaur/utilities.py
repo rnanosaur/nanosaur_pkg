@@ -60,9 +60,13 @@ class Robot:
             setattr(self, key, value)
 
     def __repr__(self):
-        attributes = ', '.join(f"{key}={value}" for key, value in self.__dict__.items() if key not in ['name', 'domain_id', 'simulation'] and value)
+        attributes = ', '.join(
+            f"{key}={value}" for key, value in self.__dict__.items()
+            if key not in ['name', 'domain_id', 'simulation'] and value
+        )
         sim_prefix = "(sim) " if self.simulation else ""
-        return f"{sim_prefix}{self.name}[DID={self.domain_id}]({attributes})"
+        base_repr = f"{sim_prefix}{self.name}[DID={self.domain_id}]"
+        return f"{base_repr}({attributes})" if attributes else base_repr
 
     def to_dict(self) -> dict:
         return self.__dict__
@@ -119,9 +123,9 @@ class RobotList:
         return False
 
     @classmethod
-    def remove_robot(cls, params):
+    def remove_robot(cls, params, robot_idx=None):
         robot_list = cls.load(params)
-        idx = params.get('robot_idx', 0)
+        idx = robot_idx if robot_idx is not None else params.get('robot_idx', 0)
         if idx == 0:
             if 'robots' in params:
                 del params['robots']
@@ -197,9 +201,16 @@ class RobotList:
     def to_dict(self) -> list:
         return [robot.to_dict() for robot in self.robots]
 
-    def print_all_robots(self):
-        for robot in self.robots:
-            print(robot)
+    def print_all_robots(self, robot_idx=None):
+        if robot_idx is not None:
+            print(TerminalFormatter.color_text(f"All robots: (selected: {robot_idx})", bold=True))
+        else:
+            print(TerminalFormatter.color_text("All robots:", bold=True))
+        for idx, robot in enumerate(self.robots):
+            if idx == robot_idx:
+                print(f"  {TerminalFormatter.color_text(f'Robot {idx}:', bold=True)} {TerminalFormatter.color_text(robot, color='green')}")
+            else:
+                print(f"  {TerminalFormatter.color_text(f'Robot {idx}:', bold=True)} {robot}")
 
 
 class Params:
