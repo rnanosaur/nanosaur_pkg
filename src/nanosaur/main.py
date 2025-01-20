@@ -153,43 +153,43 @@ def parser_robot_menu(subparsers: argparse._SubParsersAction, params: Params) ->
     parser_robot = subparsers.add_parser('robot', help=f"Manage the Nanosaur robot [{robot_data.name}]")
     robot_subparsers = parser_robot.add_subparsers(dest='robot_type', help="Robot operations")
     # Add robot display subcommand
-    parser_robot_display = robot_subparsers.add_parser('display', help="Display the robot configuration")
+    parser_robot_display = robot_subparsers.add_parser('display', help="Show the robot")
     parser_robot_display.set_defaults(func=robot.robot_display)
     # Add robot drive subcommand
-    parser_robot_drive = robot_subparsers.add_parser('drive', help="Drive the robot")
+    parser_robot_drive = robot_subparsers.add_parser('drive', help="Control the robot")
     parser_robot_drive.set_defaults(func=robot.control_keyboard)
     # Add robot start subcommand
-    parser_robot_start = robot_subparsers.add_parser('start', help="Start the robot")
+    parser_robot_start = robot_subparsers.add_parser('start', help="Activate the robot")
     parser_robot_start.add_argument(
-        '--container', action='store_true', help="Run from container")
+        '--container', action='store_true', help="Run within a container")
     parser_robot_start.add_argument(
         '--build', action='store_true', help="Rebuild docker before starting")
     parser_robot_start.set_defaults(func=robot.robot_start)
     # Add robot stop subcommand
-    parser_robot_stop = robot_subparsers.add_parser('stop', help="Stop the robot")
+    parser_robot_stop = robot_subparsers.add_parser('stop', help="Deactivate the robot")
     parser_robot_stop.set_defaults(func=robot.robot_stop)
     # Add robot name subcommand
-    parser_robot_name = robot_subparsers.add_parser('name', help=f"Set the robot name [{robot_data.name}]")
-    parser_robot_name.add_argument('name', type=str, nargs='?', help="Name of the robot (default: nanosaur)")
+    parser_robot_name = robot_subparsers.add_parser('name', help=f"Change the robot name [{robot_data.name}]")
+    parser_robot_name.add_argument('name', type=str, nargs='?', help="New name for the robot (default: nanosaur)")
     parser_robot_name.set_defaults(func=robot.robot_set_name)
     # Add robot domain id subcommand
-    parser_robot_domain_id = robot_subparsers.add_parser('domain_id', help=f"Set the robot domain ID [{robot_data.domain_id}]")
-    parser_robot_domain_id.add_argument('domain_id', type=int, nargs='?', help="Domain ID of the robot (default: 0)")
+    parser_robot_domain_id = robot_subparsers.add_parser('domain_id', help=f"Change the robot domain ID [{robot_data.domain_id}]")
+    parser_robot_domain_id.add_argument('domain_id', type=int, nargs='?', help="New domain ID for the robot (default: 0)")
     parser_robot_domain_id.set_defaults(func=robot.robot_set_domain_id)
     # Add robot camera subcommand
-    parser_robot_camera = robot_subparsers.add_parser('camera', help=f"Set the robot camera type [{robot_data.camera_type}]")
-    parser_robot_camera.add_argument('--new-camera', type=str, help=f"Specify the new camera configuration (options: {', '.join(CAMERA_CHOICES)})")
+    parser_robot_camera = robot_subparsers.add_parser('camera', help=f"Change the robot camera type [{robot_data.camera_type}]")
+    parser_robot_camera.add_argument('--new-camera', type=str, help=f"Specify the new camera type (options: {', '.join(CAMERA_CHOICES)})")
     parser_robot_camera.set_defaults(func=robot.robot_set_camera)
     # Add robot lidar subcommand
-    parser_robot_lidar = robot_subparsers.add_parser('lidar', help=f"Set the robot lidar type [{robot_data.lidar_type}]")
-    parser_robot_lidar.add_argument('--new-lidar', type=str, choices=LIDAR_CHOICES, help=f"Specify the new lidar configuration (options: {', '.join(LIDAR_CHOICES)})")
+    parser_robot_lidar = robot_subparsers.add_parser('lidar', help=f"Change the robot lidar type [{robot_data.lidar_type}]")
+    parser_robot_lidar.add_argument('--new-lidar', type=str, choices=LIDAR_CHOICES, help=f"Specify the new lidar type (options: {', '.join(LIDAR_CHOICES)})")
     parser_robot_lidar.set_defaults(func=robot.robot_set_lidar)
     # Add robot engines subcommand
     parser_robot_engines = robot_subparsers.add_parser('engines', help=f"Configure the robot engines [{', '.join(robot_data.engines)}]")
     parser_robot_engines.add_argument('--new-engine', type=str, help="Specify the new engine configuration")
     parser_robot_engines.set_defaults(func=robot.robot_configure_engines)
     # Add robot reset subcommand
-    parser_robot_reset = robot_subparsers.add_parser('reset', help="Reset the robot configuration")
+    parser_robot_reset = robot_subparsers.add_parser('reset', help="Restore the robot configuration to default")
     parser_robot_reset.set_defaults(func=robot.robot_reset)
 
     return parser_robot
