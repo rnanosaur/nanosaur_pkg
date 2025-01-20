@@ -87,7 +87,7 @@ def run_dev_script(platform, params: Params, args):
     master_fd, slave_fd = pty.openpty()
 
     # Prepare the command and arguments
-    cmd = [command] + (args if args else [])
+    cmd = [command] + (args or [])
 
     # Fork the process
     child_pid = os.fork()

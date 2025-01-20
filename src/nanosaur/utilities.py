@@ -32,8 +32,15 @@ from nanosaur.prompt_colors import TerminalFormatter
 
 DEFAULT_ROBOT_CONFIG = {
     'name': 'nanosaur',
-    'domain_id': 0
+    'domain_id': 0,
+    'camera': '',
+    'lidar': '',
+    'engines': [],
 }
+
+CAMERA_CHOICES = ['', 'realsense', 'zed']
+LIDAR_CHOICES = ['', 'rplidar']
+ENGINES_CHOICES = ['vlslam', 'nvblox', 'apriltag']
 
 
 class Robot:
@@ -52,7 +59,9 @@ class Robot:
             setattr(self, key, value)
 
     def __repr__(self):
-        return f"Robot(name={self.name}, domain_id={self.domain_id})"
+        # "Nanosaur[DID=](cover=AAA, )"
+        attributes = ', '.join(f"{key}={value}" for key, value in self.__dict__.items() if key not in ['name', 'domain_id'] and value)
+        return f"{self.name}[DID={self.domain_id}] {attributes}"
 
     def to_dict(self):
         return self.__dict__

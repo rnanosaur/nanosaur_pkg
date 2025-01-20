@@ -1,4 +1,4 @@
-# Copyright (C) 2024, Raffaello Bonghi <raffaello@rnext.it>
+# Copyright (C) 2025, Raffaello Bonghi <raffaello@rnext.it>
 # All rights reserved
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -28,7 +28,8 @@ from nanosaur import workspace
 from nanosaur import docker
 from nanosaur import simulation
 from nanosaur.prompt_colors import TerminalFormatter
-from nanosaur.utilities import Params, RobotList, Robot
+from nanosaur.utilities import Params, RobotList
+from nanosaur.utilities import ENGINES_CHOICES
 
 
 def robot_start(platform, params: Params, args):
@@ -88,46 +89,93 @@ def robot_set_domain_id(platform, params: Params, args):
     return True
 
 
+def robot_set_camera(platform, params: Params, args):
+    """Configure the camera."""
+    # Check if the camera is provided
+    robot = RobotList.get_robot(params)
+    if not args.camera_type:
+        if not robot.camera:
+            print("Robot camera is not set")
+        else:
+            print(f"Current robot camera: {robot.camera}")
+        return True
+    # Update the camera
+    robot.camera = args.camera_type
+    RobotList.update_robot(params, robot)
+    print(TerminalFormatter.color_text(f"Camera set to: {robot.camera}", color='green'))
+    return True
+
+def robot_set_lidar(platform, params: Params, args):
+    """Configure the lidar."""
+    # Check if the lidar is provided
+    robot = RobotList.get_robot(params)
+    if not args.lidar_type:
+        if not robot.lidar:
+            print("Robot lidar is not set")
+        else:
+            print(f"Current robot lidar: {robot.lidar}")
+        return True
+    # Update the lidar
+    robot.lidar = args.lidar_type
+    RobotList.update_robot(params, robot)
+    print(TerminalFormatter.color_text(f"Lidar set to: {robot.lidar}", color='green'))
+    return True
+
+def robot_configure_engines(platform, params: Params, args):
+    """Configure the robot engines."""
+    def print_options(robot):
+        all_engines = sorted(list(set(robot.engines + ENGINES_CHOICES)))
+        options = []
+        for i, engine in enumerate(all_engines):
+            if engine in robot.engines:
+                options.append(TerminalFormatter.color_text(f"{i+1}. Engine {engine} (enabled)", color='green'))
+            else:
+                options.append(f"{i+1}. Enable engine {engine}")
+        options.append(f"{len(all_engines) + 1}. Exit")
+        for option in options:
+            print(option)
+    
+    def toggle_engine(robot, engine):
+        if not robot.engines:
+            robot.engines = []
+        if engine in robot.engines:
+            robot.engines.remove(engine)
+        else:
+            robot.engines.append(engine)
+        RobotList.update_robot(params, robot)
+
+    robot = RobotList.get_robot(params)
+    if args.new_engine is not None:
+        if args.new_engine not in robot.engines:
+            robot.engines.append(args.new_engine)
+            RobotList.update_robot(params, robot)
+            print(TerminalFormatter.color_text(f"New engine {args.new_engine} added", color='green'))
+        else:
+            print(TerminalFormatter.color_text(f"Engine {args.new_engine} is already enabled", color='yellow'))
+        return True
+
+    try:
+        while True:
+            robot = RobotList.get_robot(params)
+            print_options(robot)
+            choice = input("Select an option: ")
+            all_engines = sorted(list(set(robot.engines + ENGINES_CHOICES)))
+            if choice.isdigit() and 1 <= int(choice) <= len(all_engines):
+                toggle_engine(robot, all_engines[int(choice) - 1])
+            elif choice == str(len(all_engines) + 1):
+                break
+            else:
+                print(TerminalFormatter.color_text("Invalid option, please try again", color='red'))
+    except KeyboardInterrupt:
+        print(TerminalFormatter.color_text("Process interrupted by user", color='yellow'))
+        return False
+
+
 def robot_reset(platform, params: Params, args):
     """Reset the robot configuration."""
     # Reset the robot configuration
     RobotList.remove_robot(params)
     print(TerminalFormatter.color_text("Robot configuration reset", color='green'))
-    return True
-
-
-def robot_new(platform, params: Params, args):
-    """Add a new robot configuration."""
-    # Create a new robot configuration
-    robot = Robot(name=args.name)
-    if RobotList.add_robot(params, robot):
-        print(TerminalFormatter.color_text("New robot configuration added", color='green'))
-        return True
-    print(TerminalFormatter.color_text("Robot configuration already exists", color='red'))
-
-
-def robot_idx_set(platform, params: Params, args):
-    """Set the robot index."""
-    if args.robot_name is not None:
-        idx = RobotList.get_idx_by_name(params, args.robot_name)
-        if idx is not None:
-            params['robot_idx'] = idx
-            print(TerminalFormatter.color_text(f"Robot index set to: {idx}", color='green'))
-            return True
-        print(TerminalFormatter.color_text("Robot not found", color='red'))
-    else:
-        robot = RobotList.load(params)._get_robot_by_idx(params.get('robot_idx', 0))
-        print(f"Current robot index: {params.get('robot_idx', 0)} name: {robot.name}")
-
-
-def robot_list(platform, params: Params, args):
-    """List the robot configurations."""
-    robot_list = RobotList.load(params)
-    for i, robot in enumerate(robot_list.robots):
-        if i == params.get('robot_idx', 0):
-            print(TerminalFormatter.color_text(f"{i}. {robot}", color='green'))
-        else:
-            print(f"{i}. {robot}")
     return True
 
 

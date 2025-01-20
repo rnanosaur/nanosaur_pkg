@@ -34,7 +34,9 @@ from nanosaur.utilities import Params
 from nanosaur import workspace
 from nanosaur import simulation
 from nanosaur import robot
+from nanosaur import swarm
 from nanosaur.prompt_colors import TerminalFormatter
+from nanosaur.utilities import CAMERA_CHOICES, LIDAR_CHOICES
 
 NANOSAUR_CONFIG_FILE_NAME = 'nanosaur.yaml'
 NANOSAUR_HOME_NAME = 'nanosaur'
@@ -125,14 +127,14 @@ def parser_swarm_menu(subparsers: argparse._SubParsersAction, params: Params) ->
     # Add robot status subcommand
     parser_robot_new = swarm_subparsers.add_parser('new', help="Get a new robot to control")
     parser_robot_new.add_argument('name', type=str, help="New robot name")
-    parser_robot_new.set_defaults(func=robot.robot_new)
+    parser_robot_new.set_defaults(func=swarm.robot_new)
     # Add robot set subcommand
     parser_robot_set = swarm_subparsers.add_parser('set', help=f"Set which robot to control [{idx_swarm}]")
     parser_robot_set.add_argument('robot_name', type=str, nargs='?', help="Name of the robot to control")
-    parser_robot_set.set_defaults(func=robot.robot_idx_set)
+    parser_robot_set.set_defaults(func=swarm.robot_idx_set)
     # Add robot list subcommand
     parser_robot_list = swarm_subparsers.add_parser('list', help="List all robots in the swarm")
-    parser_robot_list.set_defaults(func=robot.robot_list)
+    parser_robot_list.set_defaults(func=swarm.robot_list)
     return parser_swarm
 
 
@@ -215,6 +217,18 @@ def main():
     parser_robot_domain_id = robot_subparsers.add_parser('domain_id', help=f"Set the robot domain ID [{robot_data.domain_id}]")
     parser_robot_domain_id.add_argument('domain_id', type=int, nargs='?', help="Domain ID of the robot (default: 0)")
     parser_robot_domain_id.set_defaults(func=robot.robot_set_domain_id)
+    # Add robot camera subcommand
+    parser_robot_camera = robot_subparsers.add_parser('camera', help="Set the robot camera type")
+    parser_robot_camera.add_argument('camera_type', type=str, choices=CAMERA_CHOICES, nargs='?', help=f"Type of camera, if empty no camera (options: {', '.join(CAMERA_CHOICES)})")
+    parser_robot_camera.set_defaults(func=robot.robot_set_camera)
+    # Add robot lidar subcommand
+    parser_robot_lidar = robot_subparsers.add_parser('lidar', help="Set the robot lidar type")
+    parser_robot_lidar.add_argument('lidar_type', type=str, choices=LIDAR_CHOICES, nargs='?', help=f"Type of lidar, if empty no lidar (options: {', '.join(LIDAR_CHOICES)})")
+    parser_robot_lidar.set_defaults(func=robot.robot_set_lidar)
+    # Add robot engines subcommand
+    parser_robot_engines = robot_subparsers.add_parser('engines', help="Configure the robot engines")
+    parser_robot_engines.add_argument('--new-engine', type=str, help="Specify the new engine configuration")
+    parser_robot_engines.set_defaults(func=robot.robot_configure_engines)
     # Add robot reset subcommand
     parser_robot_reset = robot_subparsers.add_parser('reset', help="Reset the robot configuration")
     parser_robot_reset.set_defaults(func=robot.robot_reset)
