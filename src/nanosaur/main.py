@@ -30,7 +30,7 @@ import sys
 from jtop import jtop, JtopException
 
 from nanosaur import __version__
-from nanosaur.utilities import Params
+from nanosaur.utilities import Params, get_nanosaur_home
 from nanosaur import workspace
 from nanosaur import simulation
 from nanosaur import robot
@@ -54,17 +54,25 @@ DEFAULT_PARAMS = {
 
 def info(platform, params: Params, args):
     """Print version information."""
+    # Print mode if it exists in params
+    if 'mode' in params:
+        print(TerminalFormatter.color_text(f"Mode: {params['mode']}", bg_color='red', bold=True))
+        print()
 
+    robot_list = robot.RobotList.load(params)
     # Print current robot configuration
     robot_data = robot.RobotList.get_robot(params)
     robot_data.verbose()
-
-    robot_list = robot.RobotList.load(params)
+    # Print other robots if they exist
     if len(robot_list.robots) > 1:
         print("\nOther robots:")
         for i, rb in enumerate(robot_list.robots):
             if i != params.get('robot_idx', 0):
                 print(f"{i}. {rb}")
+
+    # Print simulation tools if they exist
+    if 'simulation_tool' in params:
+        print(f"\n{TerminalFormatter.color_text('Simulation Tool:', bold=True)} {params['simulation_tool']}")
 
     # Print all workspaces installed
     print(TerminalFormatter.color_text("\nInstalled Workspaces:", bold=True))
@@ -87,7 +95,10 @@ def info(platform, params: Params, args):
         for key, value in platform.items():
             print(f"  {key}: {value}")
     # Print version information
-    print(f"Nanosaur package version {__version__}")
+    print(TerminalFormatter.color_text("\nVersion Information:", bold=True))
+    print(f"  {TerminalFormatter.color_text('Nanosaur package:', bold=True)} {__version__}")
+    print(f"  {TerminalFormatter.color_text('Nanosaur version (branch):', bold=True)} {params['nanosaur_branch']}")
+    print(f"  {TerminalFormatter.color_text('Nanosaur home:', bold=True)} {get_nanosaur_home(params['nanosaur_home'])}")
 
 
 def install(platform, params: Params, args, password=None):
@@ -192,7 +203,7 @@ def main():
 
     # Subcommand: install (hidden if workspace already exists)
     # if get_workspace_path(params['nanosaur_workspace_name']) is None:
-    if 'developer_mode' not in params and not params['developer_mode']:
+    if 'mode' in params and params['mode'] == 'developer':
         parser_install = subparsers.add_parser('install', help="Install the Nanosaur workspace")
     else:
         parser_install = subparsers.add_parser('install')
@@ -203,7 +214,7 @@ def main():
     parser_install.set_defaults(func=install)
 
     # Subcommand: workspace (with a sub-menu for workspace operations)
-    if 'developer_mode' in params and params['developer_mode']:
+    if 'mode' in params and params['mode'] == 'developer':
         # Add workspace subcommand
         parser_workspace = parser_workspace_menu(subparsers)
 

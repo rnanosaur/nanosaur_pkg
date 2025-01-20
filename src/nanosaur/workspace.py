@@ -302,7 +302,7 @@ def create_developer_workspace(platform, params: Params, args, password=None):
     ws_name_path = create_workspace(nanosaur_home_path, params['ws_perception_name'])
     build_workspace(branch, ws_name_path, 'perception', password, skip_rosdep=True, skip_build=True)
     # Set params in developer mode
-    params['developer_mode'] = True
+    params['mode'] = 'developer'
 
 
 def download_rosinstall(url, folder_path, file_name) -> str:

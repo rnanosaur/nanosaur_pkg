@@ -179,6 +179,9 @@ class RobotList:
     def to_dict(self) -> list:
         return [robot.to_dict() for robot in self.robots]
 
+    def print_all_robots(self):
+        for robot in self.robots:
+            print(robot)
 
 class Params:
 
