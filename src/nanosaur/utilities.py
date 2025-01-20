@@ -84,6 +84,7 @@ class Robot:
             for key, value in other_attributes.items():
                 print(f"    {TerminalFormatter.color_text(f'{key}:', bold=True)} {value}")
 
+
 class RobotList:
 
     @classmethod
