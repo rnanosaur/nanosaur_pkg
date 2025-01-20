@@ -81,7 +81,8 @@ def info(platform, params: Params, args):
         if ws_path := workspace.get_workspace_path(
             params, params.get(ws_name)
         ):
-            print(f"  {TerminalFormatter.color_text(ws_name, bold=True)}: {ws_path}")
+            ws_name_split = ws_name.split('_')[1]  # Split and get the middle part
+            print(f"  {TerminalFormatter.color_text(ws_name_split, bold=True)}: {ws_path}")
 
     # Print all robot configurations
     if args.verbose:

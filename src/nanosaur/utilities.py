@@ -33,13 +33,13 @@ from nanosaur.prompt_colors import TerminalFormatter
 DEFAULT_ROBOT_CONFIG = {
     'name': 'nanosaur',
     'domain_id': 0,
-    'camera': '',
-    'lidar': '',
+    'camera_type': '',
+    'lidar_type': '',
     'engines': [],
 }
 
 CAMERA_CHOICES = ['', 'realsense', 'zed']
-LIDAR_CHOICES = ['', 'rplidar']
+LIDAR_CHOICES = ['', 'LD06', 'rplidar']
 ENGINES_CHOICES = ['vlslam', 'nvblox', 'apriltag']
 
 
@@ -59,12 +59,22 @@ class Robot:
             setattr(self, key, value)
 
     def __repr__(self):
-        # "Nanosaur[DID=](cover=AAA, )"
         attributes = ', '.join(f"{key}={value}" for key, value in self.__dict__.items() if key not in ['name', 'domain_id'] and value)
-        return f"{self.name}[DID={self.domain_id}] {attributes}"
+        return f"{self.name}[DID={self.domain_id}]({attributes})"
 
     def to_dict(self) -> dict:
         return self.__dict__
+
+    def config_to_ros(self) -> str:
+        ros_params = []
+        for key, value in self.__dict__.items():
+            if key == 'domain_id' or not value:
+                continue
+            param_name = 'robot_name' if key == 'name' else key
+            if isinstance(value, list):
+                value = f'"[{", ".join(value)}]"'
+            ros_params.append(f"{param_name}:={value}")
+        return ' '.join(ros_params)
 
     def verbose(self):
         """Print the robot configuration."""

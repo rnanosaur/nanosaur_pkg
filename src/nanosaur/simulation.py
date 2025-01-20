@@ -52,11 +52,15 @@ def start_robot_simulation(params):
     command = simulation_tools[params['simulation_tool']]['robot']
     # Load the robot configuration
     robot = RobotList.get_robot(params)
-    print(TerminalFormatter.color_text(f"Starting {robot.name} ID={robot.domain_id}", color='green'))
+    print(TerminalFormatter.color_text(f"Starting {robot}", color='green'))
+
+    # Print the command to be run
+    print(f"ROS_DOMAIN_ID={robot.domain_id} {command} {robot.config_to_ros()}")    
+
     try:
         # Combine sourcing the bash file with running the command
         process = subprocess.Popen(
-            f"source {bash_file} && ROS_DOMAIN_ID={robot.domain_id} {command} namespace:={robot.name}",
+            f"source {bash_file} && ROS_DOMAIN_ID={robot.domain_id} {command} {robot.config_to_ros()}",
             shell=True,
             executable="/bin/bash",
             stdout=subprocess.PIPE,
