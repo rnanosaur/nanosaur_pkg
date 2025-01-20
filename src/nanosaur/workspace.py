@@ -135,7 +135,7 @@ def run_dev_script(platform, params: Params, args):
     print(TerminalFormatter.color_text("Dev script finished", color='green'))
 
 
-def clean_workspace(nanosaur_ws_name, password):
+def clean_workspace(nanosaur_ws_name, password) -> bool:
     """
     Checks if a workspace folder exists in the user's home directory.
     :param folder_name: The name of the workspace folder to check.
@@ -192,7 +192,7 @@ def clean_workspace(nanosaur_ws_name, password):
     return False
 
 
-def get_workspace_path(params: Params, ws_name):
+def get_workspace_path(params: Params, ws_name) -> str:
     # Create the Nanosaur home folder
     nanosaur_home_path = create_nanosaur_home(params['nanosaur_home'])
     # Create the full path for the workspace folder in the user's home directory
@@ -205,7 +205,7 @@ def get_workspace_path(params: Params, ws_name):
         return None
 
 
-def create_workspace(nanosaur_home_path, ws_name):
+def create_workspace(nanosaur_home_path, ws_name) -> str:
     ws_name_path = os.path.join(nanosaur_home_path, ws_name)
     ws_name_path_src = os.path.join(ws_name_path, "src")
     # Check if folder exists, if not, create it
@@ -220,7 +220,7 @@ def create_workspace(nanosaur_home_path, ws_name):
     return ws_name_path
 
 
-def build_workspace(nanosaur_raw_github_repo, branch, workspace_path, rosinstall_name, password, skip_rosdep=False, skip_build=False):
+def build_workspace(nanosaur_raw_github_repo, branch, workspace_path, rosinstall_name, password, skip_rosdep=False, skip_build=False) -> bool:
     # Download rosinstall for this device
     url = f"{nanosaur_raw_github_repo}/{branch}/nanosaur/rosinstall/{rosinstall_name}.rosinstall"
     rosinstall_path = download_rosinstall(url, workspace_path, f"{rosinstall_name}.rosinstall")
@@ -305,7 +305,7 @@ def create_developer_workspace(platform, params: Params, args, password=None):
     params['developer_mode'] = True
 
 
-def download_rosinstall(url, folder_path, file_name):
+def download_rosinstall(url, folder_path, file_name) -> str:
     # Create the full file path
     file_path = os.path.join(folder_path, file_name)
 
@@ -329,7 +329,7 @@ def download_rosinstall(url, folder_path, file_name):
         return None
 
 
-def run_vcs_import(workspace_path, rosinstall_path, src_folder="src"):
+def run_vcs_import(workspace_path, rosinstall_path, src_folder="src") -> bool:
     try:
         # Run the command and stream the output live
         process = subprocess.Popen(
@@ -363,7 +363,7 @@ def run_vcs_import(workspace_path, rosinstall_path, src_folder="src"):
         return False
 
 
-def run_rosdep(folder_path, password):
+def run_rosdep(folder_path, password) -> bool:
     if password is None:
         print(TerminalFormatter.color_text("Error: No password provided.", color='red'))
         return False
@@ -398,7 +398,7 @@ def run_rosdep(folder_path, password):
     return result
 
 
-def run_colcon_build(folder_path):
+def run_colcon_build(folder_path) -> bool:
 
     # Move to the folder_path and run the colcon build command
     try:

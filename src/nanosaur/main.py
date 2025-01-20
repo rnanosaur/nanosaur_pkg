@@ -54,16 +54,40 @@ DEFAULT_PARAMS = {
 
 def info(platform, params: Params, args):
     """Print version information."""
-    print(f"Nanosaur package version {__version__}")
-    # Print configuration parameters
-    print("\nConfiguration:")
-    for key, value in params.items():
-        if value:  # Only print if value is not empty
+
+    # Print current robot configuration
+    robot_data = robot.RobotList.get_robot(params)
+    robot_data.verbose()
+
+    robot_list = robot.RobotList.load(params)
+    if len(robot_list.robots) > 1:
+        print("\nOther robots:")
+        for i, rb in enumerate(robot_list.robots):
+            if i != params.get('robot_idx', 0):
+                print(f"{i}. {rb}")
+
+    # Print all workspaces installed
+    print(TerminalFormatter.color_text("\nInstalled Workspaces:", bold=True))
+    for ws_name in ['ws_perception_name', 'ws_robot_name', 'ws_simulation_name']:
+        # Get the workspace path if it exists
+        if ws_path := workspace.get_workspace_path(
+            params, params.get(ws_name)
+        ):
+            print(f"  {TerminalFormatter.color_text(ws_name, bold=True)}: {ws_path}")
+
+    # Print all robot configurations
+    if args.verbose:
+        # Print configuration parameters
+        print("\nConfiguration:")
+        for key, value in params.items():
+            if value:  # Only print if value is not empty
+                print(f"  {key}: {value}")
+        # Print device information
+        print("\nPlatform Information:")
+        for key, value in platform.items():
             print(f"  {key}: {value}")
-    # Print device information
-    print("\nPlatform Information:")
-    for key, value in platform.items():
-        print(f"  {key}: {value}")
+    # Print version information
+    print(f"Nanosaur package version {__version__}")
 
 
 def install(platform, params: Params, args, password=None):
@@ -163,6 +187,7 @@ def main():
 
     # Subcommand: info
     parser_info = subparsers.add_parser('info', help="Show version information")
+    parser_info.add_argument('--verbose', '-v', action='store_true', help="Show detailed information")
     parser_info.set_defaults(func=info)
 
     # Subcommand: install (hidden if workspace already exists)

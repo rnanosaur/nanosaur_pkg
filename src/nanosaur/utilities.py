@@ -63,18 +63,35 @@ class Robot:
         attributes = ', '.join(f"{key}={value}" for key, value in self.__dict__.items() if key not in ['name', 'domain_id'] and value)
         return f"{self.name}[DID={self.domain_id}] {attributes}"
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return self.__dict__
 
+    def verbose(self):
+        """Print the robot configuration."""
+        print(TerminalFormatter.color_text("Robot:", bold=True))
+        print(f"  {TerminalFormatter.color_text('Name:', bold=True)} {self.name}")
+        print(f"  {TerminalFormatter.color_text('Domain ID:', bold=True)} {self.domain_id}")
+        print(f"  {TerminalFormatter.color_text('Camera:', bold=True)} {self.camera or 'not set'}")
+        print(f"  {TerminalFormatter.color_text('Lidar:', bold=True)} {self.lidar or 'not set'}")
+        print(f"  {TerminalFormatter.color_text('Engines:', bold=True)} {', '.join(self.engines) if self.engines else 'not set'}")
+        # Print other attributes
+        if other_attributes := {
+            key: value
+            for key, value in self.__dict__.items()
+            if key not in ['name', 'domain_id', 'camera', 'lidar', 'engines']
+        }:
+            print(f"  {TerminalFormatter.color_text('Other attributes:', bold=True)}")
+            for key, value in other_attributes.items():
+                print(f"    {TerminalFormatter.color_text(f'{key}:', bold=True)} {value}")
 
 class RobotList:
 
     @classmethod
-    def get_idx_by_name(cls, params, robot_name):
+    def get_idx_by_name(cls, params, robot_name) -> int:
         return cls.load(params)._get_idx_by_name(robot_name)
 
     @classmethod
-    def add_robot(cls, params, robot):
+    def add_robot(cls, params, robot) -> bool:
         robot_list = cls.load(params)
         if robot_list._add_robot(robot):
             params['robots'] = robot_list.to_dict()
@@ -98,7 +115,7 @@ class RobotList:
                 params['robot_idx'] -= 1
 
     @classmethod
-    def update_robot(cls, params, robot):
+    def update_robot(cls, params, robot) -> bool:
         robot_list = cls.load(params)
         idx = params.get('robot_idx', 0)
         if robot_list._update_robot(robot, idx):
@@ -107,7 +124,7 @@ class RobotList:
         return False
 
     @classmethod
-    def get_robot(cls, params, idx=None):
+    def get_robot(cls, params, idx=None) -> Robot:
         if idx is None:
             idx = params.get('robot_idx', 0)
         return cls.load(params)._get_robot_by_idx(idx)
@@ -122,7 +139,7 @@ class RobotList:
         else:
             self.robots = [Robot(robot) for robot in robots]
 
-    def _add_robot(self, robot):
+    def _add_robot(self, robot) -> bool:
         def is_robot(robot):
             for r in self.robots:
                 if r.name == robot.name:
@@ -134,22 +151,22 @@ class RobotList:
             return True
         return False
 
-    def _remove_robot(self, idx):
+    def _remove_robot(self, idx) -> bool:
         if idx < len(self.robots):
             del self.robots[idx]
             return True
         return False
 
-    def _get_idx_by_name(self, name):
+    def _get_idx_by_name(self, name) -> int:
         return next((i for i, robot in enumerate(self.robots) if robot.name == name), None)
 
-    def _get_robot_by_idx(self, idx):
+    def _get_robot_by_idx(self, idx) -> Robot:
         return self.robots[idx]
 
-    def _get_robot_by_name(self, name):
+    def _get_robot_by_name(self, name) -> Robot:
         return next((robot for robot in self.robots if robot.name == name), None)
 
-    def _update_robot(self, robot, idx):
+    def _update_robot(self, robot, idx) -> bool:
         if idx < len(self.robots):
             self.robots[idx] = robot
             return True
@@ -158,7 +175,7 @@ class RobotList:
     def __repr__(self):
         return f"RobotList({self.robots})"
 
-    def to_dict(self):
+    def to_dict(self) -> list:
         return [robot.to_dict() for robot in self.robots]
 
 
@@ -217,7 +234,7 @@ class Params:
                 yaml.dump(self._params_dict, file)
 
     @staticmethod
-    def get_params_file(home_folder, params_file_name):
+    def get_params_file(home_folder, params_file_name) -> str:
         return os.path.join(get_nanosaur_home(home_folder), params_file_name)
 
     def get(self, key, default=None):
@@ -233,7 +250,7 @@ class Params:
         return self._params_dict.items()
 
 
-def create_nanosaur_home(nanosaur_home):
+def create_nanosaur_home(nanosaur_home) -> str:
     # Get the current user's home directory
     user_home_dir = os.path.expanduser("~")
     # Create the full path for the workspace folder in the user's home directory
@@ -245,7 +262,7 @@ def create_nanosaur_home(nanosaur_home):
     return nanosaur_home_path
 
 
-def get_nanosaur_home(nanosaur_home):
+def get_nanosaur_home(nanosaur_home) -> str:
     # Get the current user's home directory
     user_home_dir = os.path.expanduser("~")
     return os.path.join(user_home_dir, nanosaur_home)
