@@ -183,6 +183,7 @@ class RobotList:
         for robot in self.robots:
             print(robot)
 
+
 class Params:
 
     @classmethod
