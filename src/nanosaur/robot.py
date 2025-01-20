@@ -105,6 +105,7 @@ def robot_set_camera(platform, params: Params, args):
     print(TerminalFormatter.color_text(f"Camera set to: {robot.camera}", color='green'))
     return True
 
+
 def robot_set_lidar(platform, params: Params, args):
     """Configure the lidar."""
     # Check if the lidar is provided
@@ -121,6 +122,7 @@ def robot_set_lidar(platform, params: Params, args):
     print(TerminalFormatter.color_text(f"Lidar set to: {robot.lidar}", color='green'))
     return True
 
+
 def robot_configure_engines(platform, params: Params, args):
     """Configure the robot engines."""
     def print_options(robot):
@@ -128,13 +130,13 @@ def robot_configure_engines(platform, params: Params, args):
         options = []
         for i, engine in enumerate(all_engines):
             if engine in robot.engines:
-                options.append(TerminalFormatter.color_text(f"{i+1}. Engine {engine} (enabled)", color='green'))
+                options.append(TerminalFormatter.color_text(f"{i + 1}. Engine {engine} (enabled)", color='green'))
             else:
-                options.append(f"{i+1}. Enable engine {engine}")
+                options.append(f"{i + 1}. Enable engine {engine}")
         options.append(f"{len(all_engines) + 1}. Exit")
         for option in options:
             print(option)
-    
+
     def toggle_engine(robot, engine):
         if not robot.engines:
             robot.engines = []
