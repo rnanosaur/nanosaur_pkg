@@ -72,9 +72,10 @@ class Robot:
         for key, value in self.__dict__.items():
             if key == 'domain_id' or not value:
                 continue
-            param_name = 'robot_name' if key == 'name' else key
-            if key == 'simulation':
-                param_name = 'use_sim_time'
+            param_name = {
+                'name': 'robot_name',
+                'simulation': 'use_sim_time'
+            }.get(key, key)
             if isinstance(value, list):
                 value = f'"[{", ".join(value)}]"'
             ros_params.append(f"{param_name}:={value}")
