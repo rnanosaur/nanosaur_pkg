@@ -32,6 +32,8 @@ import subprocess
 import pty
 import select
 import termios
+import tty
+import signal
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, get_nanosaur_home, create_nanosaur_home, require_sudo_password, conditional_sudo_password
 
@@ -55,73 +57,80 @@ def run_dev_script(platform, params: Params, args):
     os.chdir(isaac_ros_common_path)
     print(f"Changed directory to: {isaac_ros_common_path}")
 
-    # Save terminal settings to restore later
+    nanosaur_home_path = get_nanosaur_home(params['nanosaur_home'])
+
+    # Path to the script you want to run
+    command = "./scripts/run_dev.sh"
+
+    # Build the command arguments
+    args = ["-d", nanosaur_home_path]
+
+    # Optional: Commands to run automatically after the script starts
+    auto_commands = [f"cd {params['ws_perception_name']}"]
+
+    # Save the original terminal settings
     original_termios = termios.tcgetattr(sys.stdin)
 
-    # Switch terminal to raw mode for better control over input
     def set_raw_mode():
-        tty = sys.stdin.fileno()
-        new_termios = termios.tcgetattr(tty)
-        new_termios[3] = new_termios[3] & ~termios.ICANON & ~termios.ECHO  # Disable canonical mode and echo
-        termios.tcsetattr(tty, termios.TCSANOW, new_termios)
+        """Set terminal to raw mode to handle special characters."""
+        tty.setraw(sys.stdin.fileno())
 
-    # Restore the terminal settings
     def restore_terminal():
+        """Restore original terminal settings."""
         termios.tcsetattr(sys.stdin, termios.TCSANOW, original_termios)
+
+    def handle_signal(signum, frame):
+        """Forward terminal signals to the subprocess."""
+        os.kill(child_pid, signum)
 
     # Open a pseudo-terminal
     master_fd, slave_fd = pty.openpty()
 
-    nanosaur_home_path = get_nanosaur_home(params['nanosaur_home'])
+    # Prepare the command and arguments
+    cmd = [command] + (args if args else [])
 
-    # Start the subprocess with the slave side of the pseudo-terminal as its stdio
-    process = subprocess.Popen(
-        ["./scripts/run_dev.sh", "-d", nanosaur_home_path],
-        stdin=slave_fd,
-        stdout=slave_fd,
-        stderr=slave_fd,
-        universal_newlines=True
-    )
+    # Fork the process
+    child_pid = os.fork()
+    if child_pid == 0:  # Child process
+        os.close(master_fd)  # Close master in the child process
+        os.dup2(slave_fd, sys.stdin.fileno())  # Use slave as stdin
+        os.dup2(slave_fd, sys.stdout.fileno())  # Use slave as stdout
+        os.dup2(slave_fd, sys.stderr.fileno())  # Use slave as stderr
+        os.execvp(cmd[0], cmd)  # Execute the command
+    else:  # Parent process
+        os.close(slave_fd)  # Close slave in the parent process
 
     try:
         set_raw_mode()
 
-        # Automatically send the "cd" command after Docker starts
-        cd_command = f"cd {params['ws_perception_name']}\n"  # Create the cd command dynamically
-        os.write(master_fd, cd_command.encode())  # Send the command to the subprocess
+        # Forward terminal signals to the subprocess
+        for sig in (signal.SIGINT, signal.SIGTSTP, signal.SIGQUIT):
+            signal.signal(sig, handle_signal)
+
+        # Automatically send commands if specified
+        if auto_commands:
+            for command in auto_commands:
+                os.write(master_fd, (command + '\n').encode())
 
         while True:
-            # Use select to handle input/output
+            # Wait for input from the user or output from the subprocess
             rlist, _, _ = select.select([sys.stdin, master_fd], [], [])
 
-            if sys.stdin in rlist:  # Check for input from the user
-                user_input = os.read(sys.stdin.fileno(), 1024)  # Read input from the terminal
+            if sys.stdin in rlist:  # User input
+                user_input = os.read(sys.stdin.fileno(), 1024)
+                os.write(master_fd, user_input)  # Forward input to the subprocess
 
-                # Check for CTRL-D
-                if b'\x04' in user_input:  # CTRL-D (End of Transmission)
-                    os.write(master_fd, b'\x04')  # Send CTRL-D to the subprocess
-                    break  # Exit the loop after sending CTRL-D
-
-                os.write(master_fd, user_input)  # Write input to the subprocess
-
-            if master_fd in rlist:  # Check for output from the subprocess
-                output = os.read(master_fd, 1024).decode()  # Read from the subprocess
-                if output:
-                    sys.stdout.write(output)  # Write it to the terminal
-                    sys.stdout.flush()
-
-            # If the subprocess has terminated, exit the loop
-            if process.poll() is not None:
-                break
-
-        # Ensure the subprocess is terminated (in case it didn't handle CTRL-D)
-        if process.poll() is None:
-            process.terminate()
-            process.wait()
+            if master_fd in rlist:  # Subprocess output
+                output = os.read(master_fd, 1024)
+                if not output:  # If the subprocess exits, stop the loop
+                    break
+                # Filter and render subprocess output to avoid cursor resets
+                filtered_output = output.replace(b"\x1b[2J", b"")  # Remove clear screen sequences
+                sys.stdout.buffer.write(filtered_output)
+                sys.stdout.buffer.flush()
     finally:
-        restore_terminal()  # Restore terminal settings
+        restore_terminal()  # Restore the original terminal settings
         os.close(master_fd)
-        os.close(slave_fd)
 
     print(TerminalFormatter.color_text("Dev script finished", color='green'))
 
