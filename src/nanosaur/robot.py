@@ -29,7 +29,7 @@ from nanosaur import docker
 from nanosaur import simulation
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, RobotList
-from nanosaur.utilities import ENGINES_CHOICES
+from nanosaur.utilities import ENGINES_CHOICES, CAMERA_CHOICES, LIDAR_CHOICES
 
 
 def robot_start(platform, params: Params, args):
@@ -91,36 +91,116 @@ def robot_set_domain_id(platform, params: Params, args):
 
 def robot_set_camera(platform, params: Params, args):
     """Configure the camera."""
-    # Check if the camera is provided
+    def print_options(robot):
+        all_cameras = sorted(CAMERA_CHOICES + [robot.camera_type] if robot.camera_type not in CAMERA_CHOICES else CAMERA_CHOICES)
+        options = []
+        for i, camera in enumerate(all_cameras):
+            if camera == robot.camera_type:
+                if camera:
+                    options.append(TerminalFormatter.color_text(f"{i + 1}. Camera {camera} (selected)", color='green'))
+                else:
+                    options.append(TerminalFormatter.color_text(f"{i + 1}. No camera (selected)", color='green'))
+            else:
+                if camera:
+                    options.append(f"{i + 1}. Select camera {camera}")
+                else:
+                    options.append(f"{i + 1}. Select no camera")
+        options.append(f"{len(all_cameras) + 1}. Exit")
+        for option in options:
+            print(option)
+
+    def select_camera(robot, camera):
+        robot.camera_type = camera
+        RobotList.update_robot(params, robot)
+
     robot = RobotList.get_robot(params)
-    if not args.camera_type:
-        if not robot.camera:
-            print("Robot camera is not set")
+    if args.new_camera is not None:
+        if args.new_camera != robot.camera_type:
+            robot.camera_type = args.new_camera
+            RobotList.update_robot(params, robot)
+            print(TerminalFormatter.color_text(f"New camera {args.new_camera} selected", color='green'))
         else:
-            print(f"Current robot camera: {robot.camera}")
+            print(TerminalFormatter.color_text(f"Camera {args.new_camera} is already selected", color='yellow'))
         return True
-    # Update the camera
-    robot.camera = args.camera_type
-    RobotList.update_robot(params, robot)
-    print(TerminalFormatter.color_text(f"Camera set to: {robot.camera}", color='green'))
-    return True
+
+    try:
+        while True:
+            robot = RobotList.get_robot(params)
+            print_options(robot)
+            choice = input("Select an option: ")
+            all_cameras = sorted(CAMERA_CHOICES + [robot.camera_type] if robot.camera_type not in CAMERA_CHOICES else CAMERA_CHOICES)
+            if choice.isdigit() and 1 <= int(choice) <= len(all_cameras):
+                select_camera(robot, all_cameras[int(choice) - 1])
+                if robot.camera_type:
+                    print(TerminalFormatter.color_text(f"Camera set to: {robot.camera_type}", color='green'))
+                else:
+                    print(TerminalFormatter.color_text("No camera selected", color='green'))
+                break
+            elif choice == str(len(all_cameras) + 1):
+                print(TerminalFormatter.color_text("Exiting camera selection", color='yellow'))
+                break
+            else:
+                print(TerminalFormatter.color_text("Invalid option, please try again", color='red'))
+    except KeyboardInterrupt:
+        print(TerminalFormatter.color_text("Process interrupted by user", color='yellow'))
+        return False
 
 
 def robot_set_lidar(platform, params: Params, args):
     """Configure the lidar."""
-    # Check if the lidar is provided
+    def print_options(robot):
+        all_lidars = sorted(LIDAR_CHOICES + [robot.lidar_type] if robot.lidar_type not in LIDAR_CHOICES else LIDAR_CHOICES)
+        options = []
+        for i, lidar in enumerate(all_lidars):
+            if lidar == robot.lidar_type:
+                if lidar:
+                    options.append(TerminalFormatter.color_text(f"{i + 1}. Lidar {lidar} (selected)", color='green'))
+                else:
+                    options.append(TerminalFormatter.color_text(f"{i + 1}. No lidar (selected)", color='green'))
+            else:
+                if lidar:
+                    options.append(f"{i + 1}. Select lidar {lidar}")
+                else:
+                    options.append(f"{i + 1}. Select no lidar")
+        options.append(f"{len(all_lidars) + 1}. Exit")
+        for option in options:
+            print(option)
+
+    def select_lidar(robot, lidar):
+        robot.lidar_type = lidar
+        RobotList.update_robot(params, robot)
+
     robot = RobotList.get_robot(params)
-    if not args.lidar_type:
-        if not robot.lidar:
-            print("Robot lidar is not set")
+    if args.new_lidar is not None:
+        if args.new_lidar != robot.lidar_type:
+            robot.lidar_type = args.new_lidar
+            RobotList.update_robot(params, robot)
+            print(TerminalFormatter.color_text(f"New lidar {args.new_lidar} selected", color='green'))
         else:
-            print(f"Current robot lidar: {robot.lidar}")
+            print(TerminalFormatter.color_text(f"Lidar {args.new_lidar} is already selected", color='yellow'))
         return True
-    # Update the lidar
-    robot.lidar = args.lidar_type
-    RobotList.update_robot(params, robot)
-    print(TerminalFormatter.color_text(f"Lidar set to: {robot.lidar}", color='green'))
-    return True
+
+    try:
+        while True:
+            robot = RobotList.get_robot(params)
+            print_options(robot)
+            choice = input("Select an option: ")
+            all_lidars = sorted(LIDAR_CHOICES + [robot.lidar_type] if robot.lidar_type not in LIDAR_CHOICES else LIDAR_CHOICES)
+            if choice.isdigit() and 1 <= int(choice) <= len(all_lidars):
+                select_lidar(robot, all_lidars[int(choice) - 1])
+                if robot.lidar_type:
+                    print(TerminalFormatter.color_text(f"Lidar set to: {robot.lidar_type}", color='green'))
+                else:
+                    print(TerminalFormatter.color_text("No lidar selected", color='green'))
+                break
+            elif choice == str(len(all_lidars) + 1):
+                print(TerminalFormatter.color_text("Exiting lidar selection", color='yellow'))
+                break
+            else:
+                print(TerminalFormatter.color_text("Invalid option, please try again", color='red'))
+    except KeyboardInterrupt:
+        print(TerminalFormatter.color_text("Process interrupted by user", color='yellow'))
+        return False
 
 
 def robot_configure_engines(platform, params: Params, args):

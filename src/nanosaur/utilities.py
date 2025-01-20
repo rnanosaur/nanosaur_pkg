@@ -81,14 +81,14 @@ class Robot:
         print(TerminalFormatter.color_text("Robot:", bold=True))
         print(f"  {TerminalFormatter.color_text('Name:', bold=True)} {self.name}")
         print(f"  {TerminalFormatter.color_text('Domain ID:', bold=True)} {self.domain_id}")
-        print(f"  {TerminalFormatter.color_text('Camera:', bold=True)} {self.camera or 'not set'}")
-        print(f"  {TerminalFormatter.color_text('Lidar:', bold=True)} {self.lidar or 'not set'}")
+        print(f"  {TerminalFormatter.color_text('Camera:', bold=True)} {self.camera_type or 'not set'}")
+        print(f"  {TerminalFormatter.color_text('Lidar:', bold=True)} {self.lidar_type or 'not set'}")
         print(f"  {TerminalFormatter.color_text('Engines:', bold=True)} {', '.join(self.engines) if self.engines else 'not set'}")
         # Print other attributes
         if other_attributes := {
             key: value
             for key, value in self.__dict__.items()
-            if key not in ['name', 'domain_id', 'camera', 'lidar', 'engines']
+            if key not in ['name', 'domain_id', 'camera_type', 'lidar_type', 'engines']
         }:
             print(f"  {TerminalFormatter.color_text('Other attributes:', bold=True)}")
             for key, value in other_attributes.items():

@@ -258,11 +258,11 @@ def main():
     parser_robot_domain_id.set_defaults(func=robot.robot_set_domain_id)
     # Add robot camera subcommand
     parser_robot_camera = robot_subparsers.add_parser('camera', help="Set the robot camera type")
-    parser_robot_camera.add_argument('camera_type', type=str, choices=CAMERA_CHOICES, nargs='?', help=f"Type of camera, if empty no camera (options: {', '.join(CAMERA_CHOICES)})")
+    parser_robot_camera.add_argument('--new-camera', type=str, help=f"Specify the new camera configuration (options: {', '.join(CAMERA_CHOICES)})")
     parser_robot_camera.set_defaults(func=robot.robot_set_camera)
     # Add robot lidar subcommand
     parser_robot_lidar = robot_subparsers.add_parser('lidar', help="Set the robot lidar type")
-    parser_robot_lidar.add_argument('lidar_type', type=str, choices=LIDAR_CHOICES, nargs='?', help=f"Type of lidar, if empty no lidar (options: {', '.join(LIDAR_CHOICES)})")
+    parser_robot_lidar.add_argument('--new-lidar', type=str, choices=LIDAR_CHOICES, help=f"Specify the new lidar configuration (options: {', '.join(LIDAR_CHOICES)})")
     parser_robot_lidar.set_defaults(func=robot.robot_set_lidar)
     # Add robot engines subcommand
     parser_robot_engines = robot_subparsers.add_parser('engines', help="Configure the robot engines")
