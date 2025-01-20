@@ -33,6 +33,7 @@ from nanosaur.prompt_colors import TerminalFormatter
 DEFAULT_ROBOT_CONFIG = {
     'name': 'nanosaur',
     'domain_id': 0,
+    'simulation': False,
     'camera_type': '',
     'lidar_type': '',
     'engines': [],
@@ -59,8 +60,9 @@ class Robot:
             setattr(self, key, value)
 
     def __repr__(self):
-        attributes = ', '.join(f"{key}={value}" for key, value in self.__dict__.items() if key not in ['name', 'domain_id'] and value)
-        return f"{self.name}[DID={self.domain_id}]({attributes})"
+        attributes = ', '.join(f"{key}={value}" for key, value in self.__dict__.items() if key not in ['name', 'domain_id', 'simulation'] and value)
+        sim_prefix = "(sim) " if self.simulation else ""
+        return f"{sim_prefix}{self.name}[DID={self.domain_id}]({attributes})"
 
     def to_dict(self) -> dict:
         return self.__dict__
@@ -71,6 +73,8 @@ class Robot:
             if key == 'domain_id' or not value:
                 continue
             param_name = 'robot_name' if key == 'name' else key
+            if key == 'simulation':
+                param_name = 'use_sim_time'
             if isinstance(value, list):
                 value = f'"[{", ".join(value)}]"'
             ros_params.append(f"{param_name}:={value}")
@@ -78,7 +82,10 @@ class Robot:
 
     def verbose(self):
         """Print the robot configuration."""
-        print(TerminalFormatter.color_text("Robot:", bold=True))
+        if self.simulation:
+            print(TerminalFormatter.color_text("Robot: (simulated)", bold=True, color='magenta'))
+        else:
+            print(TerminalFormatter.color_text("Robot:", bold=True))
         print(f"  {TerminalFormatter.color_text('Name:', bold=True)} {self.name}")
         print(f"  {TerminalFormatter.color_text('Domain ID:', bold=True)} {self.domain_id}")
         print(f"  {TerminalFormatter.color_text('Camera:', bold=True)} {self.camera_type or 'not set'}")
@@ -88,7 +95,7 @@ class Robot:
         if other_attributes := {
             key: value
             for key, value in self.__dict__.items()
-            if key not in ['name', 'domain_id', 'camera_type', 'lidar_type', 'engines']
+            if key not in ['name', 'simulation', 'domain_id', 'camera_type', 'lidar_type', 'engines']
         }:
             print(f"  {TerminalFormatter.color_text('Other attributes:', bold=True)}")
             for key, value in other_attributes.items():
