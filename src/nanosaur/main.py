@@ -282,18 +282,19 @@ def main():
     # Parse the arguments
     args = parser.parse_args()
 
-    # Handle subcommands without a specific type
-    subcommand_map = {
-        'workspace': parser_workspace,
-        'ws': parser_workspace,
-        'simulation': parser_simulation,
-        'sim': parser_simulation,
-        'robot': parser_robot,
-        'swarm': parser_swarm
-    }
-
-    if args.command in subcommand_map and getattr(args, f"{args.command}_type", None) is None:
-        subcommand_map[args.command].print_help()
+    # Handle workspace subcommand without a workspace_type
+    if args.command in ['workspace', 'ws'] and args.workspace_type is None:
+        parser_workspace.print_help()
+        sys.exit(1)
+    # Handle install subcommand without an install_type
+    if args.command in ['simulation', 'sim'] and args.simulation_type is None:
+        parser_simulation.print_help()
+        sys.exit(1)
+    if args.command in ['robot'] and args.robot_type is None:
+        parser_robot.print_help()
+        sys.exit(1)
+    if args.command in ['swarm'] and args.swarm_type is None:
+        parser_swarm.print_help()
         sys.exit(1)
 
     # Execute the corresponding function based on the subcommand
