@@ -573,7 +573,7 @@ def deploy(platform, params: Params, args, password=None):
 
     if workspace == 'robot' or args.all_platforms:
         print(TerminalFormatter.color_text("Robot deploy. Not implemented", color='yellow'))
-    
+
     if workspace == 'desktop' or args.all_platforms:
         print(TerminalFormatter.color_text("Desktop deploy. Not implemented", color='yellow'))
 
