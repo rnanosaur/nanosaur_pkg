@@ -479,23 +479,45 @@ def update(platform, params: Params, args, password=None):
     else:
         workspace = "robot" if platform['Machine'] == 'jetson' else "desktop"
 
-    if workspace == 'robot' or args.all_platforms:
-        robot_ws_name = params['ws_robot_name']
-        robot_ws_path = get_workspace_path(params, robot_ws_name)
-        if robot_ws_path is not None:
-            print(TerminalFormatter.color_text(f"- Update robot workspace {robot_ws_name}", bold=True))
-            # Build environment
-            if not run_colcon_build(robot_ws_path):
-                return False
+    def update_workspace(params, workspace_type, workspace_name_key, skip_build=False):
+        workspace_name = params[workspace_name_key]
+        workspace_path = get_workspace_path(params, workspace_name)
+        # Check if the workspace folder exists, vcs update and build
+        if workspace_path:
+            rosinstall_path = os.path.join(workspace_path, f"{workspace_type}.rosinstall")
+            if os.path.exists(rosinstall_path):
+                print(TerminalFormatter.color_text(f"Found rosinstall file: {rosinstall_path}", bold=True))
+                if not run_vcs_import(workspace_path, rosinstall_path):
+                    return False
+            # rosdep workspace
+            if not skip_build:
+                print(TerminalFormatter.color_text(f"- Update {workspace_name} workspace", bold=True))
+                if not run_colcon_build(workspace_path):
+                    return False
+        return True
+    
+    # Update shared workspace
+    nanosaur_home_path = get_nanosaur_home(params['nanosaur_home'])
+    shared_src_path = os.path.join(nanosaur_home_path, "shared_src")
+    rosinstall_path = os.path.join(shared_src_path, "shared.rosinstall")
+    if os.path.exists(rosinstall_path):
+        print(TerminalFormatter.color_text(f"Found rosinstall file: {rosinstall_path}", bold=True))
+        if not run_vcs_import(nanosaur_home_path, rosinstall_path, src_folder="shared_src"):
+            return False
 
+    # Update the robot workspace
+    if workspace == 'robot' or args.all_platforms:
+        if not update_workspace(params, 'robot', 'ws_robot_name'):
+            return False
+
+    # Update the simulation workspace
     if workspace == 'desktop' or args.all_platforms:
-        simulation_ws_name = params['ws_simulation_name']
-        simulation_ws_path = get_workspace_path(params, simulation_ws_name)
-        if simulation_ws_path is not None:
-            print(TerminalFormatter.color_text(f"- Update simulation workspace {simulation_ws_name}", bold=True))
-            # Build environment
-            if not run_colcon_build(simulation_ws_path):
-                return False
+        if not update_workspace(params, 'desktop', 'ws_simulation_name'):
+            return False
+
+    if workspace == 'peception' or args.all_platforms:
+        if not update_workspace(params, 'perception', 'ws_perception_name', skip_build=True):
+            return False
 
     return True
 # EOF
