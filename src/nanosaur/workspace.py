@@ -51,6 +51,7 @@ COLCON_DEFAULTS = {
 ISAAC_ROS_DISTRO_SUFFIX = "ros2_humble"
 NANOSAUR_DOCKERFILE_SUFFIX = "nanosaur"
 
+
 def run_dev_script(platform, params: Params, args):
 
     perception_path = get_workspace_path(params, params['ws_perception_name'])
@@ -520,12 +521,13 @@ def update(platform, params: Params, args, password=None):
 
     return True
 
+
 def deploy_docker_perception(params: Params):
-    image_name="nanosaur-perception"
+    image_name = "nanosaur-perception"
     perception_ws_name = params['ws_perception_name']
     perception_ws_path = get_workspace_path(params, perception_ws_name)
     nanosaur_perception_path = os.path.join(perception_ws_path, 'src', 'nanosaur_perception')
-    
+
     src_folders = [
         os.path.join(get_nanosaur_home(params['nanosaur_home']), 'shared_src'),
         os.path.join(perception_ws_path, 'src')
@@ -534,10 +536,10 @@ def deploy_docker_perception(params: Params):
     try:
         os.chdir(nanosaur_perception_path)
         print(f"Changed directory to: {nanosaur_perception_path}")
-        
+
         ws_dir_list = '--ws-src ' + ' --ws-src '.join(src_folders)
         command = f"scripts/docker_build.sh {ws_dir_list} --image-name {image_name}"
-        
+
         process = subprocess.Popen(
             command,
             shell=True,
@@ -562,6 +564,7 @@ def deploy_docker_perception(params: Params):
         print(f"An error occurred while running the command: {e}")
         return False
 
+
 def deploy(platform, params: Params, args, password=None):
     if args.workspace is not None:
         workspace = args.workspace
@@ -570,7 +573,7 @@ def deploy(platform, params: Params, args, password=None):
 
     if workspace == 'robot' or args.all_platforms:
         print(TerminalFormatter.color_text("Not implemented", color='yellow'))
-    
+
     if workspace == 'desktop' or args.all_platforms:
         print(TerminalFormatter.color_text("Not implemented", color='yellow'))
 
