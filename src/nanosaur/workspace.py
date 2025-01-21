@@ -572,10 +572,10 @@ def deploy(platform, params: Params, args, password=None):
         workspace = "robot" if platform['Machine'] == 'jetson' else "desktop"
 
     if workspace == 'robot' or args.all_platforms:
-        print(TerminalFormatter.color_text("Not implemented", color='yellow'))
-
+        print(TerminalFormatter.color_text("Robot deploy. Not implemented", color='yellow'))
+    
     if workspace == 'desktop' or args.all_platforms:
-        print(TerminalFormatter.color_text("Not implemented", color='yellow'))
+        print(TerminalFormatter.color_text("Desktop deploy. Not implemented", color='yellow'))
 
     # Call the function within the deploy function
     if workspace == 'perception' or args.all_platforms:
