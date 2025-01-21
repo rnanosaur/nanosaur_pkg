@@ -149,7 +149,7 @@ def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Param
 
 def add_robot_config_subcommands(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     robot_data = robot.RobotList.get_robot(params)
-    parser_robot_config = subparsers.add_parser('config', help="Configure the robot settings")
+    parser_robot_config = subparsers.add_parser('config', help=f"Configure the robot settings [{robot_data.name}]")
     config_subparsers = parser_robot_config.add_subparsers(dest='config_type', help="Configuration options")
     # Add robot name subcommand
     parser_robot_name = config_subparsers.add_parser('name', help=f"Change the robot name [{robot_data.name}]")
@@ -257,7 +257,6 @@ def main():
     parser_info.set_defaults(func=info)
 
     # Subcommand: install (hidden if workspace already exists)
-    # if get_workspace_path(params['nanosaur_workspace_name']) is None:
     if 'mode' in params and params['mode'] == 'developer':
         parser_install = subparsers.add_parser('install', help="Install the Nanosaur workspace")
     else:
