@@ -147,6 +147,7 @@ def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Param
     parser_simulation_set.set_defaults(func=simulation.simulation_set)
     return parser_simulation
 
+
 def add_robot_config_subcommands(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     robot_data = robot.RobotList.get_robot(params)
     parser_robot_config = subparsers.add_parser('config', help=f"Configure the robot settings [{robot_data.name}]")
@@ -174,8 +175,9 @@ def add_robot_config_subcommands(subparsers: argparse._SubParsersAction, params:
     # Add robot reset subcommand
     parser_robot_reset = config_subparsers.add_parser('reset', help="Restore the robot configuration to default")
     parser_robot_reset.set_defaults(func=robot.robot_reset)
-    
+
     return parser_robot_config
+
 
 def parser_robot_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     robot_data = robot.RobotList.get_robot(params)
