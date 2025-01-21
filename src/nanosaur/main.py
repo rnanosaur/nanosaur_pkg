@@ -120,6 +120,7 @@ def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.Ar
     # Add workspace clean subcommand
     add_workspace_subcommand('clean', "Clean the workspace", workspace.clean)
     add_workspace_subcommand('update', "Update the workspace", workspace.update)
+    add_workspace_subcommand('deploy', "Deploy workspace to docker image", workspace.deploy)
     # Add workspace perception subcommand
     parser_workspace_perception = workspace_subparsers.add_parser(
         'perception', help="Start the Isaac ROS docker container")

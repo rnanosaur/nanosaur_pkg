@@ -48,6 +48,8 @@ COLCON_DEFAULTS = {
     }
 }
 
+ISAAC_ROS_DISTRO_SUFFIX = "ros2_humble"
+NANOSAUR_DOCKERFILE_SUFFIX = "nanosaur"
 
 def run_dev_script(platform, params: Params, args):
 
@@ -507,17 +509,74 @@ def update(platform, params: Params, args, password=None):
 
     # Update the robot workspace
     if workspace == 'robot' or args.all_platforms:
-        if not update_workspace(params, 'robot', 'ws_robot_name'):
-            return False
+        update_workspace(params, 'robot', 'ws_robot_name')
 
     # Update the simulation workspace
     if workspace == 'desktop' or args.all_platforms:
-        if not update_workspace(params, 'desktop', 'ws_simulation_name'):
-            return False
+        update_workspace(params, 'desktop', 'ws_simulation_name')
 
-    if workspace == 'peception' or args.all_platforms:
-        if not update_workspace(params, 'perception', 'ws_perception_name', skip_build=True):
+    if workspace == 'perception' or args.all_platforms:
+        update_workspace(params, 'perception', 'ws_perception_name', skip_build=True)
+
+    return True
+
+def deploy_docker_perception(params: Params):
+    image_name="nanosaur-perception"
+    perception_ws_name = params['ws_perception_name']
+    perception_ws_path = get_workspace_path(params, perception_ws_name)
+    nanosaur_perception_path = os.path.join(perception_ws_path, 'src', 'nanosaur_perception')
+    
+    src_folders = [
+        os.path.join(get_nanosaur_home(params['nanosaur_home']), 'shared_src'),
+        os.path.join(perception_ws_path, 'src')
+    ]
+
+    try:
+        os.chdir(nanosaur_perception_path)
+        print(f"Changed directory to: {nanosaur_perception_path}")
+        
+        ws_dir_list = '--ws-src ' + ' --ws-src '.join(src_folders)
+        command = f"scripts/docker_build.sh {ws_dir_list} --image-name {image_name}"
+        
+        process = subprocess.Popen(
+            command,
+            shell=True,
+            executable="/bin/bash",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+
+        for line in process.stdout:
+            print(line.decode('utf-8', errors='replace'), end="")
+
+        process.wait()
+
+        if process.returncode != 0:
+            print(TerminalFormatter.color_text(process.returncode, color='red'))
             return False
+        else:
+            print(TerminalFormatter.color_text("Command completed successfully", color='green'))
+            return True
+
+    except Exception as e:
+        print(f"An error occurred while running the command: {e}")
+        return False
+
+def deploy(platform, params: Params, args, password=None):
+    if args.workspace is not None:
+        workspace = args.workspace
+    else:
+        workspace = "robot" if platform['Machine'] == 'jetson' else "desktop"
+
+    if workspace == 'robot' or args.all_platforms:
+        print(TerminalFormatter.color_text("Not implemented", color='yellow'))
+    
+    if workspace == 'desktop' or args.all_platforms:
+        print(TerminalFormatter.color_text("Not implemented", color='yellow'))
+
+    # Call the function within the deploy function
+    if workspace == 'perception' or args.all_platforms:
+        deploy_docker_perception(params)
 
     return True
 # EOF
