@@ -495,7 +495,7 @@ def update(platform, params: Params, args, password=None):
                 if not run_colcon_build(workspace_path):
                     return False
         return True
-    
+
     # Update shared workspace
     nanosaur_home_path = get_nanosaur_home(params['nanosaur_home'])
     shared_src_path = os.path.join(nanosaur_home_path, "shared_src")
