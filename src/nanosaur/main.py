@@ -34,7 +34,7 @@ from jtop import jtop, JtopException
 from nanosaur import __version__
 from nanosaur.utilities import Params, get_nanosaur_home
 from nanosaur import workspace
-from nanosaur.robot import parser_robot_menu
+from nanosaur.robot import parser_robot_menu, robot_start, robot_stop
 from nanosaur.simulation import parser_simulation_menu
 from nanosaur.swarm import parser_swarm_menu
 from nanosaur.prompt_colors import TerminalFormatter
@@ -82,13 +82,13 @@ def info(platform, params: Params, args):
     # Print simulation tools if they exist
     if 'simulation_tool' in params:
         print(f"\n{TerminalFormatter.color_text('Simulation Tool:', bold=True)} {params['simulation_tool']}")
-
-    # Print all workspaces installed
-    print(TerminalFormatter.color_text("\nInstalled Workspaces:", bold=True))
-    for ws_name, ws_path in workspace.get_workspaces_path(params).items():
-        # Get the workspace path if it exists
-        print(f"  {TerminalFormatter.color_text(ws_name, bold=True)}: {TerminalFormatter.clickable_path(ws_path)}")
-
+    # Print installed workspaces
+    workspaces = workspace.get_workspaces_path(params)
+    if workspaces or args.verbose:
+        print(TerminalFormatter.color_text("\nInstalled Workspaces:", bold=True))
+        for ws_name, ws_path in workspaces.items():
+            # Get the workspace path if it exists
+            print(f"  {TerminalFormatter.color_text(ws_name, bold=True)}: {TerminalFormatter.clickable_path(ws_path)}")
     # Print all robot configurations
     if args.verbose:
         # Print device information
@@ -147,6 +147,15 @@ def install(platform, params: Params, args):
         params['mode'] = install_type
 
 
+def robot_control(params, subparsers):
+    robot = RobotList.get_robot(params).name
+    robot_name = TerminalFormatter.color_text(robot, color='green', bold=True)
+    parser_wakeup = subparsers.add_parser('wake-up', help=f"Start {robot_name} (same as 'nanosaur robot start')")
+    parser_wakeup.set_defaults(func=robot_start)
+    # Subcommand: shutdown
+    parser_shutdown = subparsers.add_parser('shutdown', help="Shutdown the robot (same as 'nanosaur robot stop')")
+    parser_shutdown.set_defaults(func=robot_stop)
+
 def main():
     # Load the parameters
     params = Params.load(DEFAULT_PARAMS, home_folder=NANOSAUR_HOME_NAME, params_file_name=NANOSAUR_CONFIG_FILE_NAME)
@@ -176,12 +185,11 @@ def main():
     parser_info.set_defaults(func=info)
 
     # Subcommand: install (hidden if workspace already exists)
-    # if 'mode' in params and params['mode'] in ['developer', 'maintainer']:
-    parser_install = subparsers.add_parser('install', help=f"Install nanosaur on your {device_type}")
-    # else:
-    #    parser_install = subparsers.add_parser('install')
+    if 'mode' not in params:
+        parser_install = subparsers.add_parser('install', help=f"Install nanosaur on your {device_type}")
+    else:
+        parser_install = subparsers.add_parser('install')
     # Add simulation install subcommand
-    parser_install.add_argument('--developer', '--dev', action='store_true', help="Install developer workspace")
     parser_install.add_argument('--force', action='store_true', help="Force the update")
     parser_install.add_argument('--all-platforms', action='store_true', help="Install for all platforms")
     parser_install.set_defaults(func=install)
@@ -202,6 +210,10 @@ def main():
     if device_type == 'desktop':
         # Subcommand: swarm (with a sub-menu for swarm operations)
         parser_swarm = parser_swarm_menu(subparsers, params)
+
+    # Subcommand: wakeup (with a sub-menu for wakeup operations)
+    if 'mode' in params:
+        robot_control(params, subparsers)
 
     # Enable tab completion
     argcomplete.autocomplete(parser)
