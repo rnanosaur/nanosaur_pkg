@@ -274,7 +274,8 @@ class Params:
 
     @staticmethod
     def get_params_file() -> str:
-        return os.path.join(get_nanosaur_home(), NANOSAUR_CONFIG_FILE_NAME)
+        nanosaur_config_file_name = os.getenv('NANOSAUR_CONFIG_FILE', NANOSAUR_CONFIG_FILE_NAME)
+        return os.path.join(get_nanosaur_home(), nanosaur_config_file_name)
 
     def get(self, key, default=None):
         return getattr(self, key, default)
