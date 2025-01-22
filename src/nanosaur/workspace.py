@@ -60,13 +60,23 @@ def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.Ar
     # Add workspace clean subcommand
     add_workspace_subcommand('clean', "Clean the workspace", clean)
     add_workspace_subcommand('update', "Update the workspace", update)
+    add_workspace_subcommand('run', "Run the workspace", run_developer_workspace)
     add_workspace_subcommand('deploy', "Deploy workspace to docker image", deploy)
-    # Add workspace perception subcommand
-    parser_workspace_perception = workspace_subparsers.add_parser(
-        'perception', help="Start the Isaac ROS docker container")
-    parser_workspace_perception.set_defaults(func=ros.run_dev_script)
     return parser_workspace
 
+
+def run_developer_workspace(platform, params: Params, args, password=None):
+    if args.workspace is not None:
+        workspace = args.workspace
+    else:
+        workspace = "robot" if platform['Machine'] == 'jetson' else "desktop"
+    
+    if workspace == 'perception':
+        perception_ws_name = params['ws_perception_name']
+        perception_ws_path = get_workspace_path(params, perception_ws_name)
+        ros.run_dev_script(params, perception_ws_path)
+    else:
+        print(TerminalFormatter.color_text(f"I cannot run {workspace}", color='red'))
 
 def get_workspaces_path(params: Params) -> bool:
     nanosaur_home_path = get_nanosaur_home(params['nanosaur_home'])
@@ -91,7 +101,7 @@ def get_workspace_path(params: Params, ws_name) -> str:
         return None
 
 
-def create_workspace(nanosaur_home_path, ws_name) -> str:
+def create_workspace(nanosaur_home_path, ws_name, skip_create_colcon_setting=False) -> str:
     ws_name_path = os.path.join(nanosaur_home_path, ws_name)
     ws_name_path_src = os.path.join(ws_name_path, "src")
     # Check if folder exists, if not, create it
@@ -101,8 +111,9 @@ def create_workspace(nanosaur_home_path, ws_name) -> str:
     else:
         print(TerminalFormatter.color_text(f"Workspace '{ws_name}' already exists.", color='yellow'))
     # Save the default colcon settings
-    with open(f"{ws_name_path}/colcon_defaults.yaml", 'w') as file:
-        yaml.dump(COLCON_DEFAULTS, file)
+    if not skip_create_colcon_setting:
+        with open(f"{ws_name_path}/colcon_defaults.yaml", 'w') as file:
+            yaml.dump(COLCON_DEFAULTS, file)
     return ws_name_path
 
 
@@ -195,6 +206,15 @@ def build_workspace(nanosaur_raw_github_repo, branch, workspace_path, rosinstall
     return True
 
 
+def create_developer_workspace(platform, params: Params, args, password=None):
+    # Get the Nanosaur home folder and branch
+    nanosaur_home = params['nanosaur_home']
+    # Create the Nanosaur home folder
+    nanosaur_home_path = create_nanosaur_home(nanosaur_home)
+    # Create developer workspace
+    create_workspace(nanosaur_home_path, params['ws_developer_name'], skip_create_colcon_setting=True)
+
+
 @require_sudo_password
 def create_maintainer_workspace(platform, params: Params, args, password=None):
     # determine the device type
@@ -243,7 +263,7 @@ def create_maintainer_workspace(platform, params: Params, args, password=None):
 
     # Make the perception workspace
     ws_name_path = create_workspace(nanosaur_home_path, params['ws_perception_name'])
-    build_workspace(branch, ws_name_path, 'perception', password, skip_rosdep=True, skip_build=True)
+    build_workspace(nanosaur_raw_github_repo, branch, ws_name_path, 'perception', password, skip_rosdep=True, skip_build=True)
     # Set params in maintainer mode
     params['mode'] = 'maintainer'
 

@@ -27,6 +27,8 @@
 import argparse
 import argcomplete
 import sys
+import inquirer
+from inquirer.themes import GreenPassion
 from jtop import jtop, JtopException
 
 from nanosaur import __version__
@@ -37,10 +39,11 @@ from nanosaur.simulation import parser_simulation_menu
 from nanosaur.swarm import parser_swarm_menu
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import RobotList
-import inquirer
 
+
+NANOSAUR_INSTALL_OPTIONS = ['Simple', 'Developer', 'Maintainer']
 NANOSAUR_CONFIG_FILE_NAME = 'nanosaur.yaml'
-NANOSAUR_HOME_NAME = 'nanosaur_test'
+NANOSAUR_HOME_NAME = 'nanosaur'
 
 # Define default parameters
 DEFAULT_PARAMS = {
@@ -106,23 +109,38 @@ def install_old(platform, params: Params, args, password=None):
 
 
 def install(platform, params: Params, args, password=None):
+    # Determine the device type
+    device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
+    # Questions to ask the user
     questions = [
         inquirer.List(
             'choice',
             message="What would you like to install?",
-            choices=['Developer Workspace', 'Simulation Tools', 'Robot Configuration'],
+            choices=NANOSAUR_INSTALL_OPTIONS,
         ),
+        inquirer.Confirm(
+            'confirm',
+            message="Are you sure you want to install this?",
+            default=False
+        )
     ]
-
-    answers = inquirer.prompt(questions)
-
-    if answers['choice'] == 'Developer Workspace':
+    # Ask the user to select an install type
+    answers = inquirer.prompt(questions, theme=GreenPassion())
+    if answers is None:
+        return False
+    # Check if the user wants to continue
+    if answers['confirm'] is False:
+        print(TerminalFormatter.color_text("Installation cancelled", color='red'))
+        return False
+    # Get the selected install type
+    install_type = answers['choice']
+    print(f"Installing {install_type} workspace...")
+    if install_type == 'Developer':
         workspace.create_developer_workspace(platform, params, args)
-    elif answers['choice'] == 'Simulation Tools':
-        print(TerminalFormatter.color_text("Simulation Tools installation is not implemented yet", color='red'))
-    elif answers['choice'] == 'Robot Configuration':
-        print(TerminalFormatter.color_text("Robot Configuration installation is not implemented yet", color='red'))
-
+    elif install_type == 'Maintainer':
+        workspace.create_maintainer_workspace(platform, params, args)
+    elif install_type == 'Simple':
+        print(TerminalFormatter.color_text(f"Not implemented yet {device_type}", color='red'))
 
 def main():
     # Load the parameters

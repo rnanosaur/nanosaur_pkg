@@ -44,9 +44,7 @@ ISAAC_ROS_DISTRO_SUFFIX = "ros2_humble"
 NANOSAUR_DOCKERFILE_SUFFIX = "nanosaur"
 
 
-def run_dev_script(platform, params: Params, args):
-
-    perception_path = get_workspace_path(params, params['ws_perception_name'])
+def run_dev_script(params, perception_path):
     isaac_ros_common_path = os.path.join(perception_path, 'src', 'isaac_ros_common')
     # Get the path to the Isaac ROS common package
     os.chdir(isaac_ros_common_path)
