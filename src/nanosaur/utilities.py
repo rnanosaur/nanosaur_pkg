@@ -28,6 +28,7 @@ import copy
 import yaml
 import pexpect
 import getpass
+from nanosaur import __version__
 from nanosaur.prompt_colors import TerminalFormatter
 
 DEFAULT_ROBOT_CONFIG = {
@@ -46,6 +47,7 @@ ENGINES_CHOICES = ['vslam', 'nvblox', 'apriltag']
 
 NANOSAUR_CONFIG_FILE_NAME = 'nanosaur.yaml'
 NANOSAUR_HOME_NAME = 'nanosaur'
+NANOSAUR_WEBSITE_URL = 'https://nanosaur.ai'
 NANOSAUR_MAIN_GITHUB_URL = 'https://github.com/rnanosaur/nanosaur.git'
 NANOSAUR_MAIN_BRANCH = 'nanosaur2'
 
@@ -292,6 +294,20 @@ class Params:
         return self._params_dict.items()
 
 
+def package_info(params: Params, verbose: bool):
+    # Print version information
+    nanosaur_website = TerminalFormatter.clickable_link(NANOSAUR_WEBSITE_URL)
+    print(f"{TerminalFormatter.color_text('Nanosaur website:', bold=True)} {nanosaur_website}")
+    nanosaur_home_folder = TerminalFormatter.clickable_link(get_nanosaur_home())
+    print(f"{TerminalFormatter.color_text('Nanosaur home:', bold=True)} {nanosaur_home_folder}")
+    if verbose:
+        print(f"{TerminalFormatter.color_text('Nanosaur package:', bold=True)} {__version__}")
+        nanosaur_branch = params.get('nanosaur_branch', NANOSAUR_MAIN_BRANCH)
+        print(f"{TerminalFormatter.color_text('Nanosaur version (branch):', bold=True)} {nanosaur_branch}")
+        config_file_path = TerminalFormatter.clickable_link(Params.get_params_file())
+        print(f"{TerminalFormatter.color_text('Nanosaur config file:', bold=True)} {config_file_path}")
+
+
 def get_nanosaur_raw_github_url(params: Params) -> str:
     nanosaur_github_url = params.get('nanosaur_github', NANOSAUR_MAIN_GITHUB_URL)
     nanosaur_branch = params.get('nanosaur_branch', NANOSAUR_MAIN_BRANCH)
@@ -316,10 +332,12 @@ def create_nanosaur_home() -> str:
 
 
 def get_nanosaur_home() -> str:
-    # Get the current user's home directory
-    nanosaur_home = os.getenv('NANOSAUR_HOME', NANOSAUR_HOME_NAME)
-    user_home_dir = os.path.expanduser("~")
-    return os.path.join(user_home_dir, nanosaur_home)
+    """ Get the nanosaur home directory. """
+    # Check if the environment variable is set
+    if 'NANOSAUR_HOME' in os.environ:
+        return os.environ['NANOSAUR_HOME']
+    # Get the current nanosaur's home directory
+    return os.path.join(os.path.expanduser("~"), NANOSAUR_HOME_NAME)
 
 
 def require_sudo(func):

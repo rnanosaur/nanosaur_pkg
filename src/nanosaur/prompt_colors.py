@@ -94,7 +94,7 @@ class TerminalFormatter:
         return f"\033]8;;{url}\033\\{text}\033]8;;\033\\"
 
     @staticmethod
-    def clickable_path(path):
+    def clickable_link(path):
         """
         Create a clickable link in the terminal where the path is the URL and the text.
         Detect if the path is a file, folder, or link and format the URL accordingly.
@@ -104,11 +104,13 @@ class TerminalFormatter:
         """
         if os.path.isfile(path) or os.path.isdir(path):
             url = f"file://{os.path.abspath(path)}"
+            return TerminalFormatter.clickable_text(path, url)
         elif os.path.islink(path):
             url = f"file://{os.path.abspath(os.readlink(path))}"
+            return TerminalFormatter.clickable_text(path, url)
+        elif path.startswith("http://") or path.startswith("https://"):
+            return TerminalFormatter.clickable_text(path, path)
         else:
-            url = path  # Assume it's a URL if it's neither a file, directory, nor link
-
-        return TerminalFormatter.clickable_text(path, url)
+            return path  # Return the same text if it's neither a file, directory, link, nor URL
 
 # EOF

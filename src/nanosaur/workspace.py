@@ -45,9 +45,22 @@ COLCON_DEFAULTS = {
 
 DEFAULT_WORKSPACE_PERCEPTION = 'perception_ws'
 DEFAULT_WORKSPACE_SIMULATION = 'simulation_ws'
-DEFAULT_WORKSPACE_ROBOT = 'ros_ws'
-DEFAULT_WORKSPACE_DEVELOPER = 'developer_ws'
+DEFAULT_WORKSPACE_ROBOT = 'robot_ws'
+DEFAULT_WORKSPACE_DEVELOPER = 'ros_ws'
 
+
+def workspaces_info(params: Params, verbose: bool):
+    """Print information about the workspaces."""
+    # Print installed workspaces
+    workspaces = get_workspaces_path(params)
+    print()
+    if workspaces:
+        print(TerminalFormatter.color_text("Installed Workspaces:", bold=True))
+        for ws_name, ws_path in workspaces.items():
+            # Get the workspace path if it exists
+            print(f"  {TerminalFormatter.color_text(ws_name, bold=True)}: {TerminalFormatter.clickable_link(ws_path)}")
+    elif verbose:
+        print(TerminalFormatter.color_text("No workspaces installed", bold=True))
 
 def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     parser_workspace = subparsers.add_parser(

@@ -31,42 +31,40 @@ import inquirer
 from inquirer.themes import GreenPassion
 from jtop import jtop, JtopException
 
-from nanosaur import __version__
-from nanosaur.utilities import Params, get_nanosaur_home
-from nanosaur import workspace
+from nanosaur.workspace import workspaces_info, parser_workspace_menu, create_developer_workspace, create_maintainer_workspace, get_workspaces_path
 from nanosaur.robot import parser_robot_menu, robot_start, robot_stop
 from nanosaur.simulation import parser_simulation_menu
 from nanosaur.swarm import parser_swarm_menu
 from nanosaur.prompt_colors import TerminalFormatter
-from nanosaur.utilities import RobotList
+from nanosaur.utilities import Params, RobotList, package_info
 
 
 NANOSAUR_INSTALL_OPTIONS = ['Simple', 'Developer', 'Maintainer']
 
 # Define default parameters
-DEFAULT_PARAMS = {
-    'nanosaur_branch': 'nanosaur2',
-    'nanosaur_raw_github_repo': 'https://raw.githubusercontent.com/rnanosaur/nanosaur',
-}
+DEFAULT_PARAMS = {}
 
 
 def info(platform, params: Params, args):
     """Print version information."""
+    # Print version information
+    package_info(params, args.verbose)
     # Print mode if it exists in params
     if 'mode' in params:
         if params['mode'] == 'Developer':
             mode_string = TerminalFormatter.color_text(f"Mode: {params['mode']}", bg_color='green', bold=True)
-            print(f"{mode_string}\n")
+            print(f"\n{mode_string}")
         elif params['mode'] == 'Maintainer':
             mode_string = TerminalFormatter.color_text(f"Mode: {params['mode']}", bg_color='red', bold=True)
-            print(f"{mode_string}\n")
+            print(f"\n{mode_string}")
         elif params['mode'] == 'Raffo':
             mode_string = TerminalFormatter.color_text(f"Mode: {params['mode']}", bg_color='cyan', bold=True)
-            print(f"{mode_string}\n")
+            print(f"\n{mode_string}")
 
     robot_list = RobotList.load(params)
     # Print current robot configuration
     robot_data = RobotList.get_robot(params)
+    print()
     robot_data.verbose()
     # Print other robots if they exist
     if len(robot_list.robots) > 1 or args.verbose:
@@ -76,25 +74,13 @@ def info(platform, params: Params, args):
     if 'simulation_tool' in params:
         print(f"\n{TerminalFormatter.color_text('Simulation Tool:', bold=True)} {params['simulation_tool']}")
     # Print installed workspaces
-    workspaces = workspace.get_workspaces_path(params)
-    if workspaces or args.verbose:
-        print(TerminalFormatter.color_text("\nInstalled Workspaces:", bold=True))
-        for ws_name, ws_path in workspaces.items():
-            # Get the workspace path if it exists
-            print(f"  {TerminalFormatter.color_text(ws_name, bold=True)}: {TerminalFormatter.clickable_path(ws_path)}")
+    workspaces_info(params, args.verbose)
     # Print all robot configurations
     if args.verbose:
         # Print device information
         print(TerminalFormatter.color_text("\nPlatform Information:", bold=True))
         for key, value in platform.items():
             print(f"  {key}: {value}")
-    # Print version information
-    print(TerminalFormatter.color_text("\nVersion Information:", bold=True))
-    print(f"  {TerminalFormatter.color_text('Nanosaur package:', bold=True)} {__version__}")
-    print(f"  {TerminalFormatter.color_text('Nanosaur version (branch):', bold=True)} {params['nanosaur_branch']}")
-    print(f"  {TerminalFormatter.color_text('Nanosaur home:', bold=True)} {TerminalFormatter.clickable_path(get_nanosaur_home())}")
-    config_file_path = Params.get_params_file()
-    print(f"  {TerminalFormatter.color_text('Nanosaur config file:', bold=True)} {TerminalFormatter.clickable_path(config_file_path)}")
 
 
 def install(platform, params: Params, args):
@@ -127,10 +113,10 @@ def install(platform, params: Params, args):
     if install_type == 'Simple':
         print(TerminalFormatter.color_text(f"Not implemented yet {device_type}", color='red'))
     elif install_type == 'Developer':
-        if not workspace.create_developer_workspace(platform, params, args):
+        if not create_developer_workspace(platform, params, args):
             return False
     elif install_type == 'Maintainer':
-        if not workspace.create_maintainer_workspace(platform, params, args):
+        if not create_maintainer_workspace(platform, params, args):
             return False
     # Set params in maintainer mode
     current_mode = params.get('mode', 'Simple')
@@ -189,9 +175,9 @@ def main():
     parser_install.set_defaults(func=install)
 
     # Subcommand: workspace (with a sub-menu for workspace operations)
-    if workspace.get_workspaces_path(params):
+    if get_workspaces_path(params):
         # Add workspace subcommand
-        parser_workspace = workspace.parser_workspace_menu(subparsers)
+        parser_workspace = parser_workspace_menu(subparsers)
 
     # Subcommand: simulation (with a sub-menu for simulation types)
     if device_type == 'desktop' and 'mode' in params:
