@@ -25,8 +25,6 @@
 
 
 import os
-import sys
-import pexpect
 import yaml
 import argparse
 from nanosaur.prompt_colors import TerminalFormatter
@@ -112,6 +110,7 @@ def clean(platform, params: Params, args):
     print(TerminalFormatter.color_text(f"I cannot clean this {workspace}", color='red'))
     return False
 
+
 def update(platform, params: Params, args):
     """ Update the workspace """
     # Update shared workspace
@@ -124,6 +123,7 @@ def update(platform, params: Params, args):
             if not ros.run_vcs_import(nanosaur_home_path, rosinstall_path, src_folder="shared_src"):
                 return False
     # Update rosinstall file and run vcs import
+
     def update_workspace(params, workspace_type, workspace_name_key, force, skip_rosinstall_update=False):
         workspace_path = get_workspace_path(params, params[workspace_name_key])
         if not workspace_path:
@@ -147,7 +147,7 @@ def update(platform, params: Params, args):
             if not ros.run_vcs_import(workspace_path, rosinstall_path):
                 return False
         return True
-    
+
     workspace_actions = {
         'developer': lambda: update_workspace(params, 'developer', 'ws_developer_name', args.force, skip_rosinstall_update=True),
         'robot': lambda: update_workspace(params, 'robot', 'ws_robot_name', args.force),
@@ -170,6 +170,7 @@ def update(platform, params: Params, args):
         return action()
     print(TerminalFormatter.color_text(f"I cannot update this {workspace}", color='red'))
     return False
+
 
 @require_sudo_password
 def build(platform, params: Params, args, password=None):
@@ -209,6 +210,7 @@ def build(platform, params: Params, args, password=None):
     print(TerminalFormatter.color_text(f"I cannot build this {workspace}", color='red'))
     return False
 
+
 def debug(platform, params: Params, args):
     """ Debug the workspace """
     workspace_actions = {
@@ -246,6 +248,7 @@ def deploy(platform, params: Params, args):
         return action()
     print(TerminalFormatter.color_text(f"I cannot deploy this {workspace}", color='red'))
     return False
+
 
 def get_workspaces_path(params: Params) -> dict:
     nanosaur_home_path = get_nanosaur_home(params['nanosaur_home'])

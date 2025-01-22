@@ -29,7 +29,6 @@ import argparse
 import subprocess
 from nanosaur import workspace
 from nanosaur import docker
-from nanosaur import simulation
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, RobotList
 from nanosaur.utilities import ENGINES_CHOICES, CAMERA_CHOICES, LIDAR_CHOICES
