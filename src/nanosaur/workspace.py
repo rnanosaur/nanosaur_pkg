@@ -43,6 +43,11 @@ COLCON_DEFAULTS = {
     }
 }
 
+DEFAULT_WORKSPACE_PERCEPTION = 'perception_ws'
+DEFAULT_WORKSPACE_SIMULATION = 'simulation_ws'
+DEFAULT_WORKSPACE_ROBOT = 'robot_ws'
+DEFAULT_WORKSPACE_DEVELOPER = 'developer_ws'
+
 
 def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     parser_workspace = subparsers.add_parser(
@@ -88,12 +93,11 @@ def get_selected_workspace(params, workspace_actions, args):
 
 def clean(platform, params: Params, args):
     """ Clean the workspace """
-    nanosaur_home_path = get_nanosaur_home()
     workspace_actions = {
-        'developer': lambda: clean_workspace(nanosaur_home_path, params['ws_developer_name']),
-        'robot': lambda: clean_workspace(nanosaur_home_path, params['ws_robot_name']),
-        'simulation': lambda: clean_workspace(nanosaur_home_path, params['ws_simulation_name']),
-        'perception': lambda: clean_workspace(nanosaur_home_path, params['ws_perception_name'])
+        'developer': lambda: clean_workspace(params['ws_developer_name']),
+        'robot': lambda: clean_workspace(params['ws_robot_name']),
+        'simulation': lambda: clean_workspace(params['ws_simulation_name']),
+        'perception': lambda: clean_workspace(params['ws_perception_name'])
     }
     if args.all:
         print(TerminalFormatter.color_text("Cleaning all workspaces", bold=True))
@@ -295,12 +299,13 @@ def create_workspace(nanosaur_home_path, ws_name, skip_create_colcon_setting=Fal
     return ws_name_path
 
 
-def clean_workspace(nanosaur_home_path, nanosaur_ws_name) -> bool:
+def clean_workspace(nanosaur_ws_name) -> bool:
     """
     Checks if a workspace folder exists in the user's home directory.
     :param folder_name: The name of the workspace folder to check.
     :return: The full path to the workspace if it exists, or None if it doesn't.
     """
+    nanosaur_home_path = get_nanosaur_home()
     # Create the full path for the workspace folder in the user's home directory
     workspace_path = os.path.join(nanosaur_home_path, nanosaur_ws_name)
 
