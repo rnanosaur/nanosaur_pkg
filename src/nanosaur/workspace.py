@@ -120,6 +120,7 @@ def update(platform, params: Params, args):
     # Get the Nanosaur home folder and branch
     nanosaur_raw_url = get_nanosaur_raw_github_url(params)
     # Update shared workspace
+
     def update_shared_workspace(force):
         nanosaur_home_path = get_nanosaur_home()
         shared_src_path = os.path.join(nanosaur_home_path, "shared_src")
@@ -137,6 +138,7 @@ def update(platform, params: Params, args):
             if not ros.run_vcs_import(nanosaur_home_path, rosinstall_path, src_folder="shared_src"):
                 return False
     # Update rosinstall file and run vcs import
+
     def update_workspace(params, workspace_type, workspace_name_key, force, skip_rosinstall_update=False):
         workspace_path = get_workspace_path(params, workspace_name_key)
         if not workspace_path:
