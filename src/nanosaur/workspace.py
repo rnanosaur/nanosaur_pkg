@@ -117,11 +117,22 @@ def clean(platform, params: Params, args):
 
 def update(platform, params: Params, args):
     """ Update the workspace """
+    # Get the Nanosaur home folder and branch
+    nanosaur_raw_github_repo = params['nanosaur_raw_github_repo']
+    branch = params['nanosaur_branch']
     # Update shared workspace
-    def update_shared_workspace():
+    def update_shared_workspace(force):
         nanosaur_home_path = get_nanosaur_home()
         shared_src_path = os.path.join(nanosaur_home_path, "shared_src")
         rosinstall_path = os.path.join(shared_src_path, "shared.rosinstall")
+        workspace_type = 'shared'
+        # Download rosinstall for this device
+        url = f"{nanosaur_raw_github_repo}/{branch}/nanosaur/rosinstall/{workspace_type}.rosinstall"
+        rosinstall_path = ros.download_rosinstall(url, shared_src_path, f"{workspace_type}.rosinstall", force)
+        if rosinstall_path is not None:
+            print(TerminalFormatter.color_text(f"Update {workspace_type}.rosinstall", bold=True))
+        else:
+            print(TerminalFormatter.color_text(f"Failed to download {workspace_type}.rosinstall", color='red'))
         if os.path.exists(rosinstall_path):
             print(TerminalFormatter.color_text(f"Found rosinstall file: {rosinstall_path}", bold=True))
             if not ros.run_vcs_import(nanosaur_home_path, rosinstall_path, src_folder="shared_src"):
@@ -131,13 +142,9 @@ def update(platform, params: Params, args):
     def update_workspace(params, workspace_type, workspace_name_key, force, skip_rosinstall_update=False):
         workspace_path = get_workspace_path(params, workspace_name_key)
         if not workspace_path:
-            print(TerminalFormatter.color_text(f"Workspace {workspace_type} not found", color='red'))
             return False
         rosinstall_path = os.path.join(workspace_path, f"{workspace_type}.rosinstall")
         if not skip_rosinstall_update:
-            # Get the Nanosaur home folder and branch
-            nanosaur_raw_github_repo = params['nanosaur_raw_github_repo']
-            branch = params['nanosaur_branch']
             # Download rosinstall for this device
             url = f"{nanosaur_raw_github_repo}/{branch}/nanosaur/rosinstall/{workspace_type}.rosinstall"
             rosinstall_path = ros.download_rosinstall(url, workspace_path, f"{workspace_type}.rosinstall", force)
@@ -160,7 +167,7 @@ def update(platform, params: Params, args):
     }
     if args.all:
         print(TerminalFormatter.color_text("Updating all workspaces", bold=True))
-        update_shared_workspace()
+        update_shared_workspace(args.force)
         results = [action() for action in workspace_actions.values()]
         return all(results)
     # Get the workspace
@@ -170,9 +177,9 @@ def update(platform, params: Params, args):
     # Update the workspace
     print(TerminalFormatter.color_text(f"Updating {workspace}", bold=True))
     if action := workspace_actions.get(workspace):
-        update_shared_workspace()
+        update_shared_workspace(args.force)
         return action()
-    print(TerminalFormatter.color_text(f"I cannot update this {workspace}", color='red'))
+    print(TerminalFormatter.color_text(f"Workspace {workspace} not found", color='red'))
     return False
 
 
@@ -183,7 +190,6 @@ def build(platform, params: Params, args, password=None):
     def get_build_action(workspace_name_key):
         workspace_path = get_workspace_path(params, workspace_name_key)
         if not workspace_path:
-            print(TerminalFormatter.color_text(f"Workspace {workspace_name_key} not found", color='red'))
             return False
         print(TerminalFormatter.color_text(f"- Install all dependencies on workspace {workspace_path}", bold=True))
         if not ros.run_rosdep(workspace_path, password):
@@ -211,7 +217,7 @@ def build(platform, params: Params, args, password=None):
     print(TerminalFormatter.color_text(f"Building {workspace}", bold=True))
     if action := workspace_actions.get(workspace):
         return action()
-    print(TerminalFormatter.color_text(f"I cannot build this {workspace}", color='red'))
+    print(TerminalFormatter.color_text(f"Workspace {workspace} not found", color='red'))
     return False
 
 
@@ -335,41 +341,7 @@ def clean_workspace(nanosaur_ws_name) -> bool:
         else:
             print(TerminalFormatter.color_text(f"Workspace '{workspace_path}' does not contain build, install and log folders.", color='yellow'))
             return False
-    else:
-        print(TerminalFormatter.color_text(f"Folder '{workspace_path}' does not exist.", color='yellow'))
     return False
-
-
-def build_workspace(nanosaur_raw_github_repo, branch, workspace_path, rosinstall_name, password, skip_rosdep=False, skip_build=False) -> bool:
-    # Download rosinstall for this device
-    url = f"{nanosaur_raw_github_repo}/{branch}/nanosaur/rosinstall/{rosinstall_name}.rosinstall"
-    rosinstall_path = ros.download_rosinstall(url, workspace_path, f"{rosinstall_name}.rosinstall")
-    if rosinstall_path is not None:
-        print(TerminalFormatter.color_text(f"- Fill {rosinstall_name} from {rosinstall_name}.rosinstall", bold=True))
-    else:
-        print(TerminalFormatter.color_text(f"Failed to download {rosinstall_name}.rosinstall Exiting...", color='red'))
-        return False
-    # Import workspace
-    print(TerminalFormatter.color_text(f"- Import workspace from {rosinstall_name}.rosinstall", bold=True))
-    # run vcs import to sync the workspace
-    vcs_status = ros.run_vcs_import(workspace_path, rosinstall_path)
-    if not vcs_status:
-        print(TerminalFormatter.color_text("Failed to import workspace", color='red'))
-        return False
-    # rosdep workspace
-    if not skip_rosdep:
-        print(TerminalFormatter.color_text(f"- Install all dependencies on workspace {workspace_path}", bold=True))
-        if not ros.run_rosdep(workspace_path, password):
-            print(TerminalFormatter.color_text("Failed to install dependencies", color='red'))
-            return False
-    # Build environment
-    if not skip_build:
-        print(TerminalFormatter.color_text(f"- Build workspace {workspace_path}", bold=True))
-        if not ros.run_colcon_build(workspace_path):
-            print(TerminalFormatter.color_text("Failed to build workspace", color='red'))
-            return False
-    # All fine
-    return True
 
 
 def create_developer_workspace(platform, params: Params, args, password=None) -> bool:
@@ -379,53 +351,32 @@ def create_developer_workspace(platform, params: Params, args, password=None) ->
     create_workspace(nanosaur_home_path, params.get('ws_developer_name', DEFAULT_WORKSPACE_DEVELOPER), skip_create_colcon_setting=True)
     return True
 
-
-@require_sudo_password
 def create_maintainer_workspace(platform, params: Params, args, password=None):
     # determine the device type
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
-    # Get the Nanosaur home folder and branch
-    nanosaur_raw_github_repo = params['nanosaur_raw_github_repo']
-    branch = params['nanosaur_branch']
     # Create the Nanosaur home folder
     nanosaur_home_path = create_nanosaur_home()
-
     # Create the shared source folder
     nanosaur_shared_src = os.path.join(nanosaur_home_path, "shared_src")
     # Check if folder exists, if not, create it
     if not os.path.exists(nanosaur_shared_src):
         os.makedirs(nanosaur_shared_src)
-        print(TerminalFormatter.color_text(f"Shared src folder created in {nanosaur_home_path}.", color='green'))
-    # Download rosinstall for this device
-    url = f"{nanosaur_raw_github_repo}/{branch}/nanosaur/rosinstall/shared.rosinstall"
-    rosinstall_path = ros.download_rosinstall(url, nanosaur_shared_src, "shared.rosinstall")
-    if rosinstall_path is not None:
-        print(TerminalFormatter.color_text("- Fill shared src from shared.rosinstall", bold=True))
-    else:
-        print(TerminalFormatter.color_text("Failed to download rosinstall file. Exiting...", color='red'))
-        return False
-    # Import workspace
-    print(TerminalFormatter.color_text("- Import workspace from shared.rosinstall", bold=True))
-    # run vcs import to sync the workspace
-    vcs_status = ros.run_vcs_import(nanosaur_home_path, rosinstall_path, src_folder="shared_src")
-    if not vcs_status:
-        print(TerminalFormatter.color_text("Failed to import workspace", color='red'))
-        return False
-
-    # Make the robot workspace
     if device_type == "robot" or args.all_platforms:
         # Make the robot workspace
-        ws_name_path = create_workspace(nanosaur_home_path, params.get('ws_robot_name', DEFAULT_WORKSPACE_ROBOT))
-        if not build_workspace(nanosaur_raw_github_repo, branch, ws_name_path, device_type, password):
-            return False
+        create_workspace(nanosaur_home_path, params.get('ws_robot_name', DEFAULT_WORKSPACE_ROBOT))
     # Make the simulation workspace
     if device_type == "desktop" or args.all_platforms:
         # Make the simulation workspace
-        ws_name_path = create_workspace(nanosaur_home_path, params.get('ws_simulation_name', DEFAULT_WORKSPACE_SIMULATION))
-        if not build_workspace(nanosaur_raw_github_repo, branch, ws_name_path, device_type, password):
-            return False
-
+        create_workspace(nanosaur_home_path, params.get('ws_simulation_name', DEFAULT_WORKSPACE_SIMULATION))
     # Make the perception workspace
-    ws_name_path = create_workspace(nanosaur_home_path, params.get('ws_perception_name', DEFAULT_WORKSPACE_PERCEPTION))
-    return build_workspace(nanosaur_raw_github_repo, branch, ws_name_path, 'perception', password, skip_rosdep=True, skip_build=True)
+    create_workspace(nanosaur_home_path, params.get('ws_perception_name', DEFAULT_WORKSPACE_PERCEPTION))
+    # set all workspaces to be updated
+    args.all = True
+    if args.force:
+        clean(platform, params, args)
+    # Update all workspaces
+    update(platform, params, args)
+    # Build all workspaces
+    build(platform, params, args)
+    return True
 # EOF
