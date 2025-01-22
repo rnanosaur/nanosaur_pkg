@@ -207,13 +207,14 @@ def build_workspace(nanosaur_raw_github_repo, branch, workspace_path, rosinstall
     return True
 
 
-def create_developer_workspace(platform, params: Params, args, password=None):
+def create_developer_workspace(platform, params: Params, args, password=None) -> bool:
     # Get the Nanosaur home folder and branch
     nanosaur_home = params['nanosaur_home']
     # Create the Nanosaur home folder
     nanosaur_home_path = create_nanosaur_home(nanosaur_home)
     # Create developer workspace
     create_workspace(nanosaur_home_path, params['ws_developer_name'], skip_create_colcon_setting=True)
+    return True
 
 
 @require_sudo_password
@@ -264,9 +265,7 @@ def create_maintainer_workspace(platform, params: Params, args, password=None):
 
     # Make the perception workspace
     ws_name_path = create_workspace(nanosaur_home_path, params['ws_perception_name'])
-    build_workspace(nanosaur_raw_github_repo, branch, ws_name_path, 'perception', password, skip_rosdep=True, skip_build=True)
-    # Set params in maintainer mode
-    params['mode'] = 'maintainer'
+    return build_workspace(nanosaur_raw_github_repo, branch, ws_name_path, 'perception', password, skip_rosdep=True, skip_build=True)
 
 
 @require_sudo_password

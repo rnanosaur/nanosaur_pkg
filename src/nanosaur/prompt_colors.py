@@ -23,6 +23,7 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 
 class TerminalFormatter:
     # Define ANSI color codes
@@ -79,4 +80,34 @@ class TerminalFormatter:
 
         # Return the styled text
         return f"{style_prefix}{text}{reset_code}"
+
+    @staticmethod
+    def clickable_text(text, url):
+        """
+        Create a clickable link in the terminal.
+        
+        :param text: The display text for the link.
+        :param url: The URL the link points to.
+        :return: A string formatted as a clickable link.
+        """
+        return f"\033]8;;{url}\033\\{text}\033]8;;\033\\"
+
+    @staticmethod
+    def clickable_path(path):
+        """
+        Create a clickable link in the terminal where the path is the URL and the text.
+        Detect if the path is a file, folder, or link and format the URL accordingly.
+        
+        :param path: The file path to be used as both the display text and the URL.
+        :return: A string formatted as a clickable link.
+        """
+        if os.path.isfile(path) or os.path.isdir(path):
+            url = f"file://{os.path.abspath(path)}"
+        elif os.path.islink(path):
+            url = f"file://{os.path.abspath(os.readlink(path))}"
+        else:
+            url = path  # Assume it's a URL if it's neither a file, directory, nor link
+
+        return TerminalFormatter.clickable_text(path, url)
+
 # EOF
