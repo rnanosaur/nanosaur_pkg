@@ -70,13 +70,14 @@ def run_developer_workspace(platform, params: Params, args, password=None):
         workspace = args.workspace
     else:
         workspace = "robot" if platform['Machine'] == 'jetson' else "desktop"
-    
+
     if workspace == 'perception':
         perception_ws_name = params['ws_perception_name']
         perception_ws_path = get_workspace_path(params, perception_ws_name)
         ros.run_dev_script(params, perception_ws_path)
     else:
         print(TerminalFormatter.color_text(f"I cannot run {workspace}", color='red'))
+
 
 def get_workspaces_path(params: Params) -> bool:
     nanosaur_home_path = get_nanosaur_home(params['nanosaur_home'])

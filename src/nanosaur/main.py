@@ -142,6 +142,7 @@ def install(platform, params: Params, args, password=None):
     elif install_type == 'Simple':
         print(TerminalFormatter.color_text(f"Not implemented yet {device_type}", color='red'))
 
+
 def main():
     # Load the parameters
     params = Params.load(DEFAULT_PARAMS, home_folder=NANOSAUR_HOME_NAME, params_file_name=NANOSAUR_CONFIG_FILE_NAME)
