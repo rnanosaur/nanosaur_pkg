@@ -62,6 +62,7 @@ def workspaces_info(params: Params, verbose: bool):
     elif verbose:
         print(TerminalFormatter.color_text("No workspaces installed", bold=True))
 
+
 def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     parser_workspace = subparsers.add_parser(
         'workspace', aliases=["ws"], help="Manage the Nanosaur workspace")
