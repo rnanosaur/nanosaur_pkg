@@ -45,7 +45,7 @@ COLCON_DEFAULTS = {
 
 DEFAULT_WORKSPACE_PERCEPTION = 'perception_ws'
 DEFAULT_WORKSPACE_SIMULATION = 'simulation_ws'
-DEFAULT_WORKSPACE_ROBOT = 'robot_ws'
+DEFAULT_WORKSPACE_ROBOT = 'ros_ws'
 DEFAULT_WORKSPACE_DEVELOPER = 'developer_ws'
 
 
@@ -94,10 +94,10 @@ def get_selected_workspace(params, workspace_actions, args):
 def clean(platform, params: Params, args):
     """ Clean the workspace """
     workspace_actions = {
-        'developer': lambda: clean_workspace(params['ws_developer_name']),
-        'robot': lambda: clean_workspace(params['ws_robot_name']),
-        'simulation': lambda: clean_workspace(params['ws_simulation_name']),
-        'perception': lambda: clean_workspace(params['ws_perception_name'])
+        'developer': lambda: clean_workspace(params.get('ws_developer_name', DEFAULT_WORKSPACE_DEVELOPER)),
+        'robot': lambda: clean_workspace(params.get('ws_robot_name', DEFAULT_WORKSPACE_ROBOT)),
+        'simulation': lambda: clean_workspace(params.get('ws_simulation_name', DEFAULT_WORKSPACE_SIMULATION)),
+        'perception': lambda: clean_workspace(params.get('ws_perception_name', DEFAULT_WORKSPACE_PERCEPTION))
     }
     if args.all:
         print(TerminalFormatter.color_text("Cleaning all workspaces", bold=True))
@@ -129,7 +129,7 @@ def update(platform, params: Params, args):
     # Update rosinstall file and run vcs import
 
     def update_workspace(params, workspace_type, workspace_name_key, force, skip_rosinstall_update=False):
-        workspace_path = get_workspace_path(params, params[workspace_name_key])
+        workspace_path = get_workspace_path(params, workspace_name_key)
         if not workspace_path:
             print(TerminalFormatter.color_text(f"Workspace {workspace_type} not found", color='red'))
             return False
@@ -181,7 +181,7 @@ def build(platform, params: Params, args, password=None):
     """ Build the workspace """
     # Get the build action
     def get_build_action(workspace_name_key):
-        workspace_path = get_workspace_path(params, params[workspace_name_key])
+        workspace_path = get_workspace_path(params, workspace_name_key)
         if not workspace_path:
             print(TerminalFormatter.color_text(f"Workspace {workspace_name_key} not found", color='red'))
             return False
@@ -218,9 +218,9 @@ def build(platform, params: Params, args, password=None):
 def debug(platform, params: Params, args):
     """ Debug the workspace """
     workspace_actions = {
-        'developer': lambda: ros.run_dev_script(params, get_workspace_path(params, params['ws_developer_name']), params['ws_developer_name']),
+        'developer': lambda: ros.run_dev_script(params, get_workspace_path(params, 'ws_developer_name'), params.get('ws_developer_name', DEFAULT_WORKSPACE_DEVELOPER)),
         'simulation': lambda: start_robot_simulation(params),
-        'perception': lambda: ros.run_dev_script(params, get_workspace_path(params, params['ws_perception_name']), params['ws_perception_name'])
+        'perception': lambda: ros.run_dev_script(params, get_workspace_path(params, 'ws_perception_name'), params.get('ws_perception_name', DEFAULT_WORKSPACE_PERCEPTION))
     }
     workspace = get_selected_workspace(params, workspace_actions, args)
     if workspace is None:
@@ -236,7 +236,7 @@ def debug(platform, params: Params, args):
 def deploy(platform, params: Params, args):
     """ Deploy the workspace """
     workspace_actions = {
-        'perception': lambda: ros.deploy_docker_perception(params, get_workspace_path(params, params['ws_perception_name']))
+        'perception': lambda: ros.deploy_docker_perception(params, get_workspace_path(params, 'ws_perception_name'))
     }
     if args.all:
         print(TerminalFormatter.color_text("Deploying all workspaces", bold=True))
@@ -258,10 +258,10 @@ def get_workspaces_path(params: Params) -> dict:
     nanosaur_home_path = get_nanosaur_home()
     # Add all workspaces that exist in the Nanosaur home folder
     workspaces = {
-        'ws_developer_name': params['ws_developer_name'],
-        'ws_robot_name': params['ws_robot_name'],
-        'ws_simulation_name': params['ws_simulation_name'],
-        'ws_perception_name': params['ws_perception_name']
+        'ws_developer_name': params.get('ws_developer_name', DEFAULT_WORKSPACE_DEVELOPER),
+        'ws_robot_name': params.get('ws_robot_name', DEFAULT_WORKSPACE_ROBOT),
+        'ws_simulation_name': params.get('ws_simulation_name', DEFAULT_WORKSPACE_SIMULATION),
+        'ws_perception_name': params.get('ws_perception_name', DEFAULT_WORKSPACE_PERCEPTION)
     }
     return {
         name.split('_')[1]: os.path.join(nanosaur_home_path, path)
@@ -271,10 +271,19 @@ def get_workspaces_path(params: Params) -> dict:
 
 
 def get_workspace_path(params: Params, ws_name) -> str:
+    workspaces = {
+        'ws_developer_name': params.get('ws_developer_name', DEFAULT_WORKSPACE_DEVELOPER),
+        'ws_robot_name': params.get('ws_robot_name', DEFAULT_WORKSPACE_ROBOT),
+        'ws_simulation_name': params.get('ws_simulation_name', DEFAULT_WORKSPACE_SIMULATION),
+        'ws_perception_name': params.get('ws_perception_name', DEFAULT_WORKSPACE_PERCEPTION)
+    }
+    if ws_name not in workspaces:
+        return None
+    ws_name_folder = workspaces[ws_name]
     # Create the Nanosaur home folder
     nanosaur_home_path = create_nanosaur_home()
     # Create the full path for the workspace folder in the user's home directory
-    workspace_path = os.path.join(nanosaur_home_path, ws_name)
+    workspace_path = os.path.join(nanosaur_home_path, ws_name_folder)
 
     # Check if the workspace folder exists
     if os.path.exists(workspace_path) and os.path.isdir(workspace_path):
@@ -367,7 +376,7 @@ def create_developer_workspace(platform, params: Params, args, password=None) ->
     # Create the Nanosaur home folder
     nanosaur_home_path = create_nanosaur_home()
     # Create developer workspace
-    create_workspace(nanosaur_home_path, params['ws_developer_name'], skip_create_colcon_setting=True)
+    create_workspace(nanosaur_home_path, params.get('ws_developer_name', DEFAULT_WORKSPACE_DEVELOPER), skip_create_colcon_setting=True)
     return True
 
 
@@ -406,17 +415,17 @@ def create_maintainer_workspace(platform, params: Params, args, password=None):
     # Make the robot workspace
     if device_type == "robot" or args.all_platforms:
         # Make the robot workspace
-        ws_name_path = create_workspace(nanosaur_home_path, params['ws_robot_name'])
+        ws_name_path = create_workspace(nanosaur_home_path, params.get('ws_robot_name', DEFAULT_WORKSPACE_ROBOT))
         if not build_workspace(nanosaur_raw_github_repo, branch, ws_name_path, device_type, password):
             return False
     # Make the simulation workspace
     if device_type == "desktop" or args.all_platforms:
         # Make the simulation workspace
-        ws_name_path = create_workspace(nanosaur_home_path, params['ws_simulation_name'])
+        ws_name_path = create_workspace(nanosaur_home_path, params.get('ws_simulation_name', DEFAULT_WORKSPACE_SIMULATION))
         if not build_workspace(nanosaur_raw_github_repo, branch, ws_name_path, device_type, password):
             return False
 
     # Make the perception workspace
-    ws_name_path = create_workspace(nanosaur_home_path, params['ws_perception_name'])
+    ws_name_path = create_workspace(nanosaur_home_path, params.get('ws_perception_name', DEFAULT_WORKSPACE_PERCEPTION))
     return build_workspace(nanosaur_raw_github_repo, branch, ws_name_path, 'perception', password, skip_rosdep=True, skip_build=True)
 # EOF

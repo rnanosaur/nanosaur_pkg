@@ -47,10 +47,6 @@ NANOSAUR_INSTALL_OPTIONS = ['Simple', 'Developer', 'Maintainer']
 DEFAULT_PARAMS = {
     'nanosaur_branch': 'nanosaur2',
     'nanosaur_raw_github_repo': 'https://raw.githubusercontent.com/rnanosaur/nanosaur',
-    'ws_developer_name': 'ros_ws',
-    'ws_perception_name': 'perception_ws',
-    'ws_robot_name': 'robot_ws',
-    'ws_simulation_name': 'simulation_ws',
 }
 
 
