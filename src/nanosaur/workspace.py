@@ -363,11 +363,11 @@ def create_maintainer_workspace(platform, params: Params, args, password=None):
     # Check if folder exists, if not, create it
     if not os.path.exists(nanosaur_shared_src):
         os.makedirs(nanosaur_shared_src)
-    if device_type == "robot" or args.all_platforms:
+    if device_type == "robot" or args.all:
         # Make the robot workspace
         create_workspace(nanosaur_home_path, params.get('ws_robot_name', DEFAULT_WORKSPACE_ROBOT))
     # Make the simulation workspace
-    if device_type == "desktop" or args.all_platforms:
+    if device_type == "desktop" or args.all:
         # Make the simulation workspace
         create_workspace(nanosaur_home_path, params.get('ws_simulation_name', DEFAULT_WORKSPACE_SIMULATION))
     # Make the perception workspace

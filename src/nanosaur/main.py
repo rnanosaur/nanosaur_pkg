@@ -185,7 +185,7 @@ def main():
         parser_install = subparsers.add_parser('install')
     # Add simulation install subcommand
     parser_install.add_argument('--force', action='store_true', help="Force the update")
-    parser_install.add_argument('--all-platforms', action='store_true', help="Install for all platforms")
+    parser_install.add_argument('--all', action='store_true', help="Install for all platforms")
     parser_install.set_defaults(func=install)
 
     # Subcommand: workspace (with a sub-menu for workspace operations)
