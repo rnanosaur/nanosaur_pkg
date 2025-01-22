@@ -121,6 +121,7 @@ def update(platform, params: Params, args):
     nanosaur_raw_github_repo = params['nanosaur_raw_github_repo']
     branch = params['nanosaur_branch']
     # Update shared workspace
+
     def update_shared_workspace(force):
         nanosaur_home_path = get_nanosaur_home()
         shared_src_path = os.path.join(nanosaur_home_path, "shared_src")
@@ -350,6 +351,7 @@ def create_developer_workspace(platform, params: Params, args, password=None) ->
     # Create developer workspace
     create_workspace(nanosaur_home_path, params.get('ws_developer_name', DEFAULT_WORKSPACE_DEVELOPER), skip_create_colcon_setting=True)
     return True
+
 
 def create_maintainer_workspace(platform, params: Params, args, password=None):
     # determine the device type
