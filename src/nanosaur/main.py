@@ -105,7 +105,6 @@ def install_old(platform, params: Params, args, password=None):
         print(TerminalFormatter.color_text("Not implemented yet", color='red'))
 
 
-
 def install(platform, params: Params, args, password=None):
     questions = [
         inquirer.List(
@@ -123,7 +122,6 @@ def install(platform, params: Params, args, password=None):
         print(TerminalFormatter.color_text("Simulation Tools installation is not implemented yet", color='red'))
     elif answers['choice'] == 'Robot Configuration':
         print(TerminalFormatter.color_text("Robot Configuration installation is not implemented yet", color='red'))
-
 
 
 def main():
@@ -155,9 +153,9 @@ def main():
     parser_info.set_defaults(func=info)
 
     # Subcommand: install (hidden if workspace already exists)
-    #if 'mode' in params and params['mode'] in ['developer', 'maintainer']:
+    # if 'mode' in params and params['mode'] in ['developer', 'maintainer']:
     parser_install = subparsers.add_parser('install', help=f"Install nanosaur on your {device_type}")
-    #else:
+    # else:
     #    parser_install = subparsers.add_parser('install')
     # Add simulation install subcommand
     parser_install.add_argument('--developer', '--dev', action='store_true', help="Install developer workspace")

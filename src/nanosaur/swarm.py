@@ -57,12 +57,12 @@ def parser_swarm_menu(subparsers: argparse._SubParsersAction, params: Params) ->
 
 def robot_new(platform, params: Params, args):
     """Add a new robot configuration."""
-    
+
     def validate_name(_, x):
         if not x.isalnum():
             raise inquirer.errors.ValidationError("", reason="Name must contain only letters and numbers")
         return True
-    
+
     questions = [
         inquirer.Text(
             'name',
@@ -83,11 +83,11 @@ def robot_idx_set(platform, params: Params, args):
     """Set the robot configuration."""
     # Load the robot list
     robots = RobotList.load(params)
-    
+
     default = robots._get_robot_by_idx(params.get('robot_idx', 0))
     if args.robot_name is not None:
         default = robots._get_robot_by_name(args.robot_name)
-    
+
     options = [
         inquirer.List(
             'robot',

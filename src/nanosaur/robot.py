@@ -185,7 +185,7 @@ def robot_set_domain_id(platform, params: Params, args):
 def robot_set_camera(platform, params: Params, args):
     """Configure the camera."""
     robot = RobotList.get_robot(params)
-    
+
     all_cameras = sorted(set(CAMERA_CHOICES + [robot.camera_type]))
 
     if args.new is not None:
@@ -223,7 +223,7 @@ def robot_set_camera(platform, params: Params, args):
 def robot_set_lidar(platform, params: Params, args):
     """Configure the lidar."""
     robot = RobotList.get_robot(params)
-    
+
     all_lidars = sorted(set(LIDAR_CHOICES + [robot.lidar_type]))
 
     if args.new is not None:

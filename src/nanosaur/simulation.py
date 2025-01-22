@@ -44,6 +44,7 @@ simulation_tools = {
     }
 }
 
+
 def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     # Get the simulation tool from the parameters
     simulation_type = params.get('simulation_tool', "NOT SELECTED")

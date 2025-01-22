@@ -27,7 +27,6 @@ import os
 import sys
 import pexpect
 import requests
-import yaml
 import subprocess
 import pty
 import select
@@ -35,7 +34,7 @@ import termios
 import tty
 import signal
 from nanosaur.prompt_colors import TerminalFormatter
-from nanosaur.utilities import Params, get_nanosaur_home, create_nanosaur_home, require_sudo_password, conditional_sudo_password
+from nanosaur.utilities import Params, get_nanosaur_home
 
 ros2_distro = 'humble'
 ros2_sources = f'/opt/ros/{ros2_distro}/setup.bash'

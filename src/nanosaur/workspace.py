@@ -68,7 +68,6 @@ def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.Ar
     return parser_workspace
 
 
-
 def get_workspaces_path(params: Params) -> bool:
     nanosaur_home_path = get_nanosaur_home(params['nanosaur_home'])
     # Add all workspaces that exist in the Nanosaur home folder
@@ -164,9 +163,6 @@ def clean_workspace(nanosaur_ws_name, password) -> bool:
     return False
 
 
-
-
-
 def build_workspace(nanosaur_raw_github_repo, branch, workspace_path, rosinstall_name, password, skip_rosdep=False, skip_build=False) -> bool:
     # Download rosinstall for this device
     url = f"{nanosaur_raw_github_repo}/{branch}/nanosaur/rosinstall/{rosinstall_name}.rosinstall"
@@ -197,6 +193,7 @@ def build_workspace(nanosaur_raw_github_repo, branch, workspace_path, rosinstall
             return False
     # All fine
     return True
+
 
 @require_sudo_password
 def create_maintainer_workspace(platform, params: Params, args, password=None):
