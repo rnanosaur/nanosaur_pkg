@@ -42,13 +42,10 @@ from nanosaur.utilities import RobotList
 
 
 NANOSAUR_INSTALL_OPTIONS = ['Simple', 'Developer', 'Maintainer']
-NANOSAUR_CONFIG_FILE_NAME = 'nanosaur.yaml'
-NANOSAUR_HOME_NAME = 'nanosaur'
 
 # Define default parameters
 DEFAULT_PARAMS = {
     'nanosaur_branch': 'nanosaur2',
-    'nanosaur_home': NANOSAUR_HOME_NAME,
     'nanosaur_raw_github_repo': 'https://raw.githubusercontent.com/rnanosaur/nanosaur',
     'ws_developer_name': 'ros_ws',
     'ws_perception_name': 'perception_ws',
@@ -99,8 +96,8 @@ def info(platform, params: Params, args):
     print(TerminalFormatter.color_text("\nVersion Information:", bold=True))
     print(f"  {TerminalFormatter.color_text('Nanosaur package:', bold=True)} {__version__}")
     print(f"  {TerminalFormatter.color_text('Nanosaur version (branch):', bold=True)} {params['nanosaur_branch']}")
-    print(f"  {TerminalFormatter.color_text('Nanosaur home:', bold=True)} {TerminalFormatter.clickable_path(get_nanosaur_home(params['nanosaur_home']))}")
-    config_file_path = Params.get_params_file(params['nanosaur_home'], NANOSAUR_CONFIG_FILE_NAME)
+    print(f"  {TerminalFormatter.color_text('Nanosaur home:', bold=True)} {TerminalFormatter.clickable_path(get_nanosaur_home())}")
+    config_file_path = Params.get_params_file()
     print(f"  {TerminalFormatter.color_text('Nanosaur config file:', bold=True)} {TerminalFormatter.clickable_path(config_file_path)}")
 
 
@@ -159,7 +156,7 @@ def robot_control(params, subparsers):
 
 def main():
     # Load the parameters
-    params = Params.load(DEFAULT_PARAMS, home_folder=NANOSAUR_HOME_NAME, params_file_name=NANOSAUR_CONFIG_FILE_NAME)
+    params = Params.load(DEFAULT_PARAMS)
 
     # Extract device information with jtop
     try:
@@ -201,7 +198,7 @@ def main():
         parser_workspace = workspace.parser_workspace_menu(subparsers)
 
     # Subcommand: simulation (with a sub-menu for simulation types)
-    if device_type == 'desktop':
+    if device_type == 'desktop' and 'mode' in params:
         # Add simulation subcommand
         parser_simulation = parser_simulation_menu(subparsers, params)
 

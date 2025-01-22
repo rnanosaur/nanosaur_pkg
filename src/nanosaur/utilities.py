@@ -44,6 +44,10 @@ LIDAR_CHOICES = ['', 'LD06', 'rplidar']
 ENGINES_CHOICES = ['vslam', 'nvblox', 'apriltag']
 
 
+NANOSAUR_CONFIG_FILE_NAME = 'nanosaur.yaml'
+NANOSAUR_HOME_NAME = 'nanosaur'
+
+
 class Robot:
 
     @classmethod
@@ -219,8 +223,8 @@ class RobotList:
 class Params:
 
     @classmethod
-    def load(cls, default_params, home_folder, params_file_name):
-        params_file = Params.get_params_file(home_folder, params_file_name)
+    def load(cls, default_params):
+        params_file = Params.get_params_file()
         # Load parameters from YAML file if it exists
         if os.path.exists(params_file):
             with open(params_file, 'r') as file:
@@ -228,13 +232,11 @@ class Params:
         else:
             params_dict = default_params
 
-        return cls(params_dict, home_folder, params_file)
+        return cls(params_dict)
 
-    def __init__(self, params_dict, home_folder, params_file_name):
+    def __init__(self, params_dict):
         self._params_dict = params_dict
         self._default_params = copy.deepcopy(params_dict)
-        self.home_folder = home_folder
-        self.params_file_name = params_file_name
         for key, value in params_dict.items():
             setattr(self, key, value)
 
@@ -260,19 +262,19 @@ class Params:
         return str(self._params_dict)
 
     def save(self):
-        params_file = Params.get_params_file(self.home_folder, self.params_file_name)
+        params_file = Params.get_params_file()
         # Save the parameters to the file if they are different from the default
         if params_file and self._params_dict != self._default_params:
             # Get the current nanosaur's home directory
-            create_nanosaur_home(self.home_folder)
+            create_nanosaur_home()
             # Save the parameters to the file
-            print(TerminalFormatter.color_text(f"Saving parameters to {self.params_file_name}", color='yellow'))
+            print(TerminalFormatter.color_text(f"Saving parameters to {params_file}", color='yellow'))
             with open(params_file, 'w') as file:
                 yaml.dump(self._params_dict, file)
 
     @staticmethod
-    def get_params_file(home_folder, params_file_name) -> str:
-        return os.path.join(get_nanosaur_home(home_folder), params_file_name)
+    def get_params_file() -> str:
+        return os.path.join(get_nanosaur_home(), NANOSAUR_CONFIG_FILE_NAME)
 
     def get(self, key, default=None):
         return getattr(self, key, default)
@@ -287,11 +289,9 @@ class Params:
         return self._params_dict.items()
 
 
-def create_nanosaur_home(nanosaur_home) -> str:
-    # Get the current user's home directory
-    user_home_dir = os.path.expanduser("~")
-    # Create the full path for the workspace folder in the user's home directory
-    nanosaur_home_path = os.path.join(user_home_dir, nanosaur_home)
+def create_nanosaur_home() -> str:
+    # Get the current nanosaur's home directory
+    nanosaur_home_path = get_nanosaur_home()
     # Check if folder exists, if not, create it
     if not os.path.exists(nanosaur_home_path):
         os.makedirs(nanosaur_home_path)
@@ -299,8 +299,9 @@ def create_nanosaur_home(nanosaur_home) -> str:
     return nanosaur_home_path
 
 
-def get_nanosaur_home(nanosaur_home) -> str:
+def get_nanosaur_home() -> str:
     # Get the current user's home directory
+    nanosaur_home = os.getenv('NANOSAUR_HOME', NANOSAUR_HOME_NAME)
     user_home_dir = os.path.expanduser("~")
     return os.path.join(user_home_dir, nanosaur_home)
 

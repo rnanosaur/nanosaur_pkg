@@ -50,7 +50,7 @@ def run_dev_script(params, host_workspace_path, workspace_path):
     os.chdir(isaac_ros_common_path)
     print(f"Changed directory to: {isaac_ros_common_path}")
 
-    nanosaur_home_path = get_nanosaur_home(params['nanosaur_home'])
+    nanosaur_home_path = get_nanosaur_home()
 
     # Path to the script you want to run
     command = "./scripts/run_dev.sh"
@@ -266,7 +266,7 @@ def deploy_docker_perception(params: Params, perception_ws_path: str) -> bool:
     nanosaur_perception_path = os.path.join(perception_ws_path, 'src', 'nanosaur_perception')
 
     src_folders = [
-        os.path.join(get_nanosaur_home(params['nanosaur_home']), 'shared_src'),
+        os.path.join(get_nanosaur_home(), 'shared_src'),
         os.path.join(perception_ws_path, 'src')
     ]
 

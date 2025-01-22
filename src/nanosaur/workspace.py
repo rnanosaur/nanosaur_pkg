@@ -88,7 +88,7 @@ def get_selected_workspace(params, workspace_actions, args):
 
 def clean(platform, params: Params, args):
     """ Clean the workspace """
-    nanosaur_home_path = get_nanosaur_home(params['nanosaur_home'])
+    nanosaur_home_path = get_nanosaur_home()
     workspace_actions = {
         'developer': lambda: clean_workspace(nanosaur_home_path, params['ws_developer_name']),
         'robot': lambda: clean_workspace(nanosaur_home_path, params['ws_robot_name']),
@@ -114,8 +114,8 @@ def clean(platform, params: Params, args):
 def update(platform, params: Params, args):
     """ Update the workspace """
     # Update shared workspace
-    def update_shared_workspace(params):
-        nanosaur_home_path = get_nanosaur_home(params['nanosaur_home'])
+    def update_shared_workspace():
+        nanosaur_home_path = get_nanosaur_home()
         shared_src_path = os.path.join(nanosaur_home_path, "shared_src")
         rosinstall_path = os.path.join(shared_src_path, "shared.rosinstall")
         if os.path.exists(rosinstall_path):
@@ -156,7 +156,7 @@ def update(platform, params: Params, args):
     }
     if args.all:
         print(TerminalFormatter.color_text("Updating all workspaces", bold=True))
-        update_shared_workspace(params)
+        update_shared_workspace()
         results = [action() for action in workspace_actions.values()]
         return all(results)
     # Get the workspace
@@ -166,7 +166,7 @@ def update(platform, params: Params, args):
     # Update the workspace
     print(TerminalFormatter.color_text(f"Updating {workspace}", bold=True))
     if action := workspace_actions.get(workspace):
-        update_shared_workspace(params)
+        update_shared_workspace()
         return action()
     print(TerminalFormatter.color_text(f"I cannot update this {workspace}", color='red'))
     return False
@@ -251,7 +251,7 @@ def deploy(platform, params: Params, args):
 
 
 def get_workspaces_path(params: Params) -> dict:
-    nanosaur_home_path = get_nanosaur_home(params['nanosaur_home'])
+    nanosaur_home_path = get_nanosaur_home()
     # Add all workspaces that exist in the Nanosaur home folder
     workspaces = {
         'ws_developer_name': params['ws_developer_name'],
@@ -268,7 +268,7 @@ def get_workspaces_path(params: Params) -> dict:
 
 def get_workspace_path(params: Params, ws_name) -> str:
     # Create the Nanosaur home folder
-    nanosaur_home_path = create_nanosaur_home(params['nanosaur_home'])
+    nanosaur_home_path = create_nanosaur_home()
     # Create the full path for the workspace folder in the user's home directory
     workspace_path = os.path.join(nanosaur_home_path, ws_name)
 
@@ -359,10 +359,8 @@ def build_workspace(nanosaur_raw_github_repo, branch, workspace_path, rosinstall
 
 
 def create_developer_workspace(platform, params: Params, args, password=None) -> bool:
-    # Get the Nanosaur home folder and branch
-    nanosaur_home = params['nanosaur_home']
     # Create the Nanosaur home folder
-    nanosaur_home_path = create_nanosaur_home(nanosaur_home)
+    nanosaur_home_path = create_nanosaur_home()
     # Create developer workspace
     create_workspace(nanosaur_home_path, params['ws_developer_name'], skip_create_colcon_setting=True)
     return True
@@ -373,11 +371,10 @@ def create_maintainer_workspace(platform, params: Params, args, password=None):
     # determine the device type
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
     # Get the Nanosaur home folder and branch
-    nanosaur_home = params['nanosaur_home']
     nanosaur_raw_github_repo = params['nanosaur_raw_github_repo']
     branch = params['nanosaur_branch']
     # Create the Nanosaur home folder
-    nanosaur_home_path = create_nanosaur_home(nanosaur_home)
+    nanosaur_home_path = create_nanosaur_home()
 
     # Create the shared source folder
     nanosaur_shared_src = os.path.join(nanosaur_home_path, "shared_src")
