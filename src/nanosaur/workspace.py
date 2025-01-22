@@ -30,7 +30,7 @@ import argparse
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur import ros
 from nanosaur.simulation import start_robot_simulation
-from nanosaur.utilities import Params, get_nanosaur_home, create_nanosaur_home, require_sudo_password
+from nanosaur.utilities import Params, get_nanosaur_raw_github_url, get_nanosaur_home, create_nanosaur_home, require_sudo_password
 import inquirer
 
 
@@ -118,17 +118,15 @@ def clean(platform, params: Params, args):
 def update(platform, params: Params, args):
     """ Update the workspace """
     # Get the Nanosaur home folder and branch
-    nanosaur_raw_github_repo = params['nanosaur_raw_github_repo']
-    branch = params['nanosaur_branch']
+    nanosaur_raw_url = get_nanosaur_raw_github_url(params)
     # Update shared workspace
-
     def update_shared_workspace(force):
         nanosaur_home_path = get_nanosaur_home()
         shared_src_path = os.path.join(nanosaur_home_path, "shared_src")
         rosinstall_path = os.path.join(shared_src_path, "shared.rosinstall")
         workspace_type = 'shared'
         # Download rosinstall for this device
-        url = f"{nanosaur_raw_github_repo}/{branch}/nanosaur/rosinstall/{workspace_type}.rosinstall"
+        url = f"{nanosaur_raw_url}/nanosaur/rosinstall/{workspace_type}.rosinstall"
         rosinstall_path = ros.download_rosinstall(url, shared_src_path, f"{workspace_type}.rosinstall", force)
         if rosinstall_path is not None:
             print(TerminalFormatter.color_text(f"Update {workspace_type}.rosinstall", bold=True))
@@ -139,7 +137,6 @@ def update(platform, params: Params, args):
             if not ros.run_vcs_import(nanosaur_home_path, rosinstall_path, src_folder="shared_src"):
                 return False
     # Update rosinstall file and run vcs import
-
     def update_workspace(params, workspace_type, workspace_name_key, force, skip_rosinstall_update=False):
         workspace_path = get_workspace_path(params, workspace_name_key)
         if not workspace_path:
@@ -147,7 +144,7 @@ def update(platform, params: Params, args):
         rosinstall_path = os.path.join(workspace_path, f"{workspace_type}.rosinstall")
         if not skip_rosinstall_update:
             # Download rosinstall for this device
-            url = f"{nanosaur_raw_github_repo}/{branch}/nanosaur/rosinstall/{workspace_type}.rosinstall"
+            url = f"{nanosaur_raw_url}/nanosaur/rosinstall/{workspace_type}.rosinstall"
             rosinstall_path = ros.download_rosinstall(url, workspace_path, f"{workspace_type}.rosinstall", force)
             if rosinstall_path is not None:
                 print(TerminalFormatter.color_text(f"Update {workspace_type}.rosinstall", bold=True))

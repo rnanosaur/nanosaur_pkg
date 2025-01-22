@@ -46,6 +46,8 @@ ENGINES_CHOICES = ['vslam', 'nvblox', 'apriltag']
 
 NANOSAUR_CONFIG_FILE_NAME = 'nanosaur.yaml'
 NANOSAUR_HOME_NAME = 'nanosaur'
+NANOSAUR_MAIN_GITHUB_URL = 'https://github.com/rnanosaur/nanosaur.git'
+NANOSAUR_MAIN_BRANCH = 'nanosaur2'
 
 
 class Robot:
@@ -288,6 +290,19 @@ class Params:
 
     def items(self):
         return self._params_dict.items()
+
+
+def get_nanosaur_raw_github_url(params: Params) -> str:
+    nanosaur_github_url = params.get('nanosaur_github', NANOSAUR_MAIN_GITHUB_URL)
+    nanosaur_branch = params.get('nanosaur_branch', NANOSAUR_MAIN_BRANCH)
+    # Replace 'github.com' with 'raw.githubusercontent.com' in the URL
+    nanosaur_github_url = nanosaur_github_url.replace('www.github.com', 'raw.githubusercontent.com')
+    nanosaur_github_url = nanosaur_github_url.replace('github.com', 'raw.githubusercontent.com')
+    # Remove '.git' suffix if present
+    if nanosaur_github_url.endswith('.git'):
+        nanosaur_github_url = nanosaur_github_url[:-4]
+    # Append the branch name to the URL
+    return f"{nanosaur_github_url}/{nanosaur_branch}"
 
 
 def create_nanosaur_home() -> str:
