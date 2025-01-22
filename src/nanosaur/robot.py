@@ -23,6 +23,9 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import inquirer
+from inquirer.themes import GreenPassion
+import argparse
 import subprocess
 from nanosaur import workspace
 from nanosaur import docker
@@ -30,6 +33,62 @@ from nanosaur import simulation
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, RobotList
 from nanosaur.utilities import ENGINES_CHOICES, CAMERA_CHOICES, LIDAR_CHOICES
+
+
+def add_robot_config_subcommands(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
+    robot_data = RobotList.get_robot(params)
+    parser_robot_config = subparsers.add_parser('config', help=f"Configure the robot settings [{robot_data.name}]")
+    config_subparsers = parser_robot_config.add_subparsers(dest='config_type', help="Configuration options")
+    # Add robot name subcommand
+    parser_robot_name = config_subparsers.add_parser('name', help=f"Change the robot name [{robot_data.name}]")
+    parser_robot_name.set_defaults(func=robot_set_name)
+    # Add robot domain id subcommand
+    parser_robot_domain_id = config_subparsers.add_parser('domain_id', help=f"Change the robot domain ID [{robot_data.domain_id}]")
+    parser_robot_domain_id.set_defaults(func=robot_set_domain_id)
+    # Add robot camera subcommand
+    parser_robot_camera = config_subparsers.add_parser('camera', help=f"Change the robot camera type [{robot_data.camera_type}]")
+    parser_robot_camera.add_argument('--new', type=str, help=f"Specify the new camera type (options: {', '.join(CAMERA_CHOICES)})")
+    parser_robot_camera.set_defaults(func=robot_set_camera)
+    # Add robot lidar subcommand
+    parser_robot_lidar = config_subparsers.add_parser('lidar', help=f"Change the robot lidar type [{robot_data.lidar_type}]")
+    parser_robot_lidar.add_argument('--new', type=str, choices=LIDAR_CHOICES, help=f"Specify the new lidar type (options: {', '.join(LIDAR_CHOICES)})")
+    parser_robot_lidar.set_defaults(func=robot_set_lidar)
+    # Add robot engines subcommand
+    parser_robot_engines = config_subparsers.add_parser('engines', help=f"Configure the robot engines [{', '.join(robot_data.engines)}]")
+    parser_robot_engines.add_argument('--new', type=str, help="Specify the new engine configuration")
+    parser_robot_engines.set_defaults(func=robot_configure_engines)
+    # Add robot reset subcommand
+    parser_robot_reset = config_subparsers.add_parser('reset', help="Restore the robot configuration to default")
+    parser_robot_reset.set_defaults(func=robot_reset)
+
+    return parser_robot_config
+
+
+def parser_robot_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
+    robot_data = RobotList.get_robot(params)
+    parser_robot = subparsers.add_parser('robot', help=f"Manage the Nanosaur robot [{robot_data.name}]")
+    robot_subparsers = parser_robot.add_subparsers(dest='robot_type', help="Robot operations")
+    # Add robot display subcommand
+    parser_robot_display = robot_subparsers.add_parser('display', help="Show the robot")
+    parser_robot_display.set_defaults(func=robot_display)
+    # Add robot drive subcommand
+    parser_robot_drive = robot_subparsers.add_parser('drive', help="Control the robot")
+    parser_robot_drive.set_defaults(func=control_keyboard)
+    # Add robot start subcommand
+    parser_robot_start = robot_subparsers.add_parser('start', help="Activate the robot")
+    parser_robot_start.add_argument(
+        '--container', action='store_true', help="Run within a container")
+    parser_robot_start.add_argument(
+        '--build', action='store_true', help="Rebuild docker before starting")
+    parser_robot_start.set_defaults(func=robot_start)
+    # Add robot stop subcommand
+    parser_robot_stop = robot_subparsers.add_parser('stop', help="Deactivate the robot")
+    parser_robot_stop.set_defaults(func=robot_stop)
+
+    # Add robot config subcommand
+    parser_config = add_robot_config_subcommands(robot_subparsers, params)
+
+    return parser_robot, parser_config
 
 
 def robot_start(platform, params: Params, args):
@@ -62,195 +121,174 @@ def robot_stop(platform, params: Params, args):
 
 def robot_set_name(platform, params: Params, args):
     """Configure the robot name."""
-    # Check if the robot name is provided
     robot = RobotList.get_robot(params)
-    if not args.name:
-        print(f"Current robot name: {robot.name}")
+
+    def validate_name(_, x):
+        if not x.isalnum():
+            raise inquirer.errors.ValidationError("", reason="Name must contain only letters and numbers")
         return True
-    # Update the robot name
-    robot.name = args.name
-    RobotList.update_robot(params, robot)
-    print(TerminalFormatter.color_text(f"Robot name set to: {robot.name}", color='green'))
-    return True
+
+    question = [
+        inquirer.Text(
+            'name',
+            message="Enter the new robot name",
+            default=robot.name,
+            validate=validate_name
+        )
+    ]
+
+    answers = inquirer.prompt(question, theme=GreenPassion())
+    if answers is None:
+        return False
+    if not answers['name']:
+        print(TerminalFormatter.color_text("No name provided", color='red'))
+        return False
+    new_name = answers['name']
+    if new_name != robot.name:
+        robot.name = new_name
+        RobotList.update_robot(params, robot)
+        print(TerminalFormatter.color_text(f"Robot name set to: {robot.name}", color='green'))
+    else:
+        print(TerminalFormatter.color_text(f"Robot name {new_name} is already set", color='yellow'))
 
 
 def robot_set_domain_id(platform, params: Params, args):
     """Configure the domain ID."""
-    # Check if the domain ID is provided
     robot = RobotList.get_robot(params)
-    if not args.domain_id:
-        print(f"Current robot domain_id: {robot.domain_id}")
+
+    def validate_domain_id(_, x):
+        if not x.isdigit():
+            raise inquirer.errors.ValidationError("", reason="Domain ID must be a number")
         return True
 
-    # Update the domain ID
-    robot.domain_id = args.domain_id
-    RobotList.update_robot(params, robot)
-    print(TerminalFormatter.color_text(f"Domain ID set to: {robot.domain_id}", color='green'))
-    return True
+    question = [
+        inquirer.Text(
+            'domain_id',
+            message="Enter the new domain ID",
+            default=str(robot.domain_id),
+            validate=validate_domain_id
+        )
+    ]
+
+    answers = inquirer.prompt(question, theme=GreenPassion())
+    if answers is None:
+        return False
+    new_domain_id = int(answers['domain_id'])
+    if new_domain_id != robot.domain_id:
+        robot.domain_id = new_domain_id
+        RobotList.update_robot(params, robot)
+        print(TerminalFormatter.color_text(f"Domain ID set to: {robot.domain_id}", color='green'))
+    else:
+        print(TerminalFormatter.color_text(f"Domain ID {new_domain_id} is already set", color='yellow'))
 
 
 def robot_set_camera(platform, params: Params, args):
     """Configure the camera."""
-    def print_options(robot):
-        all_cameras = sorted(CAMERA_CHOICES + [robot.camera_type] if robot.camera_type not in CAMERA_CHOICES else CAMERA_CHOICES)
-        options = []
-        for i, camera in enumerate(all_cameras):
-            if camera == robot.camera_type:
-                if camera:
-                    options.append(TerminalFormatter.color_text(f"{i + 1}. Camera {camera} (selected)", color='green'))
-                else:
-                    options.append(TerminalFormatter.color_text(f"{i + 1}. No camera (selected)", color='green'))
-            else:
-                if camera:
-                    options.append(f"{i + 1}. Select camera {camera}")
-                else:
-                    options.append(f"{i + 1}. Select no camera")
-        options.append(f"{len(all_cameras) + 1}. Exit")
-        for option in options:
-            print(option)
-
-    def select_camera(robot, camera):
-        robot.camera_type = camera
-        RobotList.update_robot(params, robot)
-
     robot = RobotList.get_robot(params)
-    if args.new_camera is not None:
-        if args.new_camera != robot.camera_type:
-            robot.camera_type = args.new_camera
+    
+    all_cameras = sorted(set(CAMERA_CHOICES + [robot.camera_type]))
+
+    if args.new is not None:
+        if args.new not in all_cameras:
+            robot.camera_type = args.new
             RobotList.update_robot(params, robot)
-            print(TerminalFormatter.color_text(f"New camera {args.new_camera} selected", color='green'))
+            print(TerminalFormatter.color_text(f"New camera {args.new} selected", color='green'))
         else:
-            print(TerminalFormatter.color_text(f"Camera {args.new_camera} is already selected", color='yellow'))
+            print(TerminalFormatter.color_text(f"Camera {args.new} is already exist", color='yellow'))
         return True
 
-    try:
-        while True:
-            robot = RobotList.get_robot(params)
-            print_options(robot)
-            choice = input("Select an option: ")
-            all_cameras = sorted(CAMERA_CHOICES + [robot.camera_type] if robot.camera_type not in CAMERA_CHOICES else CAMERA_CHOICES)
-            if choice.isdigit() and 1 <= int(choice) <= len(all_cameras):
-                select_camera(robot, all_cameras[int(choice) - 1])
-                if robot.camera_type:
-                    print(TerminalFormatter.color_text(f"Camera set to: {robot.camera_type}", color='green'))
-                else:
-                    print(TerminalFormatter.color_text("No camera selected", color='green'))
-                break
-            elif choice == str(len(all_cameras) + 1):
-                print(TerminalFormatter.color_text("Exiting camera selection", color='yellow'))
-                break
-            else:
-                print(TerminalFormatter.color_text("Invalid option, please try again", color='red'))
-    except KeyboardInterrupt:
-        print(TerminalFormatter.color_text("Process interrupted by user", color='yellow'))
+    options = [
+        inquirer.List(
+            'camera',
+            message="Select a camera",
+            choices=[camera or 'No camera' for camera in all_cameras],
+            default=robot.camera_type
+        )
+    ]
+
+    answers = inquirer.prompt(options, theme=GreenPassion())
+    if answers is None:
         return False
+    selected_camera = answers['camera'].replace(" (selected)", "")
+
+    selected_camera = '' if selected_camera == 'No camera' else selected_camera
+    if selected_camera != robot.camera_type:
+        robot.camera_type = selected_camera
+        RobotList.update_robot(params, robot)
+        print(TerminalFormatter.color_text(f"Camera set to: {robot.camera_type or 'No camera'}", color='green'))
+    else:
+        print(TerminalFormatter.color_text(f"Camera {selected_camera or 'No camera'} is already selected", color='yellow'))
 
 
 def robot_set_lidar(platform, params: Params, args):
     """Configure the lidar."""
-    def print_options(robot):
-        all_lidars = sorted(LIDAR_CHOICES + [robot.lidar_type] if robot.lidar_type not in LIDAR_CHOICES else LIDAR_CHOICES)
-        options = []
-        for i, lidar in enumerate(all_lidars):
-            if lidar == robot.lidar_type:
-                if lidar:
-                    options.append(TerminalFormatter.color_text(f"{i + 1}. Lidar {lidar} (selected)", color='green'))
-                else:
-                    options.append(TerminalFormatter.color_text(f"{i + 1}. No lidar (selected)", color='green'))
-            else:
-                if lidar:
-                    options.append(f"{i + 1}. Select lidar {lidar}")
-                else:
-                    options.append(f"{i + 1}. Select no lidar")
-        options.append(f"{len(all_lidars) + 1}. Exit")
-        for option in options:
-            print(option)
-
-    def select_lidar(robot, lidar):
-        robot.lidar_type = lidar
-        RobotList.update_robot(params, robot)
-
     robot = RobotList.get_robot(params)
-    if args.new_lidar is not None:
-        if args.new_lidar != robot.lidar_type:
-            robot.lidar_type = args.new_lidar
+    
+    all_lidars = sorted(set(LIDAR_CHOICES + [robot.lidar_type]))
+
+    if args.new is not None:
+        if args.new not in all_lidars:
+            robot.lidar_type = args.new
             RobotList.update_robot(params, robot)
-            print(TerminalFormatter.color_text(f"New lidar {args.new_lidar} selected", color='green'))
+            print(TerminalFormatter.color_text(f"New lidar {args.new} selected", color='green'))
         else:
-            print(TerminalFormatter.color_text(f"Lidar {args.new_lidar} is already selected", color='yellow'))
+            print(TerminalFormatter.color_text(f"Lidar {args.new} is already exist", color='yellow'))
         return True
 
-    try:
-        while True:
-            robot = RobotList.get_robot(params)
-            print_options(robot)
-            choice = input("Select an option: ")
-            all_lidars = sorted(LIDAR_CHOICES + [robot.lidar_type] if robot.lidar_type not in LIDAR_CHOICES else LIDAR_CHOICES)
-            if choice.isdigit() and 1 <= int(choice) <= len(all_lidars):
-                select_lidar(robot, all_lidars[int(choice) - 1])
-                if robot.lidar_type:
-                    print(TerminalFormatter.color_text(f"Lidar set to: {robot.lidar_type}", color='green'))
-                else:
-                    print(TerminalFormatter.color_text("No lidar selected", color='green'))
-                break
-            elif choice == str(len(all_lidars) + 1):
-                print(TerminalFormatter.color_text("Exiting lidar selection", color='yellow'))
-                break
-            else:
-                print(TerminalFormatter.color_text("Invalid option, please try again", color='red'))
-    except KeyboardInterrupt:
-        print(TerminalFormatter.color_text("Process interrupted by user", color='yellow'))
+    options = [
+        inquirer.List(
+            'lidar',
+            message="Select a lidar",
+            choices=[lidar or 'No lidar' for lidar in all_lidars],
+            default=robot.lidar_type
+        )
+    ]
+
+    answers = inquirer.prompt(options, theme=GreenPassion())
+    if answers is None:
         return False
+    selected_lidar = answers['lidar'].replace(" (selected)", "")
+
+    selected_lidar = '' if selected_lidar == 'No lidar' else selected_lidar
+    if selected_lidar != robot.lidar_type:
+        robot.lidar_type = selected_lidar
+        RobotList.update_robot(params, robot)
+        print(TerminalFormatter.color_text(f"Lidar set to: {robot.lidar_type or 'No lidar'}", color='green'))
+    else:
+        print(TerminalFormatter.color_text(f"Lidar {selected_lidar or 'No lidar'} is already selected", color='yellow'))
 
 
 def robot_configure_engines(platform, params: Params, args):
     """Configure the robot engines."""
-    def print_options(robot):
-        all_engines = sorted(list(set(robot.engines + ENGINES_CHOICES)))
-        options = []
-        for i, engine in enumerate(all_engines):
-            if engine in robot.engines:
-                options.append(TerminalFormatter.color_text(f"{i + 1}. Engine {engine} (enabled)", color='green'))
-            else:
-                options.append(f"{i + 1}. Enable engine {engine}")
-        options.append(f"{len(all_engines) + 1}. Exit")
-        for option in options:
-            print(option)
-
-    def toggle_engine(robot, engine):
-        if not robot.engines:
-            robot.engines = []
-        if engine in robot.engines:
-            robot.engines.remove(engine)
-        else:
-            robot.engines.append(engine)
-        RobotList.update_robot(params, robot)
-
     robot = RobotList.get_robot(params)
-    if args.new_engine is not None:
-        if args.new_engine not in robot.engines:
-            robot.engines.append(args.new_engine)
+
+    if args.new is not None:
+        if args.new not in robot.engines:
+            robot.engines.append(args.new)
             RobotList.update_robot(params, robot)
-            print(TerminalFormatter.color_text(f"New engine {args.new_engine} added", color='green'))
+            print(TerminalFormatter.color_text(f"New engine {args.new} added", color='green'))
         else:
-            print(TerminalFormatter.color_text(f"Engine {args.new_engine} is already enabled", color='yellow'))
+            print(TerminalFormatter.color_text(f"Engine {args.new} is already enabled", color='yellow'))
         return True
 
-    try:
-        while True:
-            robot = RobotList.get_robot(params)
-            print_options(robot)
-            choice = input("Select an option: ")
-            all_engines = sorted(list(set(robot.engines + ENGINES_CHOICES)))
-            if choice.isdigit() and 1 <= int(choice) <= len(all_engines):
-                toggle_engine(robot, all_engines[int(choice) - 1])
-            elif choice == str(len(all_engines) + 1):
-                break
-            else:
-                print(TerminalFormatter.color_text("Invalid option, please try again", color='red'))
-    except KeyboardInterrupt:
-        print(TerminalFormatter.color_text("Process interrupted by user", color='yellow'))
+    engine_choices = [
+        inquirer.Checkbox(
+            'engines',
+            message="Select engines to enable/disable",
+            choices=list(sorted(list(set(robot.engines + ENGINES_CHOICES)))),
+            default=robot.engines,
+        )
+    ]
+
+    answers = inquirer.prompt(engine_choices, theme=GreenPassion())
+    if answers is None:
         return False
+    robot.engines = answers['engines']
+    RobotList.update_robot(params, robot)
+    if robot.engines:
+        print(TerminalFormatter.color_text(f"Engines updated: {', '.join(robot.engines)}", color='green'))
+    else:
+        print(TerminalFormatter.color_text("No engines selected", color='yellow'))
 
 
 def robot_reset(platform, params: Params, args):

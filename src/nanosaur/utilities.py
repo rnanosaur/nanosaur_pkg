@@ -41,7 +41,7 @@ DEFAULT_ROBOT_CONFIG = {
 
 CAMERA_CHOICES = ['', 'realsense', 'zed']
 LIDAR_CHOICES = ['', 'LD06', 'rplidar']
-ENGINES_CHOICES = ['vlslam', 'nvblox', 'apriltag']
+ENGINES_CHOICES = ['vslam', 'nvblox', 'apriltag']
 
 
 class Robot:
@@ -200,6 +200,9 @@ class RobotList:
 
     def to_dict(self) -> list:
         return [robot.to_dict() for robot in self.robots]
+
+    def to_list(self) -> list:
+        return self.robots
 
     def print_all_robots(self, robot_idx=None):
         if robot_idx is not None:

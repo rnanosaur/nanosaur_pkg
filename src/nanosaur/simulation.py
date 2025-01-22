@@ -23,10 +23,14 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import inquirer
+from inquirer.themes import GreenPassion
+import argparse
 import subprocess
 from nanosaur import workspace
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, RobotList
+
 
 # Dictionary of simulation tools and their commands
 simulation_tools = {
@@ -39,6 +43,26 @@ simulation_tools = {
         "robot": "ros2 launch nanosaur_gazebo nanosaur_bridge.launch.py"
     }
 }
+
+def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
+    # Get the simulation tool from the parameters
+    simulation_type = params.get('simulation_tool', "NOT SELECTED")
+    # Add simulation subcommand
+    parser_simulation = subparsers.add_parser(
+        'simulation', aliases=["sim"], help=f"Work with simulation tools [{simulation_type}]")
+    simulation_subparsers = parser_simulation.add_subparsers(
+        dest='simulation_type', help="Simulation types")
+
+    # Add simulation start subcommand
+    parser_simulation_start = simulation_subparsers.add_parser(
+        'start', help="Start the selected simulation")
+    parser_simulation_start.set_defaults(func=simulation_start)
+
+    # Add simulation set subcommand
+    parser_simulation_set = simulation_subparsers.add_parser(
+        'set', help="Select the simulator you want to use")
+    parser_simulation_set.set_defaults(func=simulation_set)
+    return parser_simulation
 
 
 def start_robot_simulation(params):
@@ -135,38 +159,21 @@ def simulation_start(platform, params: Params, args):
 
 def simulation_set(platform, params: Params, args):
     """Set the simulation tools."""
-    while True:
-        print("Set the simulation tools:")
-        # List of simulation environments
-        sim_options = list(simulation_tools.keys())
 
-        # Print options from list
-        for i, value in enumerate(sim_options, 1):
-            if 'simulation_tool' in params and params['simulation_tool'] == value:
-                print(f"{i}. {TerminalFormatter.color_text(value, color='green')} [Current]")
-            else:
-                print(f"{i}. {value}")
-        exit_option = len(sim_options) + 1
-        print(f"{exit_option}. Exit")
-
-        try:
-            choice = input("Enter your choice: ")
-        except KeyboardInterrupt:
-            print(TerminalFormatter.color_text("Exiting...", color='yellow'))
-            return False
-
-        if choice.isdigit():
-            choice_num = int(choice)
-            if choice_num == exit_option:
-                # print(TerminalFormatter.color_text("Exiting...", color='yellow'))
-                break
-            elif 1 <= choice_num <= len(sim_options):
-                params['simulation_tool'] = sim_options[choice_num - 1]
-                print(TerminalFormatter.color_text(f"Selected {sim_options[choice_num - 1]}", color='green'))
-                break
-            else:
-                print(TerminalFormatter.color_text(f"Invalid choice. Please enter a number between 1 and {exit_option}.", color='red'))
-        else:
-            print(TerminalFormatter.color_text("Invalid choice. Please enter a number.", color='red'))
+    questions = [
+        inquirer.List(
+            'simulation_tool',
+            message="Set the simulation tools:",
+            choices=list(simulation_tools.keys()),
+            default=params.get('simulation_tool', None)
+        )
+    ]
+    # Ask the user to select a simulation tool
+    answers = inquirer.prompt(questions, theme=GreenPassion())
+    if answers is None:
+        return False
+    # Save the selected simulation tool
+    params['simulation_tool'] = answers['simulation_tool']
+    print(TerminalFormatter.color_text(f"Selected {answers['simulation_tool']}", color='green'))
     return True
 # EOF

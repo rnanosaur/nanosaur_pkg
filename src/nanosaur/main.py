@@ -32,20 +32,22 @@ from jtop import jtop, JtopException
 from nanosaur import __version__
 from nanosaur.utilities import Params, get_nanosaur_home
 from nanosaur import workspace
-from nanosaur import simulation
-from nanosaur import robot
-from nanosaur import swarm
+from nanosaur.robot import parser_robot_menu
+from nanosaur.simulation import parser_simulation_menu
+from nanosaur.swarm import parser_swarm_menu
 from nanosaur.prompt_colors import TerminalFormatter
-from nanosaur.utilities import CAMERA_CHOICES, LIDAR_CHOICES
+from nanosaur.utilities import RobotList
+import inquirer
 
 NANOSAUR_CONFIG_FILE_NAME = 'nanosaur.yaml'
-NANOSAUR_HOME_NAME = 'nanosaur'
+NANOSAUR_HOME_NAME = 'nanosaur_test'
 
 # Define default parameters
 DEFAULT_PARAMS = {
     'nanosaur_branch': 'nanosaur2',
     'nanosaur_home': NANOSAUR_HOME_NAME,
     'nanosaur_raw_github_repo': 'https://raw.githubusercontent.com/rnanosaur/nanosaur',
+    'ws_developer_name': 'ros_ws',
     'ws_perception_name': 'perception_ws',
     'ws_robot_name': 'robot_ws',
     'ws_simulation_name': 'simulation_ws',
@@ -59,9 +61,9 @@ def info(platform, params: Params, args):
         print(TerminalFormatter.color_text(f"Mode: {params['mode']}", bg_color='red', bold=True))
         print()
 
-    robot_list = robot.RobotList.load(params)
+    robot_list = RobotList.load(params)
     # Print current robot configuration
-    robot_data = robot.RobotList.get_robot(params)
+    robot_data = RobotList.get_robot(params)
     robot_data.verbose()
     # Print other robots if they exist
     if len(robot_list.robots) > 1 or args.verbose:
@@ -96,139 +98,32 @@ def info(platform, params: Params, args):
     print(f"  {TerminalFormatter.color_text('Nanosaur config file:', bold=True)} {config_file_path}")
 
 
-def install(platform, params: Params, args, password=None):
+def install_old(platform, params: Params, args, password=None):
     if args.developer:
         workspace.create_developer_workspace(platform, params, args)
     else:
         print(TerminalFormatter.color_text("Not implemented yet", color='red'))
 
 
-def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
-    parser_workspace = subparsers.add_parser(
-        'workspace', aliases=["ws"], help="Manage the Nanosaur workspace")
-    workspace_subparsers = parser_workspace.add_subparsers(
-        dest='workspace_type', help="Workspace types")
-    # Add workspace clean subcommand
 
-    def add_workspace_subcommand(name, help_text, func):
-        parser = workspace_subparsers.add_parser(name, help=help_text)
-        parser.add_argument('workspace', type=str, nargs='?', help="Specify the workspace to clean")
-        parser.add_argument('--force', action='store_true', help="Force the workspace clean")
-        parser.add_argument('--all-platforms', '--all', action='store_true', help="Clean all workspaces")
-        parser.set_defaults(func=func)
-        return parser
-    # Add workspace clean subcommand
-    add_workspace_subcommand('clean', "Clean the workspace", workspace.clean)
-    add_workspace_subcommand('update', "Update the workspace", workspace.update)
-    add_workspace_subcommand('deploy', "Deploy workspace to docker image", workspace.deploy)
-    # Add workspace perception subcommand
-    parser_workspace_perception = workspace_subparsers.add_parser(
-        'perception', help="Start the Isaac ROS docker container")
-    parser_workspace_perception.set_defaults(func=workspace.run_dev_script)
-    return parser_workspace
+def install(platform, params: Params, args, password=None):
+    questions = [
+        inquirer.List(
+            'choice',
+            message="What would you like to install?",
+            choices=['Developer Workspace', 'Simulation Tools', 'Robot Configuration'],
+        ),
+    ]
 
+    answers = inquirer.prompt(questions)
 
-def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
-    # Get the simulation tool from the parameters
-    simulation_type = params.get('simulation_tool', "NOT SELECTED")
-    # Add simulation subcommand
-    parser_simulation = subparsers.add_parser(
-        'simulation', aliases=["sim"], help=f"Work with simulation tools [{simulation_type}]")
-    simulation_subparsers = parser_simulation.add_subparsers(
-        dest='simulation_type', help="Simulation types")
+    if answers['choice'] == 'Developer Workspace':
+        workspace.create_developer_workspace(platform, params, args)
+    elif answers['choice'] == 'Simulation Tools':
+        print(TerminalFormatter.color_text("Simulation Tools installation is not implemented yet", color='red'))
+    elif answers['choice'] == 'Robot Configuration':
+        print(TerminalFormatter.color_text("Robot Configuration installation is not implemented yet", color='red'))
 
-    # Add simulation start subcommand
-    parser_simulation_start = simulation_subparsers.add_parser(
-        'start', help="Start the selected simulation")
-    parser_simulation_start.set_defaults(func=simulation.simulation_start)
-
-    # Add simulation set subcommand
-    parser_simulation_set = simulation_subparsers.add_parser(
-        'set', help="Select the simulator you want to use")
-    parser_simulation_set.set_defaults(func=simulation.simulation_set)
-    return parser_simulation
-
-
-def add_robot_config_subcommands(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
-    robot_data = robot.RobotList.get_robot(params)
-    parser_robot_config = subparsers.add_parser('config', help=f"Configure the robot settings [{robot_data.name}]")
-    config_subparsers = parser_robot_config.add_subparsers(dest='config_type', help="Configuration options")
-    # Add robot name subcommand
-    parser_robot_name = config_subparsers.add_parser('name', help=f"Change the robot name [{robot_data.name}]")
-    parser_robot_name.add_argument('name', type=str, nargs='?', help="New name for the robot (default: nanosaur)")
-    parser_robot_name.set_defaults(func=robot.robot_set_name)
-    # Add robot domain id subcommand
-    parser_robot_domain_id = config_subparsers.add_parser('domain_id', help=f"Change the robot domain ID [{robot_data.domain_id}]")
-    parser_robot_domain_id.add_argument('domain_id', type=int, nargs='?', help="New domain ID for the robot (default: 0)")
-    parser_robot_domain_id.set_defaults(func=robot.robot_set_domain_id)
-    # Add robot camera subcommand
-    parser_robot_camera = config_subparsers.add_parser('camera', help=f"Change the robot camera type [{robot_data.camera_type}]")
-    parser_robot_camera.add_argument('--new-camera', type=str, help=f"Specify the new camera type (options: {', '.join(CAMERA_CHOICES)})")
-    parser_robot_camera.set_defaults(func=robot.robot_set_camera)
-    # Add robot lidar subcommand
-    parser_robot_lidar = config_subparsers.add_parser('lidar', help=f"Change the robot lidar type [{robot_data.lidar_type}]")
-    parser_robot_lidar.add_argument('--new-lidar', type=str, choices=LIDAR_CHOICES, help=f"Specify the new lidar type (options: {', '.join(LIDAR_CHOICES)})")
-    parser_robot_lidar.set_defaults(func=robot.robot_set_lidar)
-    # Add robot engines subcommand
-    parser_robot_engines = config_subparsers.add_parser('engines', help=f"Configure the robot engines [{', '.join(robot_data.engines)}]")
-    parser_robot_engines.add_argument('--new-engine', type=str, help="Specify the new engine configuration")
-    parser_robot_engines.set_defaults(func=robot.robot_configure_engines)
-    # Add robot reset subcommand
-    parser_robot_reset = config_subparsers.add_parser('reset', help="Restore the robot configuration to default")
-    parser_robot_reset.set_defaults(func=robot.robot_reset)
-
-    return parser_robot_config
-
-
-def parser_robot_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
-    robot_data = robot.RobotList.get_robot(params)
-    parser_robot = subparsers.add_parser('robot', help=f"Manage the Nanosaur robot [{robot_data.name}]")
-    robot_subparsers = parser_robot.add_subparsers(dest='robot_type', help="Robot operations")
-    # Add robot display subcommand
-    parser_robot_display = robot_subparsers.add_parser('display', help="Show the robot")
-    parser_robot_display.set_defaults(func=robot.robot_display)
-    # Add robot drive subcommand
-    parser_robot_drive = robot_subparsers.add_parser('drive', help="Control the robot")
-    parser_robot_drive.set_defaults(func=robot.control_keyboard)
-    # Add robot start subcommand
-    parser_robot_start = robot_subparsers.add_parser('start', help="Activate the robot")
-    parser_robot_start.add_argument(
-        '--container', action='store_true', help="Run within a container")
-    parser_robot_start.add_argument(
-        '--build', action='store_true', help="Rebuild docker before starting")
-    parser_robot_start.set_defaults(func=robot.robot_start)
-    # Add robot stop subcommand
-    parser_robot_stop = robot_subparsers.add_parser('stop', help="Deactivate the robot")
-    parser_robot_stop.set_defaults(func=robot.robot_stop)
-
-    # Add robot config subcommand
-    parser_config = add_robot_config_subcommands(robot_subparsers, params)
-
-    return parser_robot, parser_config
-
-
-def parser_swarm_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
-    # Get the robot index from the parameters
-    idx_swarm = params.get('robot_idx', 0)
-    # Subcommand: swarm (with a sub-menu for swarm operations)
-    parser_swarm = subparsers.add_parser('swarm', help="Manage swarm Nanosaur robots")
-    swarm_subparsers = parser_swarm.add_subparsers(dest='swarm_type', help="Robot operations")
-    # Add robot status subcommand
-    parser_robot_new = swarm_subparsers.add_parser('new', help="Get a new robot to control")
-    parser_robot_new.add_argument('name', type=str, help="New robot name")
-    parser_robot_new.set_defaults(func=swarm.robot_new)
-    # Add robot set subcommand
-    parser_robot_set = swarm_subparsers.add_parser('set', help=f"Set which robot to control [{idx_swarm}]")
-    parser_robot_set.add_argument('robot_name', type=str, nargs='?', help="Name of the robot to control")
-    parser_robot_set.set_defaults(func=swarm.robot_idx_set)
-    # Add robot remove subcommand
-    parser_robot_remove = swarm_subparsers.add_parser('remove', help="Remove a robot from the swarm")
-    parser_robot_remove.add_argument('robot_name', type=str, nargs='?', help="Name of the robot to remove")
-    parser_robot_remove.set_defaults(func=swarm.robot_remove)
-    # Add robot list subcommand
-    parser_robot_list = swarm_subparsers.add_parser('list', help="List all robots in the swarm")
-    parser_robot_list.set_defaults(func=swarm.robot_list)
-    return parser_swarm
 
 
 def main():
@@ -260,10 +155,10 @@ def main():
     parser_info.set_defaults(func=info)
 
     # Subcommand: install (hidden if workspace already exists)
-    if 'mode' in params and params['mode'] == 'developer':
-        parser_install = subparsers.add_parser('install', help="Install the Nanosaur workspace")
-    else:
-        parser_install = subparsers.add_parser('install')
+    #if 'mode' in params and params['mode'] in ['developer', 'maintainer']:
+    parser_install = subparsers.add_parser('install', help=f"Install nanosaur on your {device_type}")
+    #else:
+    #    parser_install = subparsers.add_parser('install')
     # Add simulation install subcommand
     parser_install.add_argument('--developer', '--dev', action='store_true', help="Install developer workspace")
     parser_install.add_argument('--force', action='store_true', help="Force the update")
@@ -271,9 +166,9 @@ def main():
     parser_install.set_defaults(func=install)
 
     # Subcommand: workspace (with a sub-menu for workspace operations)
-    if 'mode' in params and params['mode'] == 'developer':
+    if workspace.get_workspaces_path(params):
         # Add workspace subcommand
-        parser_workspace = parser_workspace_menu(subparsers)
+        parser_workspace = workspace.parser_workspace_menu(subparsers)
 
     # Subcommand: simulation (with a sub-menu for simulation types)
     if device_type == 'desktop':

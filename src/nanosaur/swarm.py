@@ -23,15 +23,56 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
+import inquirer
+from inquirer.themes import GreenPassion
+import argparse
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, RobotList, Robot
 
 
+def parser_swarm_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
+    # Get the robot index from the parameters
+    idx_swarm = params.get('robot_idx', 0)
+    current_robot_name = RobotList.load(params)._get_robot_by_idx(idx_swarm).name
+    # Subcommand: swarm (with a sub-menu for swarm operations)
+    parser_swarm = subparsers.add_parser('swarm', help="Manage swarm Nanosaur robots")
+    swarm_subparsers = parser_swarm.add_subparsers(dest='swarm_type', help="Robot operations")
+    # Add robot status subcommand
+    parser_robot_new = swarm_subparsers.add_parser('new', help="Get a new robot to control")
+    parser_robot_new.add_argument('name', type=str, nargs='?', help="New robot name")
+    parser_robot_new.set_defaults(func=robot_new)
+    # Add robot set subcommand
+    parser_robot_set = swarm_subparsers.add_parser('set', help=f"Set which robot to control [{current_robot_name}]")
+    parser_robot_set.add_argument('robot_name', type=str, nargs='?', help="Name of the robot to control")
+    parser_robot_set.set_defaults(func=robot_idx_set)
+    # Add robot remove subcommand
+    parser_robot_remove = swarm_subparsers.add_parser('remove', help="Remove a robot from the swarm")
+    parser_robot_remove.add_argument('robot_name', type=str, nargs='?', help="Name of the robot to remove")
+    parser_robot_remove.set_defaults(func=robot_remove)
+    # Add robot list subcommand
+    parser_robot_list = swarm_subparsers.add_parser('list', help="List all robots in the swarm")
+    parser_robot_list.set_defaults(func=robot_list)
+    return parser_swarm
+
+
 def robot_new(platform, params: Params, args):
     """Add a new robot configuration."""
-    # Create a new robot configuration
-    robot = Robot(name=args.name)
+    
+    def validate_name(_, x):
+        if not x.isalnum():
+            raise inquirer.errors.ValidationError("", reason="Name must contain only letters and numbers")
+        return True
+    
+    questions = [
+        inquirer.Text(
+            'name',
+            message="Enter the new robot name",
+            default=args.name,
+            validate=validate_name,
+        )
+    ]
+    answers = inquirer.prompt(questions, theme=GreenPassion())
+    robot = Robot(name=answers['name'])
     if RobotList.add_robot(params, robot):
         print(TerminalFormatter.color_text("New robot configuration added", color='green'))
         return True
@@ -39,17 +80,31 @@ def robot_new(platform, params: Params, args):
 
 
 def robot_idx_set(platform, params: Params, args):
-    """Set the robot index."""
+    """Set the robot configuration."""
+    # Load the robot list
+    robots = RobotList.load(params)
+    
+    default = robots._get_robot_by_idx(params.get('robot_idx', 0))
     if args.robot_name is not None:
-        idx = RobotList.get_idx_by_name(params, args.robot_name)
-        if idx is not None:
-            params['robot_idx'] = idx
-            print(TerminalFormatter.color_text(f"Robot index set to: {idx}", color='green'))
-            return True
-        print(TerminalFormatter.color_text("Robot not found", color='red'))
-    else:
-        robot = RobotList.load(params)._get_robot_by_idx(params.get('robot_idx', 0))
-        print(f"Current robot index: {params.get('robot_idx', 0)} name: {robot.name}")
+        default = robots._get_robot_by_name(args.robot_name)
+    
+    options = [
+        inquirer.List(
+            'robot',
+            message="Select robot in list",
+            choices=robots.to_list(),
+            default=default
+        )
+    ]
+    # Get the selected robot
+    answers = inquirer.prompt(options, theme=GreenPassion())
+    if answers is None:
+        return False
+    # Get the selected robot and its index
+    robot = answers['robot']
+    idx = RobotList.get_idx_by_name(params, robot.name)
+    print(f"Selected robot: {robot.name} with index {idx}")
+    params['robot_idx'] = idx
 
 
 def robot_remove(platform, params: Params, args):
@@ -59,13 +114,21 @@ def robot_remove(platform, params: Params, args):
         args.robot_name = robot.name
 
     formatted_robot_name = TerminalFormatter.color_text(args.robot_name, color='green', bold=True)
-    confirmation = input(f"Confirm {TerminalFormatter.color_text('remove', color='red', bold=True)} config for {formatted_robot_name}? (yes/no): ")
-    if confirmation.lower() == 'yes':
+    questions = [
+        inquirer.Confirm(
+            'confirm',
+            message=f"Confirm {TerminalFormatter.color_text('remove', color='red', bold=True)} config for {formatted_robot_name}?",
+            default=False
+        )
+    ]
+    answers = inquirer.prompt(questions, theme=GreenPassion())
+    if answers is None:
+        return False
+    # Remove the robot configuration
+    if answers['confirm']:
         RobotList.remove_robot(params, params.get('robot_idx', 0))
         print(TerminalFormatter.color_text("Robot configuration removed", color='green'))
         return True
-    else:
-        print(TerminalFormatter.color_text("Robot configuration removal canceled", color='yellow'))
 
 
 def robot_list(platform, params: Params, args):
