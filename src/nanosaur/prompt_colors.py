@@ -25,6 +25,7 @@
 
 import os
 
+
 class TerminalFormatter:
     # Define ANSI color codes
     COLORS = {
@@ -85,7 +86,7 @@ class TerminalFormatter:
     def clickable_text(text, url):
         """
         Create a clickable link in the terminal.
-        
+
         :param text: The display text for the link.
         :param url: The URL the link points to.
         :return: A string formatted as a clickable link.
@@ -97,7 +98,7 @@ class TerminalFormatter:
         """
         Create a clickable link in the terminal where the path is the URL and the text.
         Detect if the path is a file, folder, or link and format the URL accordingly.
-        
+
         :param path: The file path to be used as both the display text and the URL.
         :return: A string formatted as a clickable link.
         """
