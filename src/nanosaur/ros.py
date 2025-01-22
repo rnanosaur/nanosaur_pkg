@@ -44,8 +44,8 @@ ISAAC_ROS_DISTRO_SUFFIX = "ros2_humble"
 NANOSAUR_DOCKERFILE_SUFFIX = "nanosaur"
 
 
-def run_dev_script(params, perception_path):
-    isaac_ros_common_path = os.path.join(perception_path, 'src', 'isaac_ros_common')
+def run_dev_script(params, host_workspace_path, workspace_path):
+    isaac_ros_common_path = os.path.join(host_workspace_path, 'src', 'isaac_ros_common')
     # Get the path to the Isaac ROS common package
     os.chdir(isaac_ros_common_path)
     print(f"Changed directory to: {isaac_ros_common_path}")
@@ -59,7 +59,7 @@ def run_dev_script(params, perception_path):
     args = ["-d", nanosaur_home_path]
 
     # Optional: Commands to run automatically after the script starts
-    auto_commands = [f"cd {params['ws_perception_name']}"]
+    auto_commands = [f"cd {workspace_path}"]
 
     # Save the original terminal settings
     original_termios = termios.tcgetattr(sys.stdin)
@@ -128,12 +128,12 @@ def run_dev_script(params, perception_path):
     print(TerminalFormatter.color_text("Dev script finished", color='green'))
 
 
-def download_rosinstall(url, folder_path, file_name) -> str:
+def download_rosinstall(url, folder_path, file_name, force=False) -> str:
     # Create the full file path
     file_path = os.path.join(folder_path, file_name)
 
     # Check if the file already exists
-    if os.path.exists(file_path):
+    if not force and os.path.exists(file_path):
         print(TerminalFormatter.color_text(f"File '{file_name}' already exists in '{folder_path}'. Skip download", color='yellow'))
         return file_path  # Cancel download
 

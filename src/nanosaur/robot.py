@@ -77,8 +77,6 @@ def parser_robot_menu(subparsers: argparse._SubParsersAction, params: Params) ->
     # Add robot start subcommand
     parser_robot_start = robot_subparsers.add_parser('start', help="Activate the robot")
     parser_robot_start.add_argument(
-        '--container', action='store_true', help="Run within a container")
-    parser_robot_start.add_argument(
         '--build', action='store_true', help="Rebuild docker before starting")
     parser_robot_start.set_defaults(func=robot_start)
     # Add robot stop subcommand
@@ -96,10 +94,7 @@ def robot_start(platform, params: Params, args):
     # Check the device type
     if device_type == "desktop":
         # Start the robot simulation
-        if args.container:
-            docker.docker_start(platform, params, args)
-        else:
-            simulation.start_robot_simulation(params)
+        docker.docker_start(platform, params, args)
     elif device_type == "robot":
         print(TerminalFormatter.color_text("Not yet implemented", color='yellow'))
     else:

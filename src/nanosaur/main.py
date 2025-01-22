@@ -85,11 +85,9 @@ def info(platform, params: Params, args):
 
     # Print all workspaces installed
     print(TerminalFormatter.color_text("\nInstalled Workspaces:", bold=True))
-    for ws_name in ['ws_developer_name', 'ws_perception_name', 'ws_robot_name', 'ws_simulation_name']:
+    for ws_name, ws_path in workspace.get_workspaces_path(params).items():
         # Get the workspace path if it exists
-        if ws_path := workspace.get_workspace_path(params, params.get(ws_name)):
-            ws_name_split = ws_name.split('_')[1]  # Split and get the middle part
-            print(f"  {TerminalFormatter.color_text(ws_name_split, bold=True)}: {TerminalFormatter.clickable_path(ws_path)}")
+        print(f"  {TerminalFormatter.color_text(ws_name, bold=True)}: {TerminalFormatter.clickable_path(ws_path)}")
 
     # Print all robot configurations
     if args.verbose:
