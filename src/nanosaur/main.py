@@ -156,6 +156,7 @@ def robot_control(params, subparsers):
     parser_shutdown = subparsers.add_parser('shutdown', help="Shutdown the robot (same as 'nanosaur robot stop')")
     parser_shutdown.set_defaults(func=robot_stop)
 
+
 def main():
     # Load the parameters
     params = Params.load(DEFAULT_PARAMS, home_folder=NANOSAUR_HOME_NAME, params_file_name=NANOSAUR_CONFIG_FILE_NAME)
