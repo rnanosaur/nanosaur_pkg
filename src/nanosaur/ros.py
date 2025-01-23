@@ -265,7 +265,7 @@ def run_colcon_build(folder_path) -> bool:
         return False
 
 
-def deploy_docker_simulation(docker_user: str, simulation_ws_path: str, image_name : str = None) -> bool:
+def deploy_docker_simulation(docker_user: str, simulation_ws_path: str, image_name: str = None) -> bool:
     # Get the path to the nanosaur_simulations package
     nanosaur_simulations_path = os.path.join(simulation_ws_path, 'src', 'nanosaur_simulations')
     # Build Gazebo sim docker
