@@ -260,7 +260,7 @@ def debug(platform, params: Params, args):
 def deploy(platform, params: Params, args):
     """ Deploy the workspace """
     workspace_actions = {
-        'simulation': lambda: ros.deploy_docker_simulation(DEFAULT_DOCKER_SIMULATION_IMAGE, get_workspace_path(params, 'ws_simulation_name')),
+        'simulation': lambda: ros.deploy_docker_simulation(DEFAULT_DOCKER_SIMULATION_IMAGE, get_workspace_path(params, 'ws_simulation_name'), args.all),
         'perception': lambda: ros.deploy_docker_perception(DEFAULT_DOCKER_PERCEPTION_IMAGE, get_workspace_path(params, 'ws_perception_name')),
     }
     if args.all:

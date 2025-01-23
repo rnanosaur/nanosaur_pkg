@@ -33,7 +33,7 @@ import select
 import termios
 import tty
 import signal
-from python_on_whales import docker
+from python_on_whales import docker, DockerException
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import get_nanosaur_home
 
@@ -262,15 +262,32 @@ def run_colcon_build(folder_path) -> bool:
         return False
 
 
-def deploy_docker_simulation(image_name: str, simulation_ws_path: str) -> bool:
+def deploy_docker_simulation(image_name: str, simulation_ws_path: str, all: bool) -> bool:
     # Get the path to the nanosaur_simulations package
     nanosaur_simulations_path = os.path.join(simulation_ws_path, 'src', 'nanosaur_simulations')
-    # Build the Docker image using the Docker API
-    docker.build(
-        get_nanosaur_home(),
-        file=f"{nanosaur_simulations_path}/Dockerfile",
-        tags=image_name
-    )
+    # Build Gazebo sim docker
+    try:
+        print(TerminalFormatter.color_text("Building Gazebo Docker image...", color='magenta', bold=True))
+        docker.build(
+            get_nanosaur_home(),
+            file=f"{nanosaur_simulations_path}/Dockerfile.gazebo",
+            tags="nanosaur/gazebo"
+        )
+    except DockerException as e:
+        print(TerminalFormatter.color_text(f"Error building Gazebo Docker image: {e}", color='red'))
+        return False
+    # Build the Docker image for nanosaur bridge
+    try:
+        print(TerminalFormatter.color_text("Building Nanosaur Docker image...", color='magenta', bold=True))
+        docker.build(
+            get_nanosaur_home(),
+            file=f"{nanosaur_simulations_path}/Dockerfile.nanosaur",
+            tags=image_name
+        )
+    except DockerException as e:
+        print(TerminalFormatter.color_text(f"Error building Nanosaur Docker image: {e}", color='red'))
+        return False
+    # Print success message
     print(TerminalFormatter.color_text("Docker image built successfully", color='green'))
     return True
 
