@@ -48,6 +48,9 @@ DEFAULT_WORKSPACE_SIMULATION = 'simulation_ws'
 DEFAULT_WORKSPACE_ROBOT = 'robot_ws'
 DEFAULT_WORKSPACE_DEVELOPER = 'ros_ws'
 
+DEFAULT_DOCKER_PERCEPTION_IMAGE = 'nanosaur/perception'
+DEFAULT_DOCKER_SIMULATION_IMAGE = 'nanosaur/simulation'
+DEFAULT_DOCKER_ROBOT_IMAGE = 'nanosaur/nanosaur'
 
 def workspaces_info(params: Params, verbose: bool):
     """Print information about the workspaces."""
@@ -256,7 +259,8 @@ def debug(platform, params: Params, args):
 def deploy(platform, params: Params, args):
     """ Deploy the workspace """
     workspace_actions = {
-        'perception': lambda: ros.deploy_docker_perception(params, get_workspace_path(params, 'ws_perception_name'))
+        'simulation': lambda: ros.deploy_docker_simulation(DEFAULT_DOCKER_SIMULATION_IMAGE, get_workspace_path(params, 'ws_simulation_name')),
+        'perception': lambda: ros.deploy_docker_perception(DEFAULT_DOCKER_PERCEPTION_IMAGE, get_workspace_path(params, 'ws_perception_name')),
     }
     if args.all:
         print(TerminalFormatter.color_text("Deploying all workspaces", bold=True))

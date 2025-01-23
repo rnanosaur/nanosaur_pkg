@@ -33,6 +33,7 @@ import select
 import termios
 import tty
 import signal
+from python_on_whales import docker
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, get_nanosaur_home
 
@@ -261,8 +262,20 @@ def run_colcon_build(folder_path) -> bool:
         return False
 
 
-def deploy_docker_perception(params: Params, perception_ws_path: str) -> bool:
-    image_name = "nanosaur-perception"
+def deploy_docker_simulation(image_name: str, simulation_ws_path: str) -> bool:
+    # Get the path to the nanosaur_simulations package
+    nanosaur_simulations_path = os.path.join(simulation_ws_path, 'src', 'nanosaur_simulations')
+    # Build the Docker image using the Docker API
+    docker.build(
+        get_nanosaur_home(),
+        file=f"{nanosaur_simulations_path}/Dockerfile",
+        tags=image_name
+    )
+    print(TerminalFormatter.color_text("Docker image built successfully", color='green'))
+    return True
+
+
+def deploy_docker_perception(image_name: str, perception_ws_path: str) -> bool:
     nanosaur_perception_path = os.path.join(perception_ws_path, 'src', 'nanosaur_perception')
 
     src_folders = [
