@@ -79,40 +79,15 @@ def parser_robot_menu(subparsers: argparse._SubParsersAction, params: Params) ->
         '--build', action='store_true', help="Rebuild docker before starting")
     parser_robot_start.add_argument(
         '--detach', action='store_true', help="Run the robot in detached mode")
-    parser_robot_start.set_defaults(func=robot_start)
+    parser_robot_start.set_defaults(func=docker.docker_robot_start)
     # Add robot stop subcommand
     parser_robot_stop = robot_subparsers.add_parser('stop', help="Deactivate the robot")
-    parser_robot_stop.set_defaults(func=robot_stop)
+    parser_robot_stop.set_defaults(func=docker.docker_robot_stop)
 
     # Add robot config subcommand
     parser_config = add_robot_config_subcommands(robot_subparsers, params)
 
     return parser_robot, parser_config
-
-
-def robot_start(platform, params: Params, args):
-    device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
-    # Check the device type
-    if device_type == "desktop":
-        # Start the robot simulation
-        docker.docker_start(platform, params, args)
-    elif device_type == "robot":
-        print(TerminalFormatter.color_text("Not yet implemented", color='yellow'))
-    else:
-        print(TerminalFormatter.color_text("Unknown device type", color='red'))
-    return True
-
-
-def robot_stop(platform, params: Params, args):
-    device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
-    # Check the device type
-    if device_type == "desktop":
-        docker.docker_stop(platform, params, args)
-    elif device_type == "robot":
-        print(TerminalFormatter.color_text("Not yet implemented", color='yellow'))
-    else:
-        print(TerminalFormatter.color_text("Unknown device type", color='red'))
-    return True
 
 
 def robot_set_name(platform, params: Params, args):

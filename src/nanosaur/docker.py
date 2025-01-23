@@ -66,7 +66,7 @@ def create_simple(platform, params: Params, args) -> bool:
     return True
 
 
-def docker_start(platform, params: Params, args):
+def docker_robot_start(platform, params: Params, args):
     """Start the docker container."""
 
     if not docker.compose.is_installed():
@@ -137,7 +137,7 @@ def docker_simulator_start(platform, params: Params, args):
         return False
 
 
-def docker_stop(platform, params: Params, args):
+def docker_robot_stop(platform, params: Params, args):
     """Stop the docker container."""
 
     if not docker.compose.is_installed():
@@ -154,7 +154,7 @@ def docker_stop(platform, params: Params, args):
     # Create a DockerClient object with the docker-compose file
     nanosaur_compose = DockerClient(compose_files=[docker_compose_path])
     if len(nanosaur_compose.compose.ps()) > 0:
-        nanosaur_compose.compose.down()
+        nanosaur_compose.compose.down(volumes=True)
         print(TerminalFormatter.color_text(f"robot {robot.name} stopped", color='green'))
     else:
         print(TerminalFormatter.color_text(f"The robot {robot.name} is not running.", color='red'))

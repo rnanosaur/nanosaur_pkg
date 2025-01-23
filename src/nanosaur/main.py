@@ -31,9 +31,9 @@ import inquirer
 from inquirer.themes import GreenPassion
 from jtop import jtop, JtopException
 
-from nanosaur.docker import create_simple
+from nanosaur.docker import create_simple, docker_simulator_start, docker_robot_start, docker_robot_stop
 from nanosaur.workspace import workspaces_info, parser_workspace_menu, create_developer_workspace, create_maintainer_workspace, get_workspaces_path
-from nanosaur.robot import parser_robot_menu, robot_start, robot_stop
+from nanosaur.robot import parser_robot_menu
 from nanosaur.simulation import parser_simulation_menu
 from nanosaur.swarm import parser_swarm_menu
 from nanosaur.prompt_colors import TerminalFormatter
@@ -126,14 +126,19 @@ def install(platform, params: Params, args):
         params['mode'] = install_type
 
 
+def nanosaur_wake_up(platform, params: Params, args):
+    args.detach = True
+    return docker_robot_start(platform, params, args)
+
+
 def robot_control(params, subparsers):
     robot = RobotList.get_robot(params).name
     robot_name = TerminalFormatter.color_text(robot, color='green', bold=True)
     parser_wakeup = subparsers.add_parser('wake-up', help=f"Start {robot_name} (same as 'nanosaur robot start')")
-    parser_wakeup.set_defaults(func=robot_start)
+    parser_wakeup.set_defaults(func=nanosaur_wake_up)
     # Subcommand: shutdown
     parser_shutdown = subparsers.add_parser('shutdown', help="Shutdown the robot (same as 'nanosaur robot stop')")
-    parser_shutdown.set_defaults(func=robot_stop)
+    parser_shutdown.set_defaults(func=docker_robot_stop)
 
 
 def main():
