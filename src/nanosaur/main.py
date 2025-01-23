@@ -85,8 +85,6 @@ def info(platform, params: Params, args):
 
 
 def install(platform, params: Params, args):
-    # Determine the device type
-    device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
     # Questions to ask the user
     questions = [
         inquirer.List(
