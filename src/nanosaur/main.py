@@ -155,7 +155,7 @@ def main():
     # Create the argument parser
     parser = argparse.ArgumentParser(
         description="Nanosaur CLI - A command-line interface for the Nanosaur package.")
-    
+
     parser.add_argument('--mode', type=str, help="Specify the mode of operation")
     # Define subcommands
     subparsers = parser.add_subparsers(dest='command', help="Available commands")

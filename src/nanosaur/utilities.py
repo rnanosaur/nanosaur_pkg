@@ -53,6 +53,7 @@ NANOSAUR_MAIN_BRANCH = 'nanosaur2'
 
 NANOSAUR_DOCKER_USER = 'nanosaur'
 
+
 class Robot:
 
     @classmethod
@@ -330,6 +331,7 @@ def package_info(params: Params, verbose: bool):
     nanosaur_home_folder = TerminalFormatter.clickable_link(get_nanosaur_home())
     print(f"{TerminalFormatter.color_text('Nanosaur home:', bold=True)} {nanosaur_home_folder}")
     # Print verbose information
+
     def print_verbose_info(params):
         nanosaur_docker_user = get_nanosaur_docker_user(params)
         nanosaur_docker_home = TerminalFormatter.clickable_link(f"https://hub.docker.com/u/{nanosaur_docker_user}")
@@ -341,6 +343,7 @@ def package_info(params: Params, verbose: bool):
         print(f"{TerminalFormatter.color_text('Nanosaur package:', bold=True)} {__version__}")
     if verbose:
         print_verbose_info(params)
+
 
 def get_nanosaur_docker_user(params: Params) -> str:
     return params.get('nanosaur_docker_user', NANOSAUR_DOCKER_USER)

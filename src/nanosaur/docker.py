@@ -122,7 +122,7 @@ def docker_simulator_start(platform, params: Params, args):
     # Create a DockerClient object with the docker-compose file
     nanosaur_compose = DockerClient(compose_files=[docker_compose_path])
 
-    #if len(nanosaur_compose.compose.ps()) > 0:
+    # if len(nanosaur_compose.compose.ps()) > 0:
     #    print(TerminalFormatter.color_text(f"The robot {robot.name} is already running.", color='red'))
     #    return False
     # Build env file

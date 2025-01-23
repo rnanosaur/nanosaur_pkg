@@ -304,7 +304,7 @@ def deploy_docker_perception(docker_user: str, perception_ws_path: str) -> bool:
         os.path.join(get_nanosaur_home(), 'shared_src'),
         os.path.join(perception_ws_path, 'src')
     ]
-    
+
     tag_image = f"{docker_user}/{NANOSAUR_DOCKER_PACKAGE_PERCEPTION}:simulation"
     print(TerminalFormatter.color_text(f"Building Nanosaur robot docker image {tag_image}", color='magenta', bold=True))
 
@@ -313,7 +313,7 @@ def deploy_docker_perception(docker_user: str, perception_ws_path: str) -> bool:
         print(f"Changed directory to: {nanosaur_perception_path}")
 
         ws_dir_list = '--ws-src ' + ' --ws-src '.join(src_folders)
-        
+
         command = f"scripts/docker_build.sh {ws_dir_list} --image-name {tag_image}"
 
         process = subprocess.Popen(
