@@ -276,7 +276,7 @@ def control_keyboard(platform, params: Params, args):
     robot = RobotList.get_robot(params)
     command = f"ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args --remap /cmd_vel:=/{robot.name}/key_vel"
     # Run from local machine
-    if params.get('mode', '') in ['Maintainer','Raffo']:
+    if params.get('mode', '') in ['Maintainer', 'Raffo']:
         nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
         bash_file = f'{nanosaur_ws_path}/install/setup.bash'
         # Read the robot name
@@ -286,6 +286,7 @@ def control_keyboard(platform, params: Params, args):
     # Run from docker container
     docker.docker_robot_run_command(platform, params, shlex.split(command), name=f"{robot.name}-keyboard")
     return True
+
 
 def robot_display(platform, params: Params, args):
     """Display the robot configuration."""
