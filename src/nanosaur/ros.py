@@ -35,7 +35,7 @@ import tty
 import signal
 from python_on_whales import docker
 from nanosaur.prompt_colors import TerminalFormatter
-from nanosaur.utilities import Params, get_nanosaur_home
+from nanosaur.utilities import get_nanosaur_home
 
 ros2_distro = 'humble'
 ros2_sources = f'/opt/ros/{ros2_distro}/setup.bash'

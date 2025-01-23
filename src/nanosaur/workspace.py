@@ -52,6 +52,7 @@ DEFAULT_DOCKER_PERCEPTION_IMAGE = 'nanosaur/perception'
 DEFAULT_DOCKER_SIMULATION_IMAGE = 'nanosaur/simulation'
 DEFAULT_DOCKER_ROBOT_IMAGE = 'nanosaur/nanosaur'
 
+
 def workspaces_info(params: Params, verbose: bool):
     """Print information about the workspaces."""
     # Print installed workspaces
