@@ -371,7 +371,7 @@ def create_developer_workspace(platform, params: Params, args, password=None) ->
     return True
 
 
-def create_maintainer_workspace(platform, params: Params, args, password=None):
+def create_maintainer_workspace(platform, params: Params, args, password=None) -> bool:
     # determine the device type
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
     # Create the Nanosaur home folder
@@ -390,6 +390,28 @@ def create_maintainer_workspace(platform, params: Params, args, password=None):
         create_workspace(nanosaur_home_path, params.get('ws_simulation_name', DEFAULT_WORKSPACE_SIMULATION))
     # Make the perception workspace
     create_workspace(nanosaur_home_path, params.get('ws_perception_name', DEFAULT_WORKSPACE_PERCEPTION))
+
+    # Check if docker-compose files exist
+    def handle_docker_compose_file(docker_compose_file):
+        # Check if the docker-compose file exists
+        docker_compose_path = os.path.join(nanosaur_home_path, docker_compose_file)
+        if os.path.exists(docker_compose_path) and not os.path.islink(docker_compose_path):
+            old_path = f"{docker_compose_path}.old"
+            os.rename(docker_compose_path, old_path)
+            print(TerminalFormatter.color_text(f"Renamed existing {docker_compose_file} to {old_path}", color='yellow'))
+        # Create a symlink to the new docker-compose file
+        new_path = os.path.join(nanosaur_home_path, 'shared_src', 'nanosaur', 'nanosaur', 'compose', docker_compose_file)
+        if os.path.exists(docker_compose_path):
+            os.remove(docker_compose_path)
+        os.symlink(new_path, docker_compose_path)
+        print(TerminalFormatter.color_text(f"Created symlink for {docker_compose_file} to {new_path}", color='green'))
+
+    # Check if docker-compose files exist
+    if device_type == "robot" or args.all:
+        handle_docker_compose_file('docker-compose.robot.yml')
+    if device_type == "desktop" or args.all:
+        handle_docker_compose_file('docker-compose.simulation.yml')
+
     # set all workspaces to be updated
     args.all = True
     if args.force:

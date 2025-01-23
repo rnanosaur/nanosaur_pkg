@@ -31,6 +31,7 @@ import inquirer
 from inquirer.themes import GreenPassion
 from jtop import jtop, JtopException
 
+from nanosaur.docker import create_simple
 from nanosaur.workspace import workspaces_info, parser_workspace_menu, create_developer_workspace, create_maintainer_workspace, get_workspaces_path
 from nanosaur.robot import parser_robot_menu, robot_start, robot_stop
 from nanosaur.simulation import parser_simulation_menu
@@ -110,14 +111,15 @@ def install(platform, params: Params, args):
     # Get the selected install type
     install_type = answers['choice']
     print(f"Installing {install_type} workspace...")
-    if install_type == 'Simple':
-        print(TerminalFormatter.color_text(f"Not implemented yet {device_type}", color='red'))
-    elif install_type == 'Developer':
-        if not create_developer_workspace(platform, params, args):
-            return False
-    elif install_type == 'Maintainer':
-        if not create_maintainer_workspace(platform, params, args):
-            return False
+
+    install_functions = {
+        'Simple': create_simple,
+        'Developer': create_developer_workspace,
+        'Maintainer': create_maintainer_workspace
+    }
+
+    if not install_functions[install_type](platform, params, args):
+        return False
     # Set params in maintainer mode
     current_mode = params.get('mode', 'Simple')
     if (install_type == 'Developer' and current_mode == 'Simple') or \

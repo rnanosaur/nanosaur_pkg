@@ -77,6 +77,8 @@ def parser_robot_menu(subparsers: argparse._SubParsersAction, params: Params) ->
     parser_robot_start = robot_subparsers.add_parser('start', help="Activate the robot")
     parser_robot_start.add_argument(
         '--build', action='store_true', help="Rebuild docker before starting")
+    parser_robot_start.add_argument(
+        '--detach', action='store_true', help="Run the robot in detached mode")
     parser_robot_start.set_defaults(func=robot_start)
     # Add robot stop subcommand
     parser_robot_stop = robot_subparsers.add_parser('stop', help="Deactivate the robot")
