@@ -265,33 +265,37 @@ def run_colcon_build(folder_path) -> bool:
         return False
 
 
-def deploy_docker_simulation(docker_user: str, simulation_ws_path: str, all: bool) -> bool:
+def deploy_docker_simulation(docker_user: str, simulation_ws_path: str, image_name : str = None) -> bool:
     # Get the path to the nanosaur_simulations package
     nanosaur_simulations_path = os.path.join(simulation_ws_path, 'src', 'nanosaur_simulations')
     # Build Gazebo sim docker
-    tag_image = f"{docker_user}/{NANOSAUR_DOCKER_PACKAGE_SIMULATION}:gazebo"
-    try:
-        print(TerminalFormatter.color_text(f"Building Gazebo simulation docker image {tag_image}", color='magenta', bold=True))
-        docker.build(
-            get_nanosaur_home(),
-            file=f"{nanosaur_simulations_path}/Dockerfile.gazebo",
-            tags=tag_image
-        )
-    except DockerException as e:
-        print(TerminalFormatter.color_text(f"Error building Gazebo Docker image: {e}", color='red'))
-        return False
+    if image_name == 'gazebo' or image_name is None:
+        tag_image = f"{docker_user}/{NANOSAUR_DOCKER_PACKAGE_SIMULATION}:gazebo"
+        try:
+            print(TerminalFormatter.color_text(f"Building Gazebo simulation docker image {tag_image}", color='magenta', bold=True))
+            docker.build(
+                get_nanosaur_home(),
+                file=f"{nanosaur_simulations_path}/Dockerfile.gazebo",
+                tags=tag_image
+            )
+        except DockerException as e:
+            print(TerminalFormatter.color_text(f"Error building Gazebo Docker image: {e}", color='red'))
+            return False
+
     # Build the Docker image for nanosaur bridge
-    tag_image = f"{docker_user}/{NANOSAUR_DOCKER_PACKAGE_ROBOT}:simulation"
-    try:
-        print(TerminalFormatter.color_text(f"Building Nanosaur robot docker image {tag_image}", color='magenta', bold=True))
-        docker.build(
-            get_nanosaur_home(),
-            file=f"{nanosaur_simulations_path}/Dockerfile.nanosaur",
-            tags=tag_image
-        )
-    except DockerException as e:
-        print(TerminalFormatter.color_text(f"Error building Nanosaur Docker image: {e}", color='red'))
-        return False
+    if image_name == 'robot' or image_name is None:
+        tag_image = f"{docker_user}/{NANOSAUR_DOCKER_PACKAGE_ROBOT}:simulation"
+        try:
+            print(TerminalFormatter.color_text(f"Building Nanosaur robot docker image {tag_image}", color='magenta', bold=True))
+            docker.build(
+                get_nanosaur_home(),
+                file=f"{nanosaur_simulations_path}/Dockerfile.nanosaur",
+                tags=tag_image
+            )
+        except DockerException as e:
+            print(TerminalFormatter.color_text(f"Error building Nanosaur Docker image: {e}", color='red'))
+            return False
+
     # Print success message
     print(TerminalFormatter.color_text("Docker image built successfully", color='green'))
     return True

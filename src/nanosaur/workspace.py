@@ -82,7 +82,8 @@ def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.Ar
     add_workspace_subcommand('update', "Update the workspace", update)
     add_workspace_subcommand('build', "Build the workspace", build)
     add_workspace_subcommand('debug', "Debug the workspace", debug)
-    add_workspace_subcommand('deploy', "Deploy workspace to docker image", deploy)
+    parser_deploy = add_workspace_subcommand('deploy', "Deploy workspace to docker image", deploy)
+    parser_deploy.add_argument('image_name', type=str, nargs='?', help="Specify the image name")
     return parser_workspace
 
 
@@ -257,7 +258,7 @@ def deploy(platform, params: Params, args):
     nanosaur_docker_user = get_nanosaur_docker_user(params)
     """ Deploy the workspace """
     workspace_actions = {
-        'simulation': lambda: ros.deploy_docker_simulation(nanosaur_docker_user, get_workspace_path(params, 'ws_simulation_name'), args.all),
+        'simulation': lambda: ros.deploy_docker_simulation(nanosaur_docker_user, get_workspace_path(params, 'ws_simulation_name'), args.image_name),
         'perception': lambda: ros.deploy_docker_perception(nanosaur_docker_user, get_workspace_path(params, 'ws_perception_name')),
     }
     if args.all:
