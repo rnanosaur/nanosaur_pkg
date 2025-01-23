@@ -26,7 +26,6 @@
 # https://gabrieldemarmiesse.github.io/python-on-whales/
 from python_on_whales import docker, DockerClient
 from nanosaur.utilities import Params, RobotList, Robot, get_nanosaur_raw_github_url, get_nanosaur_home
-from nanosaur import workspace
 from nanosaur.prompt_colors import TerminalFormatter
 import os
 import requests
@@ -53,7 +52,6 @@ def download_docker_compose(url, folder_path, file_name, force=False) -> str:
     else:
         print(TerminalFormatter.color_text(f"Failed to download file. Status code: {response.status_code}", color='red'))
         return None
-
 
 
 def create_simple(platform, params: Params, args) -> bool:
@@ -95,7 +93,7 @@ def docker_start(platform, params: Params, args):
     # Create the full file path
     docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
     env_path = os.path.join(nanosaur_home_path, '.env')
-    
+
     robot = RobotList.get_robot(params)
     # Build env file
     build_env_file(params, env_path, robot)
