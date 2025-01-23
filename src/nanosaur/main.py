@@ -127,7 +127,10 @@ def install(platform, params: Params, args):
 
 
 def nanosaur_wake_up(platform, params: Params, args):
-    args.detach = True
+    args.detach = False
+    # Start the container in detached mode
+    simulation_tool = params.get('simulation_tool','').lower().replace(' ', '_')
+    args.profile = simulation_tool
     return docker_robot_start(platform, params, args)
 
 

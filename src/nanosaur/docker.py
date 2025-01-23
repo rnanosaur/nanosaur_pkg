@@ -93,7 +93,7 @@ def docker_robot_run_command(platform, params: Params, command, name=None):
     # Create a DockerClient object with the docker-compose file
     nanosaur_compose = DockerClient(compose_files=[docker_compose_path])
     try:
-        nanosaur_compose.compose.run(service='nanosaur_simulator', command=command, remove=True, tty=True, name=name)
+        nanosaur_compose.compose.run(service='nanosaur-gazebo', command=command, remove=True, tty=True, name=name)
     except DockerException as e:
         print(TerminalFormatter.color_text(f"Error running the command: {e}", color='red'))
         return False
@@ -123,11 +123,18 @@ def docker_robot_start(platform, params: Params, args):
         print(TerminalFormatter.color_text("Creating the environment file...", color='green'))
         build_env_file(params)
     print(TerminalFormatter.color_text(f"robot {robot.name} starting", color='green'))
+    
+    compose_profiles = []
+    if args.profile:
+        print(TerminalFormatter.color_text(f"Starting with profile: {args.profile}", color='green'))
+        compose_profiles = [args.profile]
     # Create a DockerClient object with the docker-compose file
-    nanosaur_compose = DockerClient(compose_files=[docker_compose_path])
+    nanosaur_compose = DockerClient(compose_files=[docker_compose_path], compose_profiles=compose_profiles)
     # Start the container in detached mode
     try:
         nanosaur_compose.compose.up(detach=args.detach)
+        if not args.detach:
+            nanosaur_compose.compose.rm(volumes=True)
     except DockerException as e:
         print(TerminalFormatter.color_text(f"Error starting the robot: {e}", color='red'))
         return False
@@ -164,7 +171,8 @@ def docker_simulator_start(platform, params: Params, args):
         build_env_file(params)
     print(TerminalFormatter.color_text(f"Simulator {simulation_tool} starting", color='green'))
     try:
-        nanosaur_compose.compose.up(services=[f'nanosaur_{simulation_tool}'], recreate=False)
+        nanosaur_compose.compose.up(services=[f'nanosaur-{simulation_tool}'], recreate=False)
+        nanosaur_compose.compose.rm(services=[f'nanosaur-{simulation_tool}'], volumes=True)
     except DockerException as e:
         print(TerminalFormatter.color_text(f"Error starting the simulation tool: {e}", color='red'))
         return False
