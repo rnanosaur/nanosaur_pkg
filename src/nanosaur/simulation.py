@@ -30,7 +30,7 @@ import subprocess
 from nanosaur import workspace
 from nanosaur.docker import docker_simulator_start
 from nanosaur.prompt_colors import TerminalFormatter
-from nanosaur.utilities import Params, RobotList, build_env_file, is_env_file
+from nanosaur.utilities import Params, RobotList
 
 
 # Dictionary of simulation tools and their commands

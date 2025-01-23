@@ -229,6 +229,7 @@ def is_env_file():
     env_path = os.path.join(nanosaur_home_path, '.env')
     return os.path.exists(env_path)
 
+
 def build_env_file(params):
     nanosaur_home_path = get_nanosaur_home()
     env_path = os.path.join(nanosaur_home_path, '.env')
@@ -245,6 +246,7 @@ def build_env_file(params):
         env_file.write(f"SIMULATION={simulation_tool}\n")
         # Pass robot ros commands
         env_file.write(f"COMMANDS={robot.config_to_ros()}\n")
+
 
 class Params:
 

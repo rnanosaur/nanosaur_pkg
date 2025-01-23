@@ -116,7 +116,7 @@ def docker_simulator_start(platform, params: Params, args):
     # Create the full file path
     docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
     robot = RobotList.get_robot(params)
-    
+
     # Check which simulation tool is selected
     if 'simulation_tool' not in params:
         print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
