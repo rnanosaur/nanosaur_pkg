@@ -51,6 +51,7 @@ NANOSAUR_WEBSITE_URL = 'https://nanosaur.ai'
 NANOSAUR_MAIN_GITHUB_URL = 'https://github.com/rnanosaur/nanosaur.git'
 NANOSAUR_MAIN_BRANCH = 'nanosaur2'
 
+NANOSAUR_DOCKER_USER = 'nanosaur'
 
 class Robot:
 
@@ -224,30 +225,6 @@ class RobotList:
                 print(f"  {TerminalFormatter.color_text(f'Robot {idx}:', bold=True)} {robot}")
 
 
-def is_env_file():
-    nanosaur_home_path = get_nanosaur_home()
-    env_path = os.path.join(nanosaur_home_path, '.env')
-    return os.path.exists(env_path)
-
-
-def build_env_file(params):
-    nanosaur_home_path = get_nanosaur_home()
-    env_path = os.path.join(nanosaur_home_path, '.env')
-    # Get current robot running
-    robot = RobotList.get_robot(params)
-    uid = os.getuid()
-    gid = os.getgid()
-    # Create a .env file and save UID and GID
-    with open(env_path, 'w') as env_file:
-        env_file.write(f"USER_UID={uid}\n")
-        env_file.write(f"USER_GID={gid}\n")
-        # Check which simulation tool is selected and save it in the .env file
-        simulation_tool = params['simulation_tool'].lower().replace(' ', '_')
-        env_file.write(f"SIMULATION={simulation_tool}\n")
-        # Pass robot ros commands
-        env_file.write(f"COMMANDS={robot.config_to_ros()}\n")
-
-
 class Params:
 
     @classmethod
@@ -310,14 +287,40 @@ class Params:
     def get(self, key, default=None):
         return getattr(self, key, default)
 
-    def set(self, key, value):
+    def set(self, key, value, save=True):
+        self._params_dict[key] = value
         setattr(self, key, value)
         # save the new value in the file
-        self.save()
+        if save:
+            self.save()
         return value
 
     def items(self):
         return self._params_dict.items()
+
+
+def is_env_file():
+    nanosaur_home_path = get_nanosaur_home()
+    env_path = os.path.join(nanosaur_home_path, '.env')
+    return os.path.exists(env_path)
+
+
+def build_env_file(params):
+    nanosaur_home_path = get_nanosaur_home()
+    env_path = os.path.join(nanosaur_home_path, '.env')
+    # Get current robot running
+    robot = RobotList.get_robot(params)
+    uid = os.getuid()
+    gid = os.getgid()
+    # Create a .env file and save UID and GID
+    with open(env_path, 'w') as env_file:
+        env_file.write(f"USER_UID={uid}\n")
+        env_file.write(f"USER_GID={gid}\n")
+        # Check which simulation tool is selected and save it in the .env file
+        simulation_tool = params['simulation_tool'].lower().replace(' ', '_')
+        env_file.write(f"SIMULATION={simulation_tool}\n")
+        # Pass robot ros commands
+        env_file.write(f"COMMANDS={robot.config_to_ros()}\n")
 
 
 def package_info(params: Params, verbose: bool):
@@ -326,12 +329,21 @@ def package_info(params: Params, verbose: bool):
     print(f"{TerminalFormatter.color_text('Nanosaur website:', bold=True)} {nanosaur_website}")
     nanosaur_home_folder = TerminalFormatter.clickable_link(get_nanosaur_home())
     print(f"{TerminalFormatter.color_text('Nanosaur home:', bold=True)} {nanosaur_home_folder}")
-    if verbose:
-        print(f"{TerminalFormatter.color_text('Nanosaur package:', bold=True)} {__version__}")
-        nanosaur_branch = params.get('nanosaur_branch', NANOSAUR_MAIN_BRANCH)
-        print(f"{TerminalFormatter.color_text('Nanosaur version (branch):', bold=True)} {nanosaur_branch}")
+    # Print verbose information
+    def print_verbose_info(params):
+        nanosaur_docker_user = get_nanosaur_docker_user(params)
+        nanosaur_docker_home = TerminalFormatter.clickable_link(f"https://hub.docker.com/u/{nanosaur_docker_user}")
+        print(f"{TerminalFormatter.color_text('Nanosaur Docker Hub:', bold=True)} {nanosaur_docker_home}")
         config_file_path = TerminalFormatter.clickable_link(Params.get_params_file())
         print(f"{TerminalFormatter.color_text('Nanosaur config file:', bold=True)} {config_file_path}")
+        nanosaur_branch = params.get('nanosaur_branch', NANOSAUR_MAIN_BRANCH)
+        print(f"{TerminalFormatter.color_text('Nanosaur version (branch):', bold=True)} {nanosaur_branch}")
+        print(f"{TerminalFormatter.color_text('Nanosaur package:', bold=True)} {__version__}")
+    if verbose:
+        print_verbose_info(params)
+
+def get_nanosaur_docker_user(params: Params) -> str:
+    return params.get('nanosaur_docker_user', NANOSAUR_DOCKER_USER)
 
 
 def get_nanosaur_raw_github_url(params: Params) -> str:

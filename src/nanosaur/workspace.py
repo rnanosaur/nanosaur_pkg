@@ -30,7 +30,7 @@ import argparse
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur import ros
 from nanosaur.simulation import simulation_robot_start_debug
-from nanosaur.utilities import Params, get_nanosaur_raw_github_url, get_nanosaur_home, create_nanosaur_home, require_sudo_password
+from nanosaur.utilities import Params, get_nanosaur_raw_github_url, get_nanosaur_home, create_nanosaur_home, require_sudo_password, get_nanosaur_docker_user
 import inquirer
 
 
@@ -47,10 +47,6 @@ DEFAULT_WORKSPACE_PERCEPTION = 'perception_ws'
 DEFAULT_WORKSPACE_SIMULATION = 'simulation_ws'
 DEFAULT_WORKSPACE_ROBOT = 'robot_ws'
 DEFAULT_WORKSPACE_DEVELOPER = 'ros_ws'
-
-DEFAULT_DOCKER_PERCEPTION_IMAGE = 'nanosaur/perception'
-DEFAULT_DOCKER_SIMULATION_IMAGE = 'nanosaur/simulation'
-DEFAULT_DOCKER_ROBOT_IMAGE = 'nanosaur/nanosaur'
 
 
 def workspaces_info(params: Params, verbose: bool):
@@ -258,10 +254,11 @@ def debug(platform, params: Params, args):
 
 
 def deploy(platform, params: Params, args):
+    nanosaur_docker_user = get_nanosaur_docker_user(params)
     """ Deploy the workspace """
     workspace_actions = {
-        'simulation': lambda: ros.deploy_docker_simulation(DEFAULT_DOCKER_SIMULATION_IMAGE, get_workspace_path(params, 'ws_simulation_name'), args.all),
-        'perception': lambda: ros.deploy_docker_perception(DEFAULT_DOCKER_PERCEPTION_IMAGE, get_workspace_path(params, 'ws_perception_name')),
+        'simulation': lambda: ros.deploy_docker_simulation(nanosaur_docker_user, get_workspace_path(params, 'ws_simulation_name'), args.all),
+        'perception': lambda: ros.deploy_docker_perception(nanosaur_docker_user, get_workspace_path(params, 'ws_perception_name')),
     }
     if args.all:
         print(TerminalFormatter.color_text("Deploying all workspaces", bold=True))

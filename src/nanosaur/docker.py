@@ -92,9 +92,6 @@ def docker_start(platform, params: Params, args):
     print(TerminalFormatter.color_text(f"robot {robot.name} starting", color='green'))
     # Create a DockerClient object with the docker-compose file
     nanosaur_compose = DockerClient(compose_files=[docker_compose_path])
-    if args.build:
-        print(TerminalFormatter.color_text("Building the Docker container...", color='green'))
-        nanosaur_compose.compose.build()
     # Start the container in detached mode
     try:
         nanosaur_compose.compose.up(detach=args.detach)
@@ -115,27 +112,26 @@ def docker_simulator_start(platform, params: Params, args):
     nanosaur_home_path = get_nanosaur_home()
     # Create the full file path
     docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
-    robot = RobotList.get_robot(params)
 
     # Check which simulation tool is selected
     if 'simulation_tool' not in params:
         print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
         return False
-
+    # Start the container in detached mode
+    simulation_tool = params['simulation_tool'].lower().replace(' ', '_')
     # Create a DockerClient object with the docker-compose file
     nanosaur_compose = DockerClient(compose_files=[docker_compose_path])
-    if len(nanosaur_compose.compose.ps()) > 0:
-        print(TerminalFormatter.color_text(f"The robot {robot.name} is already running.", color='red'))
-        return False
+
+    #if len(nanosaur_compose.compose.ps()) > 0:
+    #    print(TerminalFormatter.color_text(f"The robot {robot.name} is already running.", color='red'))
+    #    return False
     # Build env file
     if not is_env_file():
         print(TerminalFormatter.color_text("Creating the environment file...", color='green'))
         build_env_file(params)
-    print(TerminalFormatter.color_text(f"robot {robot.name} starting", color='green'))
-    # Start the container in detached mode
-    simulation_tool = params['simulation_tool'].lower().replace(' ', '_')
+    print(TerminalFormatter.color_text(f"Simulator {simulation_tool} starting", color='green'))
     try:
-        nanosaur_compose.compose.up(services=[f'nanosaur_{simulation_tool}'])
+        nanosaur_compose.compose.up(services=[f'nanosaur_{simulation_tool}'], recreate=False)
     except DockerException as e:
         print(TerminalFormatter.color_text(f"Error starting the simulation tool: {e}", color='red'))
         return False

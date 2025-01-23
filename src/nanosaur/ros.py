@@ -43,6 +43,9 @@ ros2_sources = f'/opt/ros/{ros2_distro}/setup.bash'
 
 ISAAC_ROS_DISTRO_SUFFIX = "ros2_humble"
 NANOSAUR_DOCKERFILE_SUFFIX = "nanosaur"
+NANOSAUR_DOCKER_PACKAGE_ROBOT = "nanosaur"
+NANOSAUR_DOCKER_PACKAGE_SIMULATION = "simulation"
+NANOSAUR_DOCKER_PACKAGE_PERCEPTION = "perception"
 
 
 def run_dev_script(params, host_workspace_path, workspace_path):
@@ -262,27 +265,29 @@ def run_colcon_build(folder_path) -> bool:
         return False
 
 
-def deploy_docker_simulation(image_name: str, simulation_ws_path: str, all: bool) -> bool:
+def deploy_docker_simulation(docker_user: str, simulation_ws_path: str, all: bool) -> bool:
     # Get the path to the nanosaur_simulations package
     nanosaur_simulations_path = os.path.join(simulation_ws_path, 'src', 'nanosaur_simulations')
     # Build Gazebo sim docker
+    tag_image = f"{docker_user}/{NANOSAUR_DOCKER_PACKAGE_SIMULATION}:gazebo"
     try:
-        print(TerminalFormatter.color_text("Building Gazebo Docker image...", color='magenta', bold=True))
+        print(TerminalFormatter.color_text(f"Building Gazebo simulation docker image {tag_image}", color='magenta', bold=True))
         docker.build(
             get_nanosaur_home(),
             file=f"{nanosaur_simulations_path}/Dockerfile.gazebo",
-            tags="nanosaur/gazebo"
+            tags=tag_image
         )
     except DockerException as e:
         print(TerminalFormatter.color_text(f"Error building Gazebo Docker image: {e}", color='red'))
         return False
     # Build the Docker image for nanosaur bridge
+    tag_image = f"{docker_user}/{NANOSAUR_DOCKER_PACKAGE_ROBOT}:simulation"
     try:
-        print(TerminalFormatter.color_text("Building Nanosaur Docker image...", color='magenta', bold=True))
+        print(TerminalFormatter.color_text(f"Building Nanosaur robot docker image {tag_image}", color='magenta', bold=True))
         docker.build(
             get_nanosaur_home(),
             file=f"{nanosaur_simulations_path}/Dockerfile.nanosaur",
-            tags=image_name
+            tags=tag_image
         )
     except DockerException as e:
         print(TerminalFormatter.color_text(f"Error building Nanosaur Docker image: {e}", color='red'))
@@ -292,20 +297,24 @@ def deploy_docker_simulation(image_name: str, simulation_ws_path: str, all: bool
     return True
 
 
-def deploy_docker_perception(image_name: str, perception_ws_path: str) -> bool:
+def deploy_docker_perception(docker_user: str, perception_ws_path: str) -> bool:
     nanosaur_perception_path = os.path.join(perception_ws_path, 'src', 'nanosaur_perception')
 
     src_folders = [
         os.path.join(get_nanosaur_home(), 'shared_src'),
         os.path.join(perception_ws_path, 'src')
     ]
+    
+    tag_image = f"{docker_user}/{NANOSAUR_DOCKER_PACKAGE_PERCEPTION}:simulation"
+    print(TerminalFormatter.color_text(f"Building Nanosaur robot docker image {tag_image}", color='magenta', bold=True))
 
     try:
         os.chdir(nanosaur_perception_path)
         print(f"Changed directory to: {nanosaur_perception_path}")
 
         ws_dir_list = '--ws-src ' + ' --ws-src '.join(src_folders)
-        command = f"scripts/docker_build.sh {ws_dir_list} --image-name {image_name}"
+        
+        command = f"scripts/docker_build.sh {ws_dir_list} --image-name {tag_image}"
 
         process = subprocess.Popen(
             command,

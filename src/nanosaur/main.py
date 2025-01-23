@@ -155,7 +155,8 @@ def main():
     # Create the argument parser
     parser = argparse.ArgumentParser(
         description="Nanosaur CLI - A command-line interface for the Nanosaur package.")
-
+    
+    parser.add_argument('--mode', type=str, help="Specify the mode of operation")
     # Define subcommands
     subparsers = parser.add_subparsers(dest='command', help="Available commands")
 
@@ -200,6 +201,9 @@ def main():
 
     # Parse the arguments
     args = parser.parse_args()
+    # Override mode if provided as an argument
+    if args.mode:
+        params.set('mode', args.mode, save=False)
 
     # Handle subcommands without a specific type
     if args.command in ['workspace', 'ws'] and not args.workspace_type:
