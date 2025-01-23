@@ -123,7 +123,7 @@ def docker_robot_start(platform, params: Params, args):
         print(TerminalFormatter.color_text("Creating the environment file...", color='green'))
         build_env_file(params)
     print(TerminalFormatter.color_text(f"robot {robot.name} starting", color='green'))
-    
+
     compose_profiles = []
     if args.profile:
         print(TerminalFormatter.color_text(f"Starting with profile: {args.profile}", color='green'))
