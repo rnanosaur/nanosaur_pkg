@@ -66,6 +66,39 @@ def create_simple(platform, params: Params, args) -> bool:
     return True
 
 
+def docker_robot_run_command(platform, params: Params, command, name=None):
+    """Run a command in the robot container."""
+
+    if not docker.compose.is_installed():
+        print(TerminalFormatter.color_text("Please install Docker and Docker Compose before running the simulation.", color='red'))
+        return False
+    
+    workspace_type = "robot" if platform['Machine'] == 'jetson' else "simulation"
+    docker_compose = f"docker-compose.{workspace_type}.yml"
+    nanosaur_home_path = get_nanosaur_home()
+    # Create the full file path
+    docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
+    robot = RobotList.get_robot(params)
+    
+    # Check which simulation tool is selected only if robot.simulation is true
+    if robot.simulation and 'simulation_tool' not in params:
+        print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
+        return False
+    
+    # Build env file
+    if not is_env_file():
+        print(TerminalFormatter.color_text("Creating the environment file...", color='green'))
+        build_env_file(params)
+    
+    # Create a DockerClient object with the docker-compose file
+    nanosaur_compose = DockerClient(compose_files=[docker_compose_path])
+    try:
+        nanosaur_compose.compose.run(service='nanosaur_simulator', command=command, remove=True, tty=True, name=name)
+    except DockerException as e:
+        print(TerminalFormatter.color_text(f"Error running the command: {e}", color='red'))
+        return False
+
+
 def docker_robot_start(platform, params: Params, args):
     """Start the docker container."""
 
