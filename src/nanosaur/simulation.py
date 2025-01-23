@@ -28,8 +28,9 @@ from inquirer.themes import GreenPassion
 import argparse
 import subprocess
 from nanosaur import workspace
+from nanosaur.docker import docker_simulator_start
 from nanosaur.prompt_colors import TerminalFormatter
-from nanosaur.utilities import Params, RobotList
+from nanosaur.utilities import Params, RobotList, build_env_file, is_env_file
 
 
 # Dictionary of simulation tools and their commands
@@ -57,6 +58,8 @@ def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Param
     # Add simulation start subcommand
     parser_simulation_start = simulation_subparsers.add_parser(
         'start', help="Start the selected simulation")
+    parser_simulation_start.add_argument(
+        '--debug', action='store_true', help="Start the simulation in debug mode")
     parser_simulation_start.set_defaults(func=simulation_start)
 
     # Add simulation set subcommand
@@ -66,7 +69,7 @@ def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Param
     return parser_simulation
 
 
-def start_robot_simulation(params):
+def simulation_robot_start_debug(params):
     nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
     bash_file = f'{nanosaur_ws_path}/install/setup.bash'
     # Check which simulation tool is selected
@@ -112,7 +115,7 @@ def start_robot_simulation(params):
         return False
 
 
-def simulation_start(platform, params: Params, args):
+def simulation_start_debug(platform, params: Params, args):
     """Install the simulation tools."""
     nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
     bash_file = f'{nanosaur_ws_path}/install/setup.bash'
@@ -155,6 +158,13 @@ def simulation_start(platform, params: Params, args):
     except Exception as e:
         print(f"An error occurred while running the command: {e}")
         return False
+
+
+def simulation_start(platform, params: Params, args):
+    if args.debug:
+        return simulation_start_debug(platform, params, args)
+    else:
+        return docker_simulator_start(platform, params, args)
 
 
 def simulation_set(platform, params: Params, args):

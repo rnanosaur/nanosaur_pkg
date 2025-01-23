@@ -24,8 +24,8 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # https://gabrieldemarmiesse.github.io/python-on-whales/
-from python_on_whales import docker, DockerClient
-from nanosaur.utilities import Params, RobotList, Robot, get_nanosaur_raw_github_url, get_nanosaur_home
+from python_on_whales import docker, DockerClient, DockerException
+from nanosaur.utilities import Params, RobotList, get_nanosaur_raw_github_url, get_nanosaur_home, build_env_file, is_env_file
 from nanosaur.prompt_colors import TerminalFormatter
 import os
 import requests
@@ -66,20 +66,6 @@ def create_simple(platform, params: Params, args) -> bool:
     return True
 
 
-def build_env_file(params, env_path, robot: Robot):
-    uid = os.getuid()
-    gid = os.getgid()
-    # Create a .env file and save UID and GID
-    with open(env_path, 'w') as env_file:
-        env_file.write(f"USER_UID={uid}\n")
-        env_file.write(f"USER_GID={gid}\n")
-        # Check which simulation tool is selected and save it in the .env file
-        simulation_tool = params['simulation_tool'].lower().replace(' ', '_')
-        env_file.write(f"SIMULATION={simulation_tool}\n")
-        # Pass robot ros commands
-        env_file.write(f"COMMANDS={robot.config_to_ros()}\n")
-
-
 def docker_start(platform, params: Params, args):
     """Start the docker container."""
 
@@ -92,11 +78,17 @@ def docker_start(platform, params: Params, args):
     nanosaur_home_path = get_nanosaur_home()
     # Create the full file path
     docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
-    env_path = os.path.join(nanosaur_home_path, '.env')
-
     robot = RobotList.get_robot(params)
+
+    # Check which simulation tool is selected only if robot.simulation is true
+    if robot.simulation and 'simulation_tool' not in params:
+        print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
+        return False
+
     # Build env file
-    build_env_file(params, env_path, robot)
+    if not is_env_file():
+        print(TerminalFormatter.color_text("Creating the environment file...", color='green'))
+        build_env_file(params)
     print(TerminalFormatter.color_text(f"robot {robot.name} starting", color='green'))
     # Create a DockerClient object with the docker-compose file
     nanosaur_compose = DockerClient(compose_files=[docker_compose_path])
@@ -104,7 +96,49 @@ def docker_start(platform, params: Params, args):
         print(TerminalFormatter.color_text("Building the Docker container...", color='green'))
         nanosaur_compose.compose.build()
     # Start the container in detached mode
-    nanosaur_compose.compose.up(detach=args.detach)
+    try:
+        nanosaur_compose.compose.up(detach=args.detach)
+    except DockerException as e:
+        print(TerminalFormatter.color_text(f"Error starting the robot: {e}", color='red'))
+        return False
+
+
+def docker_simulator_start(platform, params: Params, args):
+    """Start the simulation tools."""
+
+    if not docker.compose.is_installed():
+        print(TerminalFormatter.color_text("Please install Docker and Docker Compose before running the simulation.", color='red'))
+        return False
+
+    workspace_type = "robot" if platform['Machine'] == 'jetson' else "simulation"
+    docker_compose = f"docker-compose.{workspace_type}.yml"
+    nanosaur_home_path = get_nanosaur_home()
+    # Create the full file path
+    docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
+    robot = RobotList.get_robot(params)
+    
+    # Check which simulation tool is selected
+    if 'simulation_tool' not in params:
+        print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
+        return False
+
+    # Create a DockerClient object with the docker-compose file
+    nanosaur_compose = DockerClient(compose_files=[docker_compose_path])
+    if len(nanosaur_compose.compose.ps()) > 0:
+        print(TerminalFormatter.color_text(f"The robot {robot.name} is already running.", color='red'))
+        return False
+    # Build env file
+    if not is_env_file():
+        print(TerminalFormatter.color_text("Creating the environment file...", color='green'))
+        build_env_file(params)
+    print(TerminalFormatter.color_text(f"robot {robot.name} starting", color='green'))
+    # Start the container in detached mode
+    simulation_tool = params['simulation_tool'].lower().replace(' ', '_')
+    try:
+        nanosaur_compose.compose.up(services=[f'nanosaur_{simulation_tool}'])
+    except DockerException as e:
+        print(TerminalFormatter.color_text(f"Error starting the simulation tool: {e}", color='red'))
+        return False
 
 
 def docker_stop(platform, params: Params, args):

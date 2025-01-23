@@ -224,6 +224,28 @@ class RobotList:
                 print(f"  {TerminalFormatter.color_text(f'Robot {idx}:', bold=True)} {robot}")
 
 
+def is_env_file():
+    nanosaur_home_path = get_nanosaur_home()
+    env_path = os.path.join(nanosaur_home_path, '.env')
+    return os.path.exists(env_path)
+
+def build_env_file(params):
+    nanosaur_home_path = get_nanosaur_home()
+    env_path = os.path.join(nanosaur_home_path, '.env')
+    # Get current robot running
+    robot = RobotList.get_robot(params)
+    uid = os.getuid()
+    gid = os.getgid()
+    # Create a .env file and save UID and GID
+    with open(env_path, 'w') as env_file:
+        env_file.write(f"USER_UID={uid}\n")
+        env_file.write(f"USER_GID={gid}\n")
+        # Check which simulation tool is selected and save it in the .env file
+        simulation_tool = params['simulation_tool'].lower().replace(' ', '_')
+        env_file.write(f"SIMULATION={simulation_tool}\n")
+        # Pass robot ros commands
+        env_file.write(f"COMMANDS={robot.config_to_ros()}\n")
+
 class Params:
 
     @classmethod
@@ -272,9 +294,11 @@ class Params:
             # Get the current nanosaur's home directory
             create_nanosaur_home()
             # Save the parameters to the file
-            print(TerminalFormatter.color_text(f"Saving parameters to {params_file}", color='yellow'))
+            print(TerminalFormatter.color_text(f"Saving parameters to {params_file} and update .env file", color='yellow'))
             with open(params_file, 'w') as file:
                 yaml.dump(self._params_dict, file)
+            # Make a env file
+            build_env_file(self._params_dict)
 
     @staticmethod
     def get_params_file() -> str:

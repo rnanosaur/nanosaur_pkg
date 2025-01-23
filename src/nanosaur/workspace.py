@@ -29,7 +29,7 @@ import yaml
 import argparse
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur import ros
-from nanosaur.simulation import start_robot_simulation
+from nanosaur.simulation import simulation_robot_start_debug
 from nanosaur.utilities import Params, get_nanosaur_raw_github_url, get_nanosaur_home, create_nanosaur_home, require_sudo_password
 import inquirer
 
@@ -243,7 +243,7 @@ def debug(platform, params: Params, args):
     """ Debug the workspace """
     workspace_actions = {
         'developer': lambda: ros.run_dev_script(params, get_workspace_path(params, 'ws_developer_name'), params.get('ws_developer_name', DEFAULT_WORKSPACE_DEVELOPER)),
-        'simulation': lambda: start_robot_simulation(params),
+        'simulation': lambda: simulation_robot_start_debug(params),
         'perception': lambda: ros.run_dev_script(params, get_workspace_path(params, 'ws_perception_name'), params.get('ws_perception_name', DEFAULT_WORKSPACE_PERCEPTION))
     }
     workspace = get_selected_workspace(params, workspace_actions, args)
