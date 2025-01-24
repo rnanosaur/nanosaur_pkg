@@ -44,30 +44,29 @@ ros2_sources = f'/opt/ros/{ros2_distro}/setup.bash'
 
 ISAAC_ROS_COMMON_REPO = 'https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_common'
 
-
-NANOSAUR_DOCKERFILE_SUFFIX = "nanosaur" # unused
-
 NANOSAUR_DOCKER_PACKAGE_ROBOT = "nanosaur"
 NANOSAUR_DOCKER_PACKAGE_SIMULATION = "simulation"
 
 
-
-def run_dev_script(params, host_workspace_path, workspace_path):
-    isaac_ros_common_path = os.path.join(host_workspace_path, 'src', 'isaac_ros_common')
-    # Get the path to the Isaac ROS common package
-    os.chdir(isaac_ros_common_path)
-    print(f"Changed directory to: {isaac_ros_common_path}")
-
+def run_docker_isaac_ros(workspace_path, auto_commands=[]):
     nanosaur_home_path = get_nanosaur_home()
-
+    # Path to the Isaac ROS common package
+    isaac_ros_common_path = os.path.join(nanosaur_home_path, 'isaac_ros_common')
+    
     # Path to the script you want to run
     command = "./scripts/run_dev.sh"
-
     # Build the command arguments
-    args = ["-d", nanosaur_home_path]
+    args = ["-d", workspace_path, '-a', f"-v {nanosaur_home_path}/shared_src:/workspaces/shared_src"]
+    
+    # Get the path to the Isaac ROS common package
+    os.chdir(isaac_ros_common_path)
+    # print(f"Changed directory to: {isaac_ros_common_path}")
 
-    # Optional: Commands to run automatically after the script starts
-    auto_commands = [f"cd {workspace_path}"]
+    # Check if .isaac_ros_common-config exists and remove it
+    config_path = os.path.join(isaac_ros_common_path, 'scripts', '.isaac_ros_common-config')
+    if os.path.exists(config_path):
+        os.remove(config_path)
+        print(TerminalFormatter.color_text(f"Removed existing config file: {config_path}", color='yellow'))
 
     # Save the original terminal settings
     original_termios = termios.tcgetattr(sys.stdin)
@@ -122,13 +121,19 @@ def run_dev_script(params, host_workspace_path, workspace_path):
                 os.write(master_fd, user_input)  # Forward input to the subprocess
 
             if master_fd in rlist:  # Subprocess output
-                output = os.read(master_fd, 1024)
-                if not output:  # If the subprocess exits, stop the loop
-                    break
-                # Filter and render subprocess output to avoid cursor resets
-                filtered_output = output.replace(b"\x1b[2J", b"")  # Remove clear screen sequences
-                sys.stdout.buffer.write(filtered_output)
-                sys.stdout.buffer.flush()
+                try:
+                    output = os.read(master_fd, 1024)
+                    if not output:  # If the subprocess exits, stop the loop
+                        break
+                    # Filter and render subprocess output to avoid cursor resets
+                    filtered_output = output.replace(b"\x1b[2J", b"")  # Remove clear screen sequences
+                    sys.stdout.buffer.write(filtered_output)
+                    sys.stdout.buffer.flush()
+                except OSError as e:
+                    if e.errno == 5:  # Input/output error
+                        break
+                    else:
+                        raise
     finally:
         restore_terminal()  # Restore the original terminal settings
         os.close(master_fd)
@@ -306,25 +311,37 @@ def deploy_docker_simulation(docker_user: str, simulation_ws_path: str, image_na
 
 
 def deploy_docker_isaac_ros(isaac_ros_ws_path, tags, release_tag_name, debug=False) -> bool:
-    
-    shared_path = os.path.join(get_nanosaur_home(), 'shared_src')
+    """
+    Deploys the Isaac ROS Docker image.
 
+    Args:
+        isaac_ros_ws_path (str): Path to the Isaac ROS workspace.
+        tags (list): List of tags for the Docker image.
+        release_tag_name (str): Release tag name for the Docker image.
+        debug (bool): Flag to enable debug mode.
+
+    Returns:
+        bool: True if the deployment is successful, False otherwise.
+    """
+    # Define shared source path
+    shared_path = os.path.join(get_nanosaur_home(), 'shared_src')
+    # List of source folders to include in the workspace
     src_folders = [
         shared_path,
         os.path.join(isaac_ros_ws_path, 'src')
     ]
     ws_dir_list = '--ws-src ' + ' --ws-src '.join(src_folders)
-
+    # Path to the Isaac ROS common package
     isaac_ros_common_path = os.path.join(get_nanosaur_home(), 'isaac_ros_common')
-
+    # Path to the Nanosaur Docker scripts
     nanosaur_docker_path = os.path.join(shared_path, 'nanosaur', 'nanosaur', 'docker')
-
+    # Build the command to run the Docker build script
     debug_flag = '--debug' if debug else ''
     tags_name = '.'.join(tags)
     command = f"{nanosaur_docker_path}/docker_build_isaac_ros.sh {debug_flag} -d {tags_name} -c {isaac_ros_common_path} -i {release_tag_name} {ws_dir_list}"
 
     try:
-
+        # Run the command and stream the output live
         process = subprocess.Popen(
             command,
             shell=True,
@@ -332,19 +349,18 @@ def deploy_docker_isaac_ros(isaac_ros_ws_path, tags, release_tag_name, debug=Fal
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
-
+        # Stream output live
         for line in process.stdout:
             print(line.decode('utf-8', errors='replace'), end="")
-
+        # Wait for the process to finish
         process.wait()
-
+        # Check the exit status of the command
         if process.returncode != 0:
             print(TerminalFormatter.color_text(f"Command failed with return code: {process.returncode}", color='red'))
             return False
         else:
             print(TerminalFormatter.color_text("Command completed successfully", color='green'))
             return True
-
     except Exception as e:
         print(f"An error occurred while running the command: {e}")
         return False

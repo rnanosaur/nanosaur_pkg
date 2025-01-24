@@ -45,6 +45,7 @@ COLCON_DEFAULTS = {
 
 ISAAC_ROS_RELEASE = "release-3.2"
 ISAAC_ROS_DISTRO_SUFFIX = "ros2_humble"
+NANOSAUR_DOCKERFILE_SUFFIX = "nanosaur"
 
 DEFAULT_WORKSPACE_PERCEPTION = 'perception_ws'
 DEFAULT_WORKSPACE_SIMULATION = 'simulation_ws'
@@ -250,9 +251,9 @@ def build(platform, params: Params, args, password=None):
 def debug(platform, params: Params, args):
     """ Debug the workspace """
     workspace_actions = {
-        'developer': lambda: ros.run_dev_script(params, get_workspace_path(params, 'ws_developer_name'), params.get('ws_developer_name', DEFAULT_WORKSPACE_DEVELOPER)),
+        'developer': lambda: ros.run_docker_isaac_ros(get_workspace_path(params, 'ws_developer_name')),
         'simulation': lambda: simulation_robot_start_debug(params),
-        'perception': lambda: ros.run_dev_script(params, get_workspace_path(params, 'ws_perception_name'), params.get('ws_perception_name', DEFAULT_WORKSPACE_PERCEPTION))
+        'perception': lambda: ros.run_docker_isaac_ros(get_workspace_path(params, 'ws_perception_name'))
     }
     workspace = get_selected_workspace(params, workspace_actions, args)
     if workspace is None:
@@ -279,10 +280,12 @@ def deploy(platform, params: Params, args):
         release_tag_name = f"{nanosaur_docker_user}/{NANOSAUR_DOCKER_PACKAGE_PERCEPTION}"
         # Deploy the perception workspace
         if device_type == "robot" or args.all:
-            tags = [isaac_ros_distro_name, "nanosaur"]
-            status += [ros.deploy_docker_isaac_ros(perception_ws_path, tags, f"{release_tag_name}:robot")]
+            for camera in ["realsense", "zed"]:
+                tags = [isaac_ros_distro_name, camera, NANOSAUR_DOCKERFILE_SUFFIX]
+                print(TerminalFormatter.color_text(f"Deploying {release_tag_name}:{camera}", bold=True))
+                status += [ros.deploy_docker_isaac_ros(perception_ws_path, tags, f"{release_tag_name}:{camera}")]
         if device_type == "desktop" or args.all:
-            tags = [isaac_ros_distro_name, "nanosaur"]
+            tags = [isaac_ros_distro_name, NANOSAUR_DOCKERFILE_SUFFIX]
             status += [ros.deploy_docker_isaac_ros(perception_ws_path, tags, f"{release_tag_name}:simulation")]
         return all(status)
     
