@@ -430,14 +430,12 @@ def clean_workspace(nanosaur_ws_name) -> bool:
             try:
                 os.system(f"rm -Rf {workspace_path}/build {workspace_path}/install {workspace_path}/log")
                 print(TerminalFormatter.color_text(f"Workspace '{workspace_path}' cleaned up.", color='green'))
-                return True
             except Exception as e:
                 print(TerminalFormatter.color_text(f"Error running rm {str(e)}", color='red'))
                 return False
         else:
             print(TerminalFormatter.color_text(f"Workspace '{workspace_path}' does not contain build, install and log folders.", color='yellow'))
-            return False
-    return False
+    return True
 
 
 def create_simple(platform, params: utilities.Params, args) -> bool:
