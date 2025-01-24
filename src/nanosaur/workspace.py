@@ -304,7 +304,7 @@ def deploy(platform, params: utilities.Params, args):
         # Get the release tag name
         release_tag_name = f"{nanosaur_docker_user}/{NANOSAUR_DOCKER_PACKAGE_PERCEPTION}"
         # Deploy the perception workspace
-        if device_type == "robot" or args.all:
+        if device_type == "robot":
             # Deploy the perception workspace for each camera
             cameras = ISAAC_ROS_DOCKER_CAMERA_LIST if args.all or image_name is None else [image_name]
             for camera in cameras:
@@ -313,7 +313,7 @@ def deploy(platform, params: utilities.Params, args):
                 # Deploy the perception workspace for each camera
                 if not ros.deploy_docker_isaac_ros(perception_ws_path, tags, f"{release_tag_name}:{camera}"):
                     return False
-        if device_type == "desktop" or args.all:
+        if device_type == "desktop":
             # Deploy the perception workspace for simulation
             tags = [isaac_ros_distro_name, NANOSAUR_DOCKERFILE_SUFFIX]
             if not ros.deploy_docker_isaac_ros(perception_ws_path, tags, f"{release_tag_name}:simulation"):
