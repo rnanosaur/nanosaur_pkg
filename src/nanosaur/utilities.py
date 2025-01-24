@@ -318,8 +318,9 @@ def build_env_file(params):
         env_file.write(f"USER_UID={uid}\n")
         env_file.write(f"USER_GID={gid}\n")
         # Check which simulation tool is selected and save it in the .env file
-        simulation_tool = params['simulation_tool'].lower().replace(' ', '_')
-        env_file.write(f"SIMULATION={simulation_tool}\n")
+        if 'simulation_tool' in params:
+            simulation_tool = params['simulation_tool'].lower().replace(' ', '_')
+            env_file.write(f"SIMULATION={simulation_tool}\n")
         # Pass robot ros commands
         env_file.write(f"COMMANDS={robot.config_to_ros()}\n")
 

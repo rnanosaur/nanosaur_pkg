@@ -31,8 +31,8 @@ import inquirer
 from inquirer.themes import GreenPassion
 from jtop import jtop, JtopException
 
-from nanosaur.docker import create_simple, docker_robot_start, docker_robot_stop
-from nanosaur.workspace import workspaces_info, parser_workspace_menu, create_developer_workspace, create_maintainer_workspace, get_workspaces_path
+from nanosaur.docker import docker_robot_start, docker_robot_stop
+from nanosaur.workspace import workspaces_info, parser_workspace_menu, create_simple, create_developer_workspace, create_maintainer_workspace, get_workspaces_path
 from nanosaur.robot import parser_robot_menu
 from nanosaur.simulation import parser_simulation_menu
 from nanosaur.swarm import parser_swarm_menu

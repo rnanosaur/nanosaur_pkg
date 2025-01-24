@@ -27,6 +27,7 @@
 import os
 import yaml
 import argparse
+import requests
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur import ros
 from nanosaur.simulation import simulation_robot_start_debug
@@ -268,6 +269,8 @@ def debug(platform, params: Params, args):
 
 
 def deploy(platform, params: Params, args):
+    """ Deploy the workspace """
+    # Get the Nanosaur docker user
     nanosaur_docker_user = get_nanosaur_docker_user(params)
 
     def deploy_perception():
@@ -290,7 +293,7 @@ def deploy(platform, params: Params, args):
             status += [ros.deploy_docker_isaac_ros(perception_ws_path, tags, f"{release_tag_name}:simulation")]
         return all(status)
 
-    """ Deploy the workspace """
+    # Get the deploy action
     workspace_actions = {
         'developer': lambda: ros.deploy_docker_isaac_ros(get_workspace_path(params, 'ws_developer_name'), f'{nanosaur_docker_user}/developer'),
         'simulation': lambda: ros.deploy_docker_simulation(nanosaur_docker_user, get_workspace_path(params, 'ws_simulation_name'), args.image_name),
@@ -407,7 +410,46 @@ def clean_workspace(nanosaur_ws_name) -> bool:
     return False
 
 
+def download_docker_compose(url, folder_path, file_name, force=False) -> str:
+    # Create the full file path
+    file_path = os.path.join(folder_path, file_name)
+    # Check if the file already exists
+    if not force and os.path.exists(file_path):
+        print(TerminalFormatter.color_text(f"File '{file_name}' already exists in '{folder_path}'. Skip download", color='yellow'))
+        return file_path  # Cancel download
+
+    # Send a request to download the file
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        # Save the file in the workspace folder
+        file_path = os.path.join(folder_path, file_name)
+        with open(file_path, 'wb') as file:
+            file.write(response.content)
+        print(TerminalFormatter.color_text(f"File '{file_name}' downloaded successfully to '{folder_path}'.", color='green'))
+        return file_path
+    else:
+        print(TerminalFormatter.color_text(f"Failed to download file. Status code: {response.status_code}", color='red'))
+        return None
+
+
+def create_simple(platform, params: Params, args) -> bool:
+    # Create the Nanosaur home folder
+    nanosaur_home_path = create_nanosaur_home()
+    # Determine the device type
+    workspace_type = "robot" if platform['Machine'] == 'jetson' else "simulation"
+    docker_compose = f"docker-compose.{workspace_type}.yml"
+    # Get the Nanosaur home folder and branch
+    nanosaur_raw_url = get_nanosaur_raw_github_url(params)
+    url = f"{nanosaur_raw_url}/nanosaur/compose/{docker_compose}"
+    # Download the docker-compose file
+    download_docker_compose(url, nanosaur_home_path, docker_compose, force=args.force)
+    return True
+
+
 def create_developer_workspace(platform, params: Params, args, password=None) -> bool:
+    # Create the Nanosaur home folder
+    create_simple(platform, params, args)
     # Create the Nanosaur home folder
     nanosaur_home_path = create_nanosaur_home()
     # Create the shared source folder
