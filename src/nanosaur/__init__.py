@@ -25,7 +25,6 @@
 
 # flake8: noqa
 
-from .utilities import Params, RobotList, Robot, get_nanosaur_home, build_env_file, is_env_file
 
 __author__ = "Raffaello Bonghi"
 __email__ = "raffaello@rnext.it"
