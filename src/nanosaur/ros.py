@@ -246,6 +246,7 @@ def run_colcon_build(folder_path) -> bool:
         print(f"An error occurred while running the colcon build command: {e}")
         return False
 
+
 def deploy_docker_image(dockerfile_path, tag_image):
     try:
         print(TerminalFormatter.color_text(f"Building Docker image {tag_image}", color='magenta', bold=True))
@@ -259,6 +260,7 @@ def deploy_docker_image(dockerfile_path, tag_image):
     except DockerException as e:
         print(TerminalFormatter.color_text(f"Error building Docker image: {e}", color='red'))
         return False
+
 
 def deploy_docker_isaac_ros(isaac_ros_ws_path, tags, release_tag_name, debug=False) -> bool:
     """
