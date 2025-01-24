@@ -36,16 +36,20 @@ import signal
 from python_on_whales import docker, DockerException
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import get_nanosaur_home
+from git import Repo, GitCommandError
+import shutil
 
 ros2_distro = 'humble'
 ros2_sources = f'/opt/ros/{ros2_distro}/setup.bash'
 
+ISAAC_ROS_COMMON_REPO = 'https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_common'
 
-ISAAC_ROS_DISTRO_SUFFIX = "ros2_humble"
-NANOSAUR_DOCKERFILE_SUFFIX = "nanosaur"
+
+NANOSAUR_DOCKERFILE_SUFFIX = "nanosaur" # unused
+
 NANOSAUR_DOCKER_PACKAGE_ROBOT = "nanosaur"
 NANOSAUR_DOCKER_PACKAGE_SIMULATION = "simulation"
-NANOSAUR_DOCKER_PACKAGE_PERCEPTION = "perception"
+
 
 
 def run_dev_script(params, host_workspace_path, workspace_path):
@@ -301,24 +305,25 @@ def deploy_docker_simulation(docker_user: str, simulation_ws_path: str, image_na
     return True
 
 
-def deploy_docker_perception(docker_user: str, perception_ws_path: str) -> bool:
-    nanosaur_perception_path = os.path.join(perception_ws_path, 'src', 'nanosaur_perception')
+def deploy_docker_isaac_ros(isaac_ros_ws_path, tags, release_tag_name, debug=False) -> bool:
+    
+    shared_path = os.path.join(get_nanosaur_home(), 'shared_src')
 
     src_folders = [
-        os.path.join(get_nanosaur_home(), 'shared_src'),
-        os.path.join(perception_ws_path, 'src')
+        shared_path,
+        os.path.join(isaac_ros_ws_path, 'src')
     ]
+    ws_dir_list = '--ws-src ' + ' --ws-src '.join(src_folders)
 
-    tag_image = f"{docker_user}/{NANOSAUR_DOCKER_PACKAGE_PERCEPTION}:simulation"
-    print(TerminalFormatter.color_text(f"Building Nanosaur robot docker image {tag_image}", color='magenta', bold=True))
+    isaac_ros_common_path = os.path.join(get_nanosaur_home(), 'isaac_ros_common')
+
+    nanosaur_docker_path = os.path.join(shared_path, 'nanosaur', 'nanosaur', 'docker')
+
+    debug_flag = '--debug' if debug else ''
+    tags_name = '.'.join(tags)
+    command = f"{nanosaur_docker_path}/docker_build_isaac_ros.sh {debug_flag} -d {tags_name} -c {isaac_ros_common_path} -i {release_tag_name} {ws_dir_list}"
 
     try:
-        os.chdir(nanosaur_perception_path)
-        print(f"Changed directory to: {nanosaur_perception_path}")
-
-        ws_dir_list = '--ws-src ' + ' --ws-src '.join(src_folders)
-
-        command = f"scripts/docker_build.sh {ws_dir_list} --image-name {tag_image}"
 
         process = subprocess.Popen(
             command,
@@ -334,7 +339,7 @@ def deploy_docker_perception(docker_user: str, perception_ws_path: str) -> bool:
         process.wait()
 
         if process.returncode != 0:
-            print(TerminalFormatter.color_text(process.returncode, color='red'))
+            print(TerminalFormatter.color_text(f"Command failed with return code: {process.returncode}", color='red'))
             return False
         else:
             print(TerminalFormatter.color_text("Command completed successfully", color='green'))
@@ -343,4 +348,39 @@ def deploy_docker_perception(docker_user: str, perception_ws_path: str) -> bool:
     except Exception as e:
         print(f"An error occurred while running the command: {e}")
         return False
+
+def manage_isaac_ros_common_repo(nanosaur_home_path: str, isaac_ros_branch: str, force) -> bool:
+    # Path to the Isaac ROS common package
+    isaac_ros_common_path = os.path.join(nanosaur_home_path, 'isaac_ros_common')
+
+    def update_existing_repo():
+        try:
+            print(TerminalFormatter.color_text(f"Directory '{isaac_ros_common_path}' already exists. Pulling latest changes from branch '{isaac_ros_branch}'.", color='yellow'))
+            repo = Repo(isaac_ros_common_path)
+            repo.git.checkout(isaac_ros_branch)
+            repo.remotes.origin.pull()
+            print(TerminalFormatter.color_text("Repository updated successfully", color='green'))
+            return True
+        except GitCommandError as e:
+            print(TerminalFormatter.color_text(f"Error updating repository: {e}", color='red'))
+            return False
+
+    def clone_new_repo():
+        try:
+            print(TerminalFormatter.color_text(f"Cloning isaac_ros_common into '{isaac_ros_common_path}' from branch '{isaac_ros_branch}'", color='magenta', bold=True))
+            Repo.clone_from(ISAAC_ROS_COMMON_REPO, isaac_ros_common_path, branch=isaac_ros_branch)
+            print(TerminalFormatter.color_text("Clone completed successfully", color='green'))
+            return True
+        except GitCommandError as e:
+            print(TerminalFormatter.color_text(f"Error cloning repository from branch '{isaac_ros_branch}': {e}", color='red'))
+            return False
+
+    # Check if the Isaac ROS common package already exists
+    if os.path.exists(isaac_ros_common_path):
+        if force:
+            print(TerminalFormatter.color_text(f"Deleting existing directory '{isaac_ros_common_path}'.", color='yellow'))
+            shutil.rmtree(isaac_ros_common_path)
+        return update_existing_repo()
+    else:
+        return clone_new_repo()
 # EOF

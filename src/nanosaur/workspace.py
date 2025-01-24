@@ -43,11 +43,15 @@ COLCON_DEFAULTS = {
     }
 }
 
+ISAAC_ROS_RELEASE = "release-3.2"
+ISAAC_ROS_DISTRO_SUFFIX = "ros2_humble"
+
 DEFAULT_WORKSPACE_PERCEPTION = 'perception_ws'
 DEFAULT_WORKSPACE_SIMULATION = 'simulation_ws'
 DEFAULT_WORKSPACE_ROBOT = 'robot_ws'
 DEFAULT_WORKSPACE_DEVELOPER = 'ros_ws'
 
+NANOSAUR_DOCKER_PACKAGE_PERCEPTION = "perception"
 
 def workspaces_info(params: Params, verbose: bool):
     """Print information about the workspaces."""
@@ -132,12 +136,13 @@ def clean(platform, params: Params, args):
 
 def update(platform, params: Params, args):
     """ Update the workspace """
+    # Get the Nanosaur home folder
+    nanosaur_home_path = get_nanosaur_home()
     # Get the Nanosaur home folder and branch
     nanosaur_raw_url = get_nanosaur_raw_github_url(params)
     # Update shared workspace
 
     def update_shared_workspace(force):
-        nanosaur_home_path = get_nanosaur_home()
         shared_src_path = os.path.join(nanosaur_home_path, "shared_src")
         rosinstall_path = os.path.join(shared_src_path, "shared.rosinstall")
         workspace_type = 'shared'
@@ -181,6 +186,9 @@ def update(platform, params: Params, args):
         'perception': lambda: update_workspace(params, 'perception', 'ws_perception_name', args.force),
     }
     if args.all:
+        print(TerminalFormatter.color_text("Updating isaac_ros_common repository", bold=True))
+        isaac_ros_branch = params.get('isaac_ros_branch', ISAAC_ROS_RELEASE)
+        ros.manage_isaac_ros_common_repo(nanosaur_home_path, isaac_ros_branch, args.force)
         print(TerminalFormatter.color_text("Updating all workspaces", bold=True))
         update_shared_workspace(args.force)
         results = [action() for action in workspace_actions.values()]
@@ -190,6 +198,9 @@ def update(platform, params: Params, args):
     if workspace is None:
         return False
     # Update the workspace
+    print(TerminalFormatter.color_text("Updating isaac_ros_common repository", bold=True))
+    isaac_ros_branch = params.get('isaac_ros_branch', ISAAC_ROS_RELEASE)
+    ros.manage_isaac_ros_common_repo(nanosaur_home_path, isaac_ros_branch, args.force)
     print(TerminalFormatter.color_text(f"Updating {workspace}", bold=True))
     if action := workspace_actions.get(workspace):
         update_shared_workspace(args.force)
@@ -256,10 +267,30 @@ def debug(platform, params: Params, args):
 
 def deploy(platform, params: Params, args):
     nanosaur_docker_user = get_nanosaur_docker_user(params)
+    
+    def deploy_perception():
+        """ Deploy the perception workspace """
+        # determine the device type
+        status = []
+        device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
+        
+        perception_ws_path = get_workspace_path(params, 'ws_perception_name')
+        isaac_ros_distro_name = params.get('isaac_ros_distro', ISAAC_ROS_DISTRO_SUFFIX)
+        release_tag_name = f"{nanosaur_docker_user}/{NANOSAUR_DOCKER_PACKAGE_PERCEPTION}"
+        # Deploy the perception workspace
+        if device_type == "robot" or args.all:
+            tags = [isaac_ros_distro_name, "nanosaur"]
+            status += [ros.deploy_docker_isaac_ros(perception_ws_path, tags, f"{release_tag_name}:robot")]
+        if device_type == "desktop" or args.all:
+            tags = [isaac_ros_distro_name, "nanosaur"]
+            status += [ros.deploy_docker_isaac_ros(perception_ws_path, tags, f"{release_tag_name}:simulation")]
+        return all(status)
+    
     """ Deploy the workspace """
     workspace_actions = {
+        'developer': lambda: ros.deploy_docker_isaac_ros(get_workspace_path(params, 'ws_developer_name'), f'{nanosaur_docker_user}/developer'),
         'simulation': lambda: ros.deploy_docker_simulation(nanosaur_docker_user, get_workspace_path(params, 'ws_simulation_name'), args.image_name),
-        'perception': lambda: ros.deploy_docker_perception(nanosaur_docker_user, get_workspace_path(params, 'ws_perception_name')),
+        'perception': lambda: deploy_perception(),
     }
     if args.all:
         print(TerminalFormatter.color_text("Deploying all workspaces", bold=True))
@@ -331,6 +362,17 @@ def create_workspace(nanosaur_home_path, ws_name, skip_create_colcon_setting=Fal
     return ws_name_path
 
 
+def create_shared_workspace() -> str:
+    # Create the Nanosaur home folder
+    nanosaur_home_path = create_nanosaur_home()
+    # Create the shared source folder
+    nanosaur_shared_src = os.path.join(nanosaur_home_path, "shared_src")
+    # Check if folder exists, if not, create it
+    if not os.path.exists(nanosaur_shared_src):
+        os.makedirs(nanosaur_shared_src)
+    return nanosaur_shared_src
+
+
 def clean_workspace(nanosaur_ws_name) -> bool:
     """
     Checks if a workspace folder exists in the user's home directory.
@@ -364,8 +406,16 @@ def clean_workspace(nanosaur_ws_name) -> bool:
 def create_developer_workspace(platform, params: Params, args, password=None) -> bool:
     # Create the Nanosaur home folder
     nanosaur_home_path = create_nanosaur_home()
+    # Create the shared source folder
+    create_shared_workspace()
     # Create developer workspace
-    create_workspace(nanosaur_home_path, params.get('ws_developer_name', DEFAULT_WORKSPACE_DEVELOPER), skip_create_colcon_setting=True)
+    create_workspace(nanosaur_home_path, params.get('ws_developer_name', DEFAULT_WORKSPACE_DEVELOPER))
+    # set all workspaces to be updated
+    args.all = True
+    if args.force:
+        clean(platform, params, args)
+    # Update all workspaces
+    update(platform, params, args)
     return True
 
 
@@ -375,10 +425,7 @@ def create_maintainer_workspace(platform, params: Params, args, password=None) -
     # Create the Nanosaur home folder
     nanosaur_home_path = create_nanosaur_home()
     # Create the shared source folder
-    nanosaur_shared_src = os.path.join(nanosaur_home_path, "shared_src")
-    # Check if folder exists, if not, create it
-    if not os.path.exists(nanosaur_shared_src):
-        os.makedirs(nanosaur_shared_src)
+    create_shared_workspace()
     if device_type == "robot" or args.all:
         # Make the robot workspace
         create_workspace(nanosaur_home_path, params.get('ws_robot_name', DEFAULT_WORKSPACE_ROBOT))
