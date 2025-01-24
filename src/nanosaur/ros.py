@@ -52,12 +52,12 @@ def run_docker_isaac_ros(workspace_path, auto_commands=[]):
     nanosaur_home_path = get_nanosaur_home()
     # Path to the Isaac ROS common package
     isaac_ros_common_path = os.path.join(nanosaur_home_path, 'isaac_ros_common')
-    
+
     # Path to the script you want to run
     command = "./scripts/run_dev.sh"
     # Build the command arguments
     args = ["-d", workspace_path, '-a', f"-v {nanosaur_home_path}/shared_src:/workspaces/shared_src"]
-    
+
     # Get the path to the Isaac ROS common package
     os.chdir(isaac_ros_common_path)
     # print(f"Changed directory to: {isaac_ros_common_path}")
@@ -364,6 +364,7 @@ def deploy_docker_isaac_ros(isaac_ros_ws_path, tags, release_tag_name, debug=Fal
     except Exception as e:
         print(f"An error occurred while running the command: {e}")
         return False
+
 
 def manage_isaac_ros_common_repo(nanosaur_home_path: str, isaac_ros_branch: str, force) -> bool:
     # Path to the Isaac ROS common package

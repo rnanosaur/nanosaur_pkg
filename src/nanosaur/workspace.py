@@ -54,6 +54,7 @@ DEFAULT_WORKSPACE_DEVELOPER = 'ros_ws'
 
 NANOSAUR_DOCKER_PACKAGE_PERCEPTION = "perception"
 
+
 def workspaces_info(params: Params, verbose: bool):
     """Print information about the workspaces."""
     # Print installed workspaces
@@ -268,13 +269,13 @@ def debug(platform, params: Params, args):
 
 def deploy(platform, params: Params, args):
     nanosaur_docker_user = get_nanosaur_docker_user(params)
-    
+
     def deploy_perception():
         """ Deploy the perception workspace """
         # determine the device type
         status = []
         device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
-        
+
         perception_ws_path = get_workspace_path(params, 'ws_perception_name')
         isaac_ros_distro_name = params.get('isaac_ros_distro', ISAAC_ROS_DISTRO_SUFFIX)
         release_tag_name = f"{nanosaur_docker_user}/{NANOSAUR_DOCKER_PACKAGE_PERCEPTION}"
@@ -288,7 +289,7 @@ def deploy(platform, params: Params, args):
             tags = [isaac_ros_distro_name, NANOSAUR_DOCKERFILE_SUFFIX]
             status += [ros.deploy_docker_isaac_ros(perception_ws_path, tags, f"{release_tag_name}:simulation")]
         return all(status)
-    
+
     """ Deploy the workspace """
     workspace_actions = {
         'developer': lambda: ros.deploy_docker_isaac_ros(get_workspace_path(params, 'ws_developer_name'), f'{nanosaur_docker_user}/developer'),
