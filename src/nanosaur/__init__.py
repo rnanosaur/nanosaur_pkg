@@ -25,8 +25,8 @@
 
 __author__ = "Raffaello Bonghi"
 __email__ = "raffaello@rnext.it"
-__cr__ = "(c) 2024, RB"
-__copyright__ = "(c) 2024, Raffaello Bonghi"
+__cr__ = "(c) 2025, RB"
+__copyright__ = "(c) 2025, Raffaello Bonghi"
 # Version package
 # https://packaging.python.org/guides/distributing-packages-using-setuptools/#choosing-a-versioning-scheme
 __version__ = "0.0.2"
