@@ -25,9 +25,11 @@ Nanosaur is a small, open-source robotic platform designed for educational and r
 Install this package in develop mode
 
 ```console
+mkdir -p $HOME/nanosaur
+cd $HOME/nanosaur
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e .[dev]
+pip install -e nanosaur_pkg[dev]
 ```
 
 Test this package
