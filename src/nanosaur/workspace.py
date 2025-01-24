@@ -45,6 +45,7 @@ COLCON_DEFAULTS = {
 
 ISAAC_ROS_RELEASE = "release-3.2"
 ISAAC_ROS_DISTRO_SUFFIX = "ros2_humble"
+ISAAC_ROS_DOCKER_CAMERA_LIST = ["realsense", "zed"]
 NANOSAUR_DOCKERFILE_SUFFIX = "nanosaur"
 
 DEFAULT_WORKSPACE_PERCEPTION = 'perception_ws'
@@ -52,6 +53,8 @@ DEFAULT_WORKSPACE_SIMULATION = 'simulation_ws'
 DEFAULT_WORKSPACE_ROBOT = 'robot_ws'
 DEFAULT_WORKSPACE_DEVELOPER = 'ros_ws'
 
+NANOSAUR_DOCKER_PACKAGE_ROBOT = "nanosaur"
+NANOSAUR_DOCKER_PACKAGE_SIMULATION = "simulation"
 NANOSAUR_DOCKER_PACKAGE_PERCEPTION = "perception"
 
 
@@ -122,8 +125,7 @@ def clean(platform, params: utilities.Params, args):
     }
     if args.all:
         print(TerminalFormatter.color_text("Cleaning all workspaces", bold=True))
-        results = [action() for action in workspace_actions.values()]
-        return all(results)
+        return all(action() for action in workspace_actions.values())
     # Get the workspace
     workspace = get_selected_workspace(params, workspace_actions, args)
     if workspace is None:
@@ -193,8 +195,7 @@ def update(platform, params: utilities.Params, args):
         ros.manage_isaac_ros_common_repo(nanosaur_home_path, isaac_ros_branch, args.force)
         print(TerminalFormatter.color_text("Updating all workspaces", bold=True))
         update_shared_workspace(args.force)
-        results = [action() for action in workspace_actions.values()]
-        return all(results)
+        return all(action() for action in workspace_actions.values())
     # Get the workspace
     workspace = get_selected_workspace(params, workspace_actions, args)
     if workspace is None:
@@ -235,8 +236,7 @@ def build(platform, params: utilities.Params, args, password=None):
     }
     if args.all:
         print(TerminalFormatter.color_text("Building all workspaces", bold=True))
-        results = [action() for action in workspace_actions.values()]
-        return all(results)
+        return all(action() for action in workspace_actions.values())
     # Get the workspace
     workspace = get_selected_workspace(params, workspace_actions, args)
     if workspace is None:
@@ -271,37 +271,68 @@ def deploy(platform, params: utilities.Params, args):
     """ Deploy the workspace """
     # Get the Nanosaur docker user
     nanosaur_docker_user = utilities.get_nanosaur_docker_user(params)
+    # Get the Isaac ROS distro name
+    isaac_ros_distro_name = params.get('isaac_ros_distro', ISAAC_ROS_DISTRO_SUFFIX)
 
-    def deploy_perception():
+    def deploy_simulation(image_name):
+        """ Deploy the simulation workspace """
+        simulation_ws_path = get_workspace_path(params, 'ws_simulation_name')
+        # Get the path to the nanosaur_simulations package
+        nanosaur_simulations_path = os.path.join(simulation_ws_path, 'src', 'nanosaur_simulations')
+
+        # Build Gazebo sim docker
+        if image_name == 'gazebo' or image_name is None:
+            tag_image = f"{nanosaur_docker_user}/{NANOSAUR_DOCKER_PACKAGE_SIMULATION}:gazebo"
+            dockerfile_path = f"{nanosaur_simulations_path}/Dockerfile.gazebo"
+            if not ros.deploy_docker_image(dockerfile_path, tag_image):
+                return False
+
+        # Build the Docker image for nanosaur bridge
+        if image_name == 'robot' or image_name is None:
+            tag_image = f"{nanosaur_docker_user}/{NANOSAUR_DOCKER_PACKAGE_ROBOT}:simulation"
+            dockerfile_path = f"{nanosaur_simulations_path}/Dockerfile.nanosaur"
+            if not ros.deploy_docker_image(dockerfile_path, tag_image):
+                return False
+        return True
+
+    def deploy_perception(image_name):
         """ Deploy the perception workspace """
         # determine the device type
-        status = []
         device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
-
+        # Get the path to the perception workspace
         perception_ws_path = get_workspace_path(params, 'ws_perception_name')
-        isaac_ros_distro_name = params.get('isaac_ros_distro', ISAAC_ROS_DISTRO_SUFFIX)
+        # Get the release tag name
         release_tag_name = f"{nanosaur_docker_user}/{NANOSAUR_DOCKER_PACKAGE_PERCEPTION}"
         # Deploy the perception workspace
         if device_type == "robot" or args.all:
-            for camera in ["realsense", "zed"]:
+            # Deploy the perception workspace for each camera
+            cameras = ISAAC_ROS_DOCKER_CAMERA_LIST if args.all or image_name is None else [image_name]
+            for camera in cameras:
+                # Create the tags for the docker image
                 tags = [isaac_ros_distro_name, camera, NANOSAUR_DOCKERFILE_SUFFIX]
-                print(TerminalFormatter.color_text(f"Deploying {release_tag_name}:{camera}", bold=True))
-                status += [ros.deploy_docker_isaac_ros(perception_ws_path, tags, f"{release_tag_name}:{camera}")]
+                # Deploy the perception workspace for each camera
+                if not ros.deploy_docker_isaac_ros(perception_ws_path, tags, f"{release_tag_name}:{camera}"):
+                    return False
         if device_type == "desktop" or args.all:
+            # Deploy the perception workspace for simulation
             tags = [isaac_ros_distro_name, NANOSAUR_DOCKERFILE_SUFFIX]
-            status += [ros.deploy_docker_isaac_ros(perception_ws_path, tags, f"{release_tag_name}:simulation")]
-        return all(status)
+            if not ros.deploy_docker_isaac_ros(perception_ws_path, tags, f"{release_tag_name}:simulation"):
+                return False
+        return True
 
     # Get the deploy action
     workspace_actions = {
-        'developer': lambda: ros.deploy_docker_isaac_ros(get_workspace_path(params, 'ws_developer_name'), f'{nanosaur_docker_user}/developer'),
-        'simulation': lambda: ros.deploy_docker_simulation(nanosaur_docker_user, get_workspace_path(params, 'ws_simulation_name'), args.image_name),
-        'perception': lambda: deploy_perception(),
+        'developer': lambda: ros.deploy_docker_isaac_ros(
+            get_workspace_path(params, 'ws_developer_name'),
+            [isaac_ros_distro_name, NANOSAUR_DOCKERFILE_SUFFIX],
+            f'{nanosaur_docker_user}/developer'
+        ),
+        'simulation': lambda: deploy_simulation(args.image_name),
+        'perception': lambda: deploy_perception(args.image_name),
     }
     if args.all:
         print(TerminalFormatter.color_text("Deploying all workspaces", bold=True))
-        results = [action() for action in workspace_actions.values()]
-        return all(results)
+        return all(action() for action in workspace_actions.values())
     # Get the workspace
     workspace = get_selected_workspace(params, workspace_actions, args)
     if workspace is None:

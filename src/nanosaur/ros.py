@@ -41,16 +41,14 @@ import shutil
 ros2_distro = 'humble'
 ros2_sources = f'/opt/ros/{ros2_distro}/setup.bash'
 
+ISAAC_ROS_COMMON_FOLDER = 'isaac_ros_common'
 ISAAC_ROS_COMMON_REPO = 'https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_common'
-
-NANOSAUR_DOCKER_PACKAGE_ROBOT = "nanosaur"
-NANOSAUR_DOCKER_PACKAGE_SIMULATION = "simulation"
 
 
 def run_docker_isaac_ros(workspace_path, auto_commands=[]):
     nanosaur_home_path = get_nanosaur_home()
     # Path to the Isaac ROS common package
-    isaac_ros_common_path = os.path.join(nanosaur_home_path, 'isaac_ros_common')
+    isaac_ros_common_path = os.path.join(nanosaur_home_path, ISAAC_ROS_COMMON_FOLDER)
 
     # Path to the script you want to run
     command = "./scripts/run_dev.sh"
@@ -248,42 +246,19 @@ def run_colcon_build(folder_path) -> bool:
         print(f"An error occurred while running the colcon build command: {e}")
         return False
 
-
-def deploy_docker_simulation(docker_user: str, simulation_ws_path: str, image_name: str = None) -> bool:
-    # Get the path to the nanosaur_simulations package
-    nanosaur_simulations_path = os.path.join(simulation_ws_path, 'src', 'nanosaur_simulations')
-    # Build Gazebo sim docker
-    if image_name == 'gazebo' or image_name is None:
-        tag_image = f"{docker_user}/{NANOSAUR_DOCKER_PACKAGE_SIMULATION}:gazebo"
-        try:
-            print(TerminalFormatter.color_text(f"Building Gazebo simulation docker image {tag_image}", color='magenta', bold=True))
-            docker.build(
-                get_nanosaur_home(),
-                file=f"{nanosaur_simulations_path}/Dockerfile.gazebo",
-                tags=tag_image
-            )
-        except DockerException as e:
-            print(TerminalFormatter.color_text(f"Error building Gazebo Docker image: {e}", color='red'))
-            return False
-
-    # Build the Docker image for nanosaur bridge
-    if image_name == 'robot' or image_name is None:
-        tag_image = f"{docker_user}/{NANOSAUR_DOCKER_PACKAGE_ROBOT}:simulation"
-        try:
-            print(TerminalFormatter.color_text(f"Building Nanosaur robot docker image {tag_image}", color='magenta', bold=True))
-            docker.build(
-                get_nanosaur_home(),
-                file=f"{nanosaur_simulations_path}/Dockerfile.nanosaur",
-                tags=tag_image
-            )
-        except DockerException as e:
-            print(TerminalFormatter.color_text(f"Error building Nanosaur Docker image: {e}", color='red'))
-            return False
-
-    # Print success message
-    print(TerminalFormatter.color_text("Docker image built successfully", color='green'))
-    return True
-
+def deploy_docker_image(dockerfile_path, tag_image):
+    try:
+        print(TerminalFormatter.color_text(f"Building Docker image {tag_image}", color='magenta', bold=True))
+        docker.build(
+            get_nanosaur_home(),
+            file=dockerfile_path,
+            tags=tag_image
+        )
+        print(TerminalFormatter.color_text("Docker image built successfully", color='green'))
+        return True
+    except DockerException as e:
+        print(TerminalFormatter.color_text(f"Error building Docker image: {e}", color='red'))
+        return False
 
 def deploy_docker_isaac_ros(isaac_ros_ws_path, tags, release_tag_name, debug=False) -> bool:
     """
@@ -307,7 +282,7 @@ def deploy_docker_isaac_ros(isaac_ros_ws_path, tags, release_tag_name, debug=Fal
     ]
     ws_dir_list = '--ws-src ' + ' --ws-src '.join(src_folders)
     # Path to the Isaac ROS common package
-    isaac_ros_common_path = os.path.join(get_nanosaur_home(), 'isaac_ros_common')
+    isaac_ros_common_path = os.path.join(get_nanosaur_home(), ISAAC_ROS_COMMON_FOLDER)
     # Path to the Nanosaur Docker scripts
     nanosaur_docker_path = os.path.join(shared_path, 'nanosaur', 'nanosaur', 'docker')
     # Build the command to run the Docker build script
@@ -316,6 +291,7 @@ def deploy_docker_isaac_ros(isaac_ros_ws_path, tags, release_tag_name, debug=Fal
     command = f"{nanosaur_docker_path}/docker_build_isaac_ros.sh {debug_flag} -d {tags_name} -c {isaac_ros_common_path} -i {release_tag_name} {ws_dir_list}"
 
     try:
+        print(TerminalFormatter.color_text(f"Deploying {release_tag_name}", color='magenta', bold=True))
         # Run the command and stream the output live
         process = subprocess.Popen(
             command,
@@ -336,6 +312,11 @@ def deploy_docker_isaac_ros(isaac_ros_ws_path, tags, release_tag_name, debug=Fal
         else:
             print(TerminalFormatter.color_text("Command completed successfully", color='green'))
             return True
+    except KeyboardInterrupt:
+        print(TerminalFormatter.color_text("Process interrupted by user", color='red'))
+        process.terminate()
+        process.wait()
+        return False
     except Exception as e:
         print(f"An error occurred while running the command: {e}")
         return False
@@ -343,7 +324,7 @@ def deploy_docker_isaac_ros(isaac_ros_ws_path, tags, release_tag_name, debug=Fal
 
 def manage_isaac_ros_common_repo(nanosaur_home_path: str, isaac_ros_branch: str, force) -> bool:
     # Path to the Isaac ROS common package
-    isaac_ros_common_path = os.path.join(nanosaur_home_path, 'isaac_ros_common')
+    isaac_ros_common_path = os.path.join(nanosaur_home_path, ISAAC_ROS_COMMON_FOLDER)
 
     def update_existing_repo():
         try:
