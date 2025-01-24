@@ -27,11 +27,10 @@
 import os
 import yaml
 import argparse
-import requests
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur import ros
 from nanosaur.simulation import simulation_robot_start_debug
-from nanosaur.utilities import Params, get_nanosaur_raw_github_url, get_nanosaur_home, create_nanosaur_home, require_sudo_password, get_nanosaur_docker_user
+from nanosaur import utilities
 import inquirer
 
 
@@ -56,7 +55,7 @@ DEFAULT_WORKSPACE_DEVELOPER = 'ros_ws'
 NANOSAUR_DOCKER_PACKAGE_PERCEPTION = "perception"
 
 
-def workspaces_info(params: Params, verbose: bool):
+def workspaces_info(params: utilities.Params, verbose: bool):
     """Print information about the workspaces."""
     # Print installed workspaces
     workspaces = get_workspaces_path(params)
@@ -113,7 +112,7 @@ def get_selected_workspace(params, workspace_actions, args):
     return answers['workspace'] if answers else None
 
 
-def clean(platform, params: Params, args):
+def clean(platform, params: utilities.Params, args):
     """ Clean the workspace """
     workspace_actions = {
         'developer': lambda: clean_workspace(params.get('ws_developer_name', DEFAULT_WORKSPACE_DEVELOPER)),
@@ -137,12 +136,12 @@ def clean(platform, params: Params, args):
     return False
 
 
-def update(platform, params: Params, args):
+def update(platform, params: utilities.Params, args):
     """ Update the workspace """
     # Get the Nanosaur home folder
-    nanosaur_home_path = get_nanosaur_home()
+    nanosaur_home_path = utilities.get_nanosaur_home()
     # Get the Nanosaur home folder and branch
-    nanosaur_raw_url = get_nanosaur_raw_github_url(params)
+    nanosaur_raw_url = utilities.get_nanosaur_raw_github_url(params)
     # Update shared workspace
 
     def update_shared_workspace(force):
@@ -151,7 +150,7 @@ def update(platform, params: Params, args):
         workspace_type = 'shared'
         # Download rosinstall for this device
         url = f"{nanosaur_raw_url}/nanosaur/rosinstall/{workspace_type}.rosinstall"
-        rosinstall_path = ros.download_rosinstall(url, shared_src_path, f"{workspace_type}.rosinstall", force)
+        rosinstall_path = utilities.download_file(url, shared_src_path, f"{workspace_type}.rosinstall", force)
         if rosinstall_path is not None:
             print(TerminalFormatter.color_text(f"Update {workspace_type}.rosinstall", bold=True))
         else:
@@ -170,7 +169,7 @@ def update(platform, params: Params, args):
         if not skip_rosinstall_update:
             # Download rosinstall for this device
             url = f"{nanosaur_raw_url}/nanosaur/rosinstall/{workspace_type}.rosinstall"
-            rosinstall_path = ros.download_rosinstall(url, workspace_path, f"{workspace_type}.rosinstall", force)
+            rosinstall_path = utilities.download_file(url, workspace_path, f"{workspace_type}.rosinstall", force)
             if rosinstall_path is not None:
                 print(TerminalFormatter.color_text(f"Update {workspace_type}.rosinstall", bold=True))
             else:
@@ -212,8 +211,8 @@ def update(platform, params: Params, args):
     return False
 
 
-@require_sudo_password
-def build(platform, params: Params, args, password=None):
+@utilities.require_sudo_password
+def build(platform, params: utilities.Params, args, password=None):
     """ Build the workspace """
     # Get the build action
     def get_build_action(workspace_name_key):
@@ -250,7 +249,7 @@ def build(platform, params: Params, args, password=None):
     return False
 
 
-def debug(platform, params: Params, args):
+def debug(platform, params: utilities.Params, args):
     """ Debug the workspace """
     workspace_actions = {
         'developer': lambda: ros.run_docker_isaac_ros(get_workspace_path(params, 'ws_developer_name')),
@@ -268,10 +267,10 @@ def debug(platform, params: Params, args):
     return False
 
 
-def deploy(platform, params: Params, args):
+def deploy(platform, params: utilities.Params, args):
     """ Deploy the workspace """
     # Get the Nanosaur docker user
-    nanosaur_docker_user = get_nanosaur_docker_user(params)
+    nanosaur_docker_user = utilities.get_nanosaur_docker_user(params)
 
     def deploy_perception():
         """ Deploy the perception workspace """
@@ -315,8 +314,8 @@ def deploy(platform, params: Params, args):
     return False
 
 
-def get_workspaces_path(params: Params) -> dict:
-    nanosaur_home_path = get_nanosaur_home()
+def get_workspaces_path(params: utilities.Params) -> dict:
+    nanosaur_home_path = utilities.get_nanosaur_home()
     # Add all workspaces that exist in the Nanosaur home folder
     workspaces = {
         'ws_developer_name': params.get('ws_developer_name', DEFAULT_WORKSPACE_DEVELOPER),
@@ -331,7 +330,7 @@ def get_workspaces_path(params: Params) -> dict:
     }
 
 
-def get_workspace_path(params: Params, ws_name) -> str:
+def get_workspace_path(params: utilities.Params, ws_name) -> str:
     workspaces = {
         'ws_developer_name': params.get('ws_developer_name', DEFAULT_WORKSPACE_DEVELOPER),
         'ws_robot_name': params.get('ws_robot_name', DEFAULT_WORKSPACE_ROBOT),
@@ -342,7 +341,7 @@ def get_workspace_path(params: Params, ws_name) -> str:
         return None
     ws_name_folder = workspaces[ws_name]
     # Create the Nanosaur home folder
-    nanosaur_home_path = create_nanosaur_home()
+    nanosaur_home_path = utilities.create_nanosaur_home()
     # Create the full path for the workspace folder in the user's home directory
     workspace_path = os.path.join(nanosaur_home_path, ws_name_folder)
 
@@ -371,7 +370,7 @@ def create_workspace(nanosaur_home_path, ws_name, skip_create_colcon_setting=Fal
 
 def create_shared_workspace() -> str:
     # Create the Nanosaur home folder
-    nanosaur_home_path = create_nanosaur_home()
+    nanosaur_home_path = utilities.create_nanosaur_home()
     # Create the shared source folder
     nanosaur_shared_src = os.path.join(nanosaur_home_path, "shared_src")
     # Check if folder exists, if not, create it
@@ -386,7 +385,7 @@ def clean_workspace(nanosaur_ws_name) -> bool:
     :param folder_name: The name of the workspace folder to check.
     :return: The full path to the workspace if it exists, or None if it doesn't.
     """
-    nanosaur_home_path = get_nanosaur_home()
+    nanosaur_home_path = utilities.get_nanosaur_home()
     # Create the full path for the workspace folder in the user's home directory
     workspace_path = os.path.join(nanosaur_home_path, nanosaur_ws_name)
 
@@ -410,48 +409,25 @@ def clean_workspace(nanosaur_ws_name) -> bool:
     return False
 
 
-def download_docker_compose(url, folder_path, file_name, force=False) -> str:
-    # Create the full file path
-    file_path = os.path.join(folder_path, file_name)
-    # Check if the file already exists
-    if not force and os.path.exists(file_path):
-        print(TerminalFormatter.color_text(f"File '{file_name}' already exists in '{folder_path}'. Skip download", color='yellow'))
-        return file_path  # Cancel download
-
-    # Send a request to download the file
-    response = requests.get(url)
-
-    if response.status_code == 200:
-        # Save the file in the workspace folder
-        file_path = os.path.join(folder_path, file_name)
-        with open(file_path, 'wb') as file:
-            file.write(response.content)
-        print(TerminalFormatter.color_text(f"File '{file_name}' downloaded successfully to '{folder_path}'.", color='green'))
-        return file_path
-    else:
-        print(TerminalFormatter.color_text(f"Failed to download file. Status code: {response.status_code}", color='red'))
-        return None
-
-
-def create_simple(platform, params: Params, args) -> bool:
+def create_simple(platform, params: utilities.Params, args) -> bool:
     # Create the Nanosaur home folder
-    nanosaur_home_path = create_nanosaur_home()
+    nanosaur_home_path = utilities.create_nanosaur_home()
     # Determine the device type
     workspace_type = "robot" if platform['Machine'] == 'jetson' else "simulation"
     docker_compose = f"docker-compose.{workspace_type}.yml"
     # Get the Nanosaur home folder and branch
-    nanosaur_raw_url = get_nanosaur_raw_github_url(params)
+    nanosaur_raw_url = utilities.get_nanosaur_raw_github_url(params)
     url = f"{nanosaur_raw_url}/nanosaur/compose/{docker_compose}"
     # Download the docker-compose file
-    download_docker_compose(url, nanosaur_home_path, docker_compose, force=args.force)
+    utilities.download_file(url, nanosaur_home_path, docker_compose, force=args.force)
     return True
 
 
-def create_developer_workspace(platform, params: Params, args, password=None) -> bool:
+def create_developer_workspace(platform, params: utilities.Params, args, password=None) -> bool:
     # Create the Nanosaur home folder
     create_simple(platform, params, args)
     # Create the Nanosaur home folder
-    nanosaur_home_path = create_nanosaur_home()
+    nanosaur_home_path = utilities.create_nanosaur_home()
     # Create the shared source folder
     create_shared_workspace()
     # Create developer workspace
@@ -465,11 +441,11 @@ def create_developer_workspace(platform, params: Params, args, password=None) ->
     return True
 
 
-def create_maintainer_workspace(platform, params: Params, args, password=None) -> bool:
+def create_maintainer_workspace(platform, params: utilities.Params, args, password=None) -> bool:
     # determine the device type
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
     # Create the Nanosaur home folder
-    nanosaur_home_path = create_nanosaur_home()
+    nanosaur_home_path = utilities.create_nanosaur_home()
     # Create the shared source folder
     create_shared_workspace()
     if device_type == "robot" or args.all:

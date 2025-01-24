@@ -141,30 +141,6 @@ def run_docker_isaac_ros(workspace_path, auto_commands=[]):
     print(TerminalFormatter.color_text("Dev script finished", color='green'))
 
 
-def download_rosinstall(url, folder_path, file_name, force=False) -> str:
-    # Create the full file path
-    file_path = os.path.join(folder_path, file_name)
-
-    # Check if the file already exists
-    if not force and os.path.exists(file_path):
-        print(TerminalFormatter.color_text(f"File '{file_name}' already exists in '{folder_path}'. Skip download", color='yellow'))
-        return file_path  # Cancel download
-
-    # Send a request to download the file
-    response = requests.get(url)
-
-    if response.status_code == 200:
-        # Save the file in the workspace folder
-        file_path = os.path.join(folder_path, file_name)
-        with open(file_path, 'wb') as file:
-            file.write(response.content)
-        print(TerminalFormatter.color_text(f"File '{file_name}' downloaded successfully to '{folder_path}'.", color='green'))
-        return file_path
-    else:
-        print(TerminalFormatter.color_text(f"Failed to download file. Status code: {response.status_code}", color='red'))
-        return None
-
-
 def run_vcs_import(workspace_path, rosinstall_path, src_folder="src") -> bool:
     try:
         # Run the command and stream the output live

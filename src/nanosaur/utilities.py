@@ -28,6 +28,7 @@ import copy
 import yaml
 import pexpect
 import getpass
+import requests
 from nanosaur import __version__
 from nanosaur.prompt_colors import TerminalFormatter
 
@@ -380,6 +381,30 @@ def get_nanosaur_home() -> str:
         return os.environ['NANOSAUR_HOME']
     # Get the current nanosaur's home directory
     return os.path.join(os.path.expanduser("~"), NANOSAUR_HOME_NAME)
+
+
+def download_file(url, folder_path, file_name, force=False) -> str:
+    # Create the full file path
+    file_path = os.path.join(folder_path, file_name)
+
+    # Check if the file already exists
+    if not force and os.path.exists(file_path):
+        print(TerminalFormatter.color_text(f"File '{file_name}' already exists in '{folder_path}'. Skip download", color='yellow'))
+        return file_path  # Cancel download
+
+    # Send a request to download the file
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        # Save the file in the workspace folder
+        file_path = os.path.join(folder_path, file_name)
+        with open(file_path, 'wb') as file:
+            file.write(response.content)
+        print(TerminalFormatter.color_text(f"File '{file_name}' downloaded successfully to '{folder_path}'.", color='green'))
+        return file_path
+    else:
+        print(TerminalFormatter.color_text(f"Failed to download file. Status code: {response.status_code}", color='red'))
+        return None
 
 
 def require_sudo(func):
