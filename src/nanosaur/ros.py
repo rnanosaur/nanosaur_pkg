@@ -26,7 +26,6 @@
 import os
 import sys
 import pexpect
-import requests
 import subprocess
 import pty
 import select
