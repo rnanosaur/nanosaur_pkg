@@ -276,7 +276,7 @@ def control_keyboard(platform, params: Params, args):
     robot = RobotList.get_robot(params)
     command = f"ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args --remap /cmd_vel:=/{robot.name}/key_vel"
     # Run from local machine
-    if params.get('mode', '') in ['Maintainer', 'Raffo']:
+    if params.get('mode', '') in ['maintainer', 'Raffo']:
         nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
         bash_file = f'{nanosaur_ws_path}/install/setup.bash'
         # Read the robot name
@@ -293,7 +293,7 @@ def robot_display(platform, params: Params, args):
     robot = RobotList.get_robot(params)
     command = f"ros2 launch nanosaur_visualization robot_display.launch.py robot_name:={robot.name}"
     # Run from local machine
-    if params.get('mode', '') in ['Maintainer', 'Raffo']:
+    if params.get('mode', '') in ['maintainer', 'Raffo']:
         nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
         bash_file = f'{nanosaur_ws_path}/install/setup.bash'
         print(TerminalFormatter.color_text(f"Display the robot {robot.name}", color='green'))

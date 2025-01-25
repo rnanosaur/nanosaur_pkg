@@ -40,7 +40,36 @@ from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, RobotList, package_info
 
 
-NANOSAUR_INSTALL_OPTIONS = ['Simple', 'Developer', 'Maintainer']
+NANOSAUR_INSTALL_OPTIONS_RULES = {
+    'simple': {
+        'rule': [],
+        'function': create_simple,
+        'description': "Simple workspace with basic tools",
+        'color': 'green',
+        'show': True
+        },
+    'developer': {
+        'rule': ['simple'],
+        'function': create_developer_workspace,
+        'description': "Developer workspace with additional tools",
+        'color': 'blue',
+        'show': True
+        },
+    'maintainer': {
+        'rule': ['simple', 'developer'],
+        'function': create_maintainer_workspace,
+        'description': "Maintainer workspace with additional tools",
+        'color': 'red',
+        'show': True
+        },
+    'Raffo': {
+        'rule': ['simple', 'developer', 'maintainer'],
+        'function': create_maintainer_workspace,
+        'description': "Raffo workspace with additional tools",
+        'color': 'cyan',
+        'show': False
+        },
+}
 
 # Define default parameters
 DEFAULT_PARAMS = {}
@@ -52,15 +81,11 @@ def info(platform, params: Params, args):
     package_info(params, args.verbose)
     # Print mode if it exists in params
     if 'mode' in params:
-        if params['mode'] == 'Developer':
-            mode_string = TerminalFormatter.color_text(f"Mode: {params['mode']}", bg_color='green', bold=True)
-            print(f"\n{mode_string}")
-        elif params['mode'] == 'Maintainer':
-            mode_string = TerminalFormatter.color_text(f"Mode: {params['mode']}", bg_color='red', bold=True)
-            print(f"\n{mode_string}")
-        elif params['mode'] == 'Raffo':
-            mode_string = TerminalFormatter.color_text(f"Mode: {params['mode']}", bg_color='cyan', bold=True)
-            print(f"\n{mode_string}")
+        mode = params['mode']
+        if mode in NANOSAUR_INSTALL_OPTIONS_RULES:
+            color = NANOSAUR_INSTALL_OPTIONS_RULES[mode]['color']
+            mode_string = TerminalFormatter.color_text(f"{mode}", color=color, bold=True)
+            print(f"{TerminalFormatter.color_text('Mode: ', bold=True)} {mode_string}")
 
     robot_list = RobotList.load(params)
     # Print current robot configuration
@@ -90,7 +115,7 @@ def install(platform, params: Params, args):
         inquirer.List(
             'choice',
             message="What would you like to install?",
-            choices=NANOSAUR_INSTALL_OPTIONS,
+            choices=[key for key, value in NANOSAUR_INSTALL_OPTIONS_RULES.items() if value['show']],
         ),
         inquirer.Confirm(
             'confirm',
@@ -109,21 +134,16 @@ def install(platform, params: Params, args):
     # Get the selected install type
     install_type = answers['choice']
     print(f"Installing {install_type} workspace...")
-
-    install_functions = {
-        'Simple': create_simple,
-        'Developer': create_developer_workspace,
-        'Maintainer': create_maintainer_workspace
-    }
-
-    if not install_functions[install_type](platform, params, args):
+    if not NANOSAUR_INSTALL_OPTIONS_RULES[install_type]['function'](platform, params, args):
         return False
     # Set params in maintainer mode
-    current_mode = params.get('mode', 'Simple')
-    if (install_type == 'Developer' and current_mode == 'Simple') or \
-       (install_type == 'Maintainer' and current_mode in ['Simple', 'Developer']) or \
-       (install_type == 'Raffo' and current_mode in NANOSAUR_INSTALL_OPTIONS):
+    current_mode = params.get('mode')
+    if (
+        current_mode not in NANOSAUR_INSTALL_OPTIONS_RULES
+        or install_type not in NANOSAUR_INSTALL_OPTIONS_RULES[current_mode]
+    ):
         params['mode'] = install_type
+    return True
 
 
 def nanosaur_wake_up(platform, params: Params, args):

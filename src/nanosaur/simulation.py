@@ -161,7 +161,7 @@ def simulation_start_debug(platform, params: Params, args):
 
 
 def simulation_start(platform, params: Params, args):
-    debug_mode = args.debug or params.get('mode', '') in ['Maintainer', 'Raffo']
+    debug_mode = args.debug or params.get('mode', '') in ['maintainer', 'Raffo']
     if debug_mode:
         return simulation_start_debug(platform, params, args)
     # Run from docker container
