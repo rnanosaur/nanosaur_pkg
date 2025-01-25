@@ -286,7 +286,12 @@ def deploy(platform, params: utilities.Params, args):
             dockerfile_path = f"{nanosaur_simulations_path}/Dockerfile.gazebo"
             if not ros.deploy_docker_image(dockerfile_path, tag_image):
                 return False
-
+        # Build Isaac Sim docker
+        if image_name == 'isaac-sim' or image_name is None:
+            tag_image = f"{nanosaur_docker_user}/{NANOSAUR_DOCKER_PACKAGE_SIMULATION}:isaac-sim"
+            dockerfile_path = f"{nanosaur_simulations_path}/Dockerfile.isaac-sim"
+            if not ros.deploy_docker_image(dockerfile_path, tag_image):
+                return False
         # Build the Docker image for nanosaur bridge
         if image_name == 'robot' or image_name is None:
             tag_image = f"{nanosaur_docker_user}/{NANOSAUR_DOCKER_PACKAGE_ROBOT}:simulation"

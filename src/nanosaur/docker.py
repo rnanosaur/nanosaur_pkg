@@ -25,7 +25,7 @@
 
 # https://gabrieldemarmiesse.github.io/python-on-whales/
 from python_on_whales import docker, DockerClient, DockerException
-from nanosaur.utilities import Params, RobotList, get_nanosaur_home, build_env_file, is_env_file
+from nanosaur.utilities import Params, RobotList, get_nanosaur_home, build_env_file
 from nanosaur.prompt_colors import TerminalFormatter
 import os
 
@@ -41,25 +41,23 @@ def docker_robot_run_command(platform, params: Params, command, name=None):
     docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()
     # Create the full file path
-    docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
     robot = RobotList.get_robot(params)
+    docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
+    env_file_path = os.path.join(nanosaur_home_path, f'{robot.name}.env')
 
     # Check which simulation tool is selected only if robot.simulation is true
     if robot.simulation and 'simulation_tool' not in params:
         print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
         return False
-    # Start the container in detached mode
-    simulation_tool = params['simulation_tool'].lower().replace(' ', '_')
 
     # Build env file
-    if not is_env_file():
-        print(TerminalFormatter.color_text("Creating the environment file...", color='green'))
-        build_env_file(params)
+    build_env_file(params)
 
     # Create a DockerClient object with the docker-compose file
-    nanosaur_compose = DockerClient(compose_files=[docker_compose_path])
+    nanosaur_compose = DockerClient(compose_files=[docker_compose_path], compose_env_files=[env_file_path])
     try:
-        nanosaur_compose.compose.run(service=simulation_tool, command=command, remove=True, tty=True, name=name)
+        # TODO make a new docker only for this command
+        nanosaur_compose.compose.run(service='gazebo', command=command, remove=True, tty=True, name=name)
     except DockerException as e:
         print(TerminalFormatter.color_text(f"Error running the command: {e}", color='red'))
         return False
@@ -76,18 +74,18 @@ def docker_robot_start(platform, params: Params, args):
     docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()
     # Create the full file path
-    docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
     robot = RobotList.get_robot(params)
-
+    docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
+    env_file_path = os.path.join(nanosaur_home_path, f'{robot.name}.env')
+    
     # Check which simulation tool is selected only if robot.simulation is true
     if robot.simulation and 'simulation_tool' not in params:
         print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
         return False
 
     # Build env file
-    if not is_env_file():
-        print(TerminalFormatter.color_text("Creating the environment file...", color='green'))
-        build_env_file(params)
+    build_env_file(params)
+    
     print(TerminalFormatter.color_text(f"robot {robot.name} starting", color='green'))
 
     compose_profiles = []
@@ -95,7 +93,7 @@ def docker_robot_start(platform, params: Params, args):
         print(TerminalFormatter.color_text(f"Starting with profile: {args.profile}", color='green'))
         compose_profiles = [args.profile]
     # Create a DockerClient object with the docker-compose file
-    nanosaur_compose = DockerClient(compose_files=[docker_compose_path], compose_profiles=compose_profiles)
+    nanosaur_compose = DockerClient(compose_files=[docker_compose_path], compose_env_files=[env_file_path], compose_profiles=compose_profiles)
     # Start the container in detached mode
     try:
         nanosaur_compose.compose.up(detach=args.detach)
@@ -117,24 +115,26 @@ def docker_simulator_start(platform, params: Params, args):
     docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()
     # Create the full file path
+    robot = RobotList.get_robot(params)
     docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
+    env_file_path = os.path.join(nanosaur_home_path, f'{robot.name}.env')
 
     # Check which simulation tool is selected
     if 'simulation_tool' not in params:
         print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
         return False
     # Start the container in detached mode
-    simulation_tool = params['simulation_tool'].lower().replace(' ', '_')
+    simulation_tool = params['simulation_tool'].lower().replace(' ', '-')
     # Create a DockerClient object with the docker-compose file
-    nanosaur_compose = DockerClient(compose_files=[docker_compose_path])
+    nanosaur_compose = DockerClient(compose_files=[docker_compose_path], compose_env_files=[env_file_path])
 
     # if len(nanosaur_compose.compose.ps()) > 0:
     #    print(TerminalFormatter.color_text(f"The robot {robot.name} is already running.", color='red'))
     #    return False
+
     # Build env file
-    if not is_env_file():
-        print(TerminalFormatter.color_text("Creating the environment file...", color='green'))
-        build_env_file(params)
+    build_env_file(params)
+    
     print(TerminalFormatter.color_text(f"Simulator {simulation_tool} starting", color='green'))
     try:
         nanosaur_compose.compose.up(services=[f'{simulation_tool}'], recreate=False)
@@ -155,11 +155,12 @@ def docker_robot_stop(platform, params: Params, args):
     docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()
     # Create the full file path
-    docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
-
     robot = RobotList.get_robot(params)
+    docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
+    env_file_path = os.path.join(nanosaur_home_path, f'{robot.name}.env')
+
     # Create a DockerClient object with the docker-compose file
-    nanosaur_compose = DockerClient(compose_files=[docker_compose_path])
+    nanosaur_compose = DockerClient(compose_files=[docker_compose_path], compose_env_files=[env_file_path])
     if len(nanosaur_compose.compose.ps()) > 0:
         nanosaur_compose.compose.down(volumes=True)
         print(TerminalFormatter.color_text(f"robot {robot.name} stopped", color='green'))
