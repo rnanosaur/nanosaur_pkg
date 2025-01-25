@@ -88,4 +88,4 @@ env.bak/
 .idea/
 
 # test files
-test.py
+test.*

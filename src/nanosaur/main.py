@@ -116,15 +116,18 @@ def install(platform, params: Params, args):
             'choice',
             message="What would you like to install?",
             choices=[key for key, value in NANOSAUR_INSTALL_OPTIONS_RULES.items() if value['show']],
+            ignore=lambda answers: args.name is not None,
         ),
         inquirer.Confirm(
             'confirm',
             message="Are you sure you want to install this?",
-            default=False
+            default=args.yes,
+            ignore=lambda answers: args.yes,
         )
     ]
     # Ask the user to select an install type
     answers = inquirer.prompt(questions, theme=GreenPassion())
+    install_type = answers['choice'] if answers['choice'] is not None else args.name
     if answers is None:
         return False
     # Check if the user wants to continue
@@ -132,8 +135,7 @@ def install(platform, params: Params, args):
         print(TerminalFormatter.color_text("Installation cancelled", color='red'))
         return False
     # Get the selected install type
-    install_type = answers['choice']
-    print(f"Installing {install_type} workspace...")
+    print(TerminalFormatter.color_text(f"Installing {install_type} workspace...", bold=True))
     if not NANOSAUR_INSTALL_OPTIONS_RULES[install_type]['function'](platform, params, args):
         return False
     # Set params in maintainer mode
@@ -201,6 +203,8 @@ def main():
     # Add simulation install subcommand
     parser_install.add_argument('--force', action='store_true', help="Force the update")
     parser_install.add_argument('--all', action='store_true', help="Install for all platforms")
+    parser_install.add_argument('-y', '--yes', action='store_true', help="Skip confirmation prompt")
+    parser_install.add_argument('name', type=str, nargs='?', help="Specify the name for the installation")
     parser_install.set_defaults(func=install)
 
     # Subcommand: workspace (with a sub-menu for workspace operations)

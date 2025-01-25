@@ -231,7 +231,6 @@ def build(platform, params: utilities.Params, args, password=None):
         return True
     # Build the workspace
     workspace_actions = {
-        'robot': lambda: get_build_action('ws_robot_name'),
         'simulation': lambda: get_build_action('ws_simulation_name'),
     }
     if args.all:
