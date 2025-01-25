@@ -318,6 +318,21 @@ def build_env_file(params):
     with open(env_path, 'w') as env_file:
         env_file.write(f"USER_UID={uid}\n")
         env_file.write(f"USER_GID={gid}\n")
+        # Pass robot name
+        env_file.write(f"ROBOT_NAME={robot.name}\n")
+        # Pass robot simulation type
+        core_tag = "simulation" if robot.simulation else "robot"
+        env_file.write(f"CORE_TAG={core_tag}\n")
+        # Pass robot perception type
+        if robot.simulation:
+            perception_tag = "simulation"
+        elif robot.camera_type == 'realsense':
+            perception_tag = "realsense"
+        elif robot.camera_type == 'zed':
+            perception_tag = "zed"
+        else:
+            perception_tag = "none"
+        env_file.write(f"PERCEPTION_TAG={perception_tag}\n")
         # Check which simulation tool is selected and save it in the .env file
         if 'simulation_tool' in params:
             simulation_tool = params['simulation_tool'].lower().replace(' ', '_')
