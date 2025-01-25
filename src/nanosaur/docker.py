@@ -77,7 +77,7 @@ def docker_robot_start(platform, params: Params, args):
     robot = RobotList.get_robot(params)
     docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
     env_file_path = os.path.join(nanosaur_home_path, f'{robot.name}.env')
-    
+
     # Check which simulation tool is selected only if robot.simulation is true
     if robot.simulation and 'simulation_tool' not in params:
         print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
@@ -85,7 +85,7 @@ def docker_robot_start(platform, params: Params, args):
 
     # Build env file
     build_env_file(params)
-    
+
     print(TerminalFormatter.color_text(f"robot {robot.name} starting", color='green'))
 
     compose_profiles = []
@@ -134,7 +134,7 @@ def docker_simulator_start(platform, params: Params, args):
 
     # Build env file
     build_env_file(params)
-    
+
     print(TerminalFormatter.color_text(f"Simulator {simulation_tool} starting", color='green'))
     try:
         nanosaur_compose.compose.up(services=[f'{simulation_tool}'], recreate=False)
