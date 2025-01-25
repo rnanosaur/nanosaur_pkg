@@ -23,6 +23,7 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import inquirer
 from inquirer.themes import GreenPassion
 import argparse
@@ -71,10 +72,14 @@ def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Param
 
 def simulation_robot_start_debug(params):
     nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
-    bash_file = f'{nanosaur_ws_path}/install/setup.bash'
+    bash_file = os.path.join(nanosaur_ws_path, 'install', 'setup.bash')
+    # Check if the install folder exists
+    if not os.path.exists(bash_file):
+        print(TerminalFormatter.color_text("Workspace not built. Build before to debug", color='red'))
+        return False
     # Check which simulation tool is selected
     if 'simulation_tool' not in params:
-        print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
+        print(TerminalFormatter.color_text("No simulation tool selected. Please select a simulator first.", color='red'))
         return False
     # Check if the simulation tool is valid and get the command
     command = simulation_tools[params['simulation_tool']]['robot']

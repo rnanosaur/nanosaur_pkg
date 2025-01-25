@@ -161,12 +161,14 @@ def update(platform, params: utilities.Params, args):
             print(TerminalFormatter.color_text(f"Found rosinstall file: {rosinstall_path}", bold=True))
             if not ros.run_vcs_import(nanosaur_home_path, rosinstall_path, src_folder="shared_src"):
                 return False
+        return True
     # Update rosinstall file and run vcs import
 
     def update_workspace(params, workspace_type, workspace_name_key, force, skip_rosinstall_update=False):
         workspace_path = get_workspace_path(params, workspace_name_key)
         if not workspace_path:
-            return False
+            print(TerminalFormatter.color_text(f"Workspace {workspace_type} not found", color='red'))
+            return True
         rosinstall_path = os.path.join(workspace_path, f"{workspace_type}.rosinstall")
         if not skip_rosinstall_update:
             # Download rosinstall for this device
