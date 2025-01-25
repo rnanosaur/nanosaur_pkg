@@ -127,7 +127,7 @@ def install(platform, params: Params, args):
     ]
     # Ask the user to select an install type
     answers = inquirer.prompt(questions, theme=GreenPassion())
-    install_type = answers['choice'] if answers['choice'] is not None else args.name
+    install_type = answers['choice'] if answers and answers['choice'] is not None else args.name
     if answers is None:
         return False
     # Check if the user wants to continue
