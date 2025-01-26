@@ -24,6 +24,7 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import shutil
 import inquirer
 from inquirer.themes import GreenPassion
 import argparse
@@ -63,6 +64,27 @@ def find_all_isaac_sim():
     # Return a dictionary with the version as key and the full path as value
     return isaac_sim_folders
 
+
+def is_gazebo_installed(folder="/usr/share/gazebo"):
+    """
+    Check if Gazebo is installed by verifying the existence of the Gazebo binary
+    or the installation folder.
+
+    :param folder: Path to the folder where Gazebo is typically installed (default: /usr/share/gazebo).
+    :return: True if Gazebo is installed, False otherwise.
+    """
+    if shutil.which("gazebo") or shutil.which("gz"):
+        return True
+    # Check if the default Gazebo folder exists
+    return bool(os.path.exists(folder) and os.path.isdir(folder))
+
+def is_simulation_tool_installed():
+    """
+    Check if either Gazebo or Isaac Sim is installed.
+
+    :return: A dictionary indicating the installation status of Gazebo and Isaac Sim.
+    """
+    return bool(find_all_isaac_sim()) or is_gazebo_installed()
 
 def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     # Get the simulation tool from the parameters
@@ -137,7 +159,7 @@ def simulation_robot_start_debug(params):
         return False
 
 
-def simulation_start_debug(simulation_ws_path, simulation_tool):
+def simulation_start_debug(simulation_ws_path, simulation_tool, isaac_sim_path=None):
     """Install the simulation tools."""
 
     bash_file = f'{simulation_ws_path}/install/setup.bash'
@@ -147,7 +169,9 @@ def simulation_start_debug(simulation_ws_path, simulation_tool):
         return False
 
     command = simulation_tools[simulation_tool]['simulator']
-
+    # add isaac_sim_path if available
+    if isaac_sim_path:
+        command = f"{command} isaac_sim_path:={isaac_sim_path}"
     try:
         # Combine sourcing the bash file with running the command
         process = subprocess.Popen(
@@ -195,11 +219,15 @@ def simulation_start(platform, params: Params, args):
     if params['simulation_tool'] not in simulation_tools:
         print(TerminalFormatter.color_text(f"Unknown simulation tool: {params['simulation_tool']}", color='red'))
         return False
+    # Check if Isaac Sim is selected but no version is set
+    if params['simulation_tool'] == 'isaac-sim' and 'isaac_sim_path' not in params:
+        print(TerminalFormatter.color_text("No Isaac Sim version selected. Please run simulation set first.", color='red'))
+        return False
     # Check if the debug mode is enabled
     if debug_mode == 'host':
         nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
         simulator_tool = params['simulation_tool']
-        return simulation_start_debug(nanosaur_ws_path, simulator_tool)
+        return simulation_start_debug(nanosaur_ws_path, simulator_tool, isaac_sim_path=params.get('isaac_sim_path', None))
     elif debug_mode == 'docker':
         # Run from docker container
         return docker_simulator_start(platform, params, args)
@@ -210,13 +238,41 @@ def simulation_start(platform, params: Params, args):
 
 def simulation_set(platform, params: Params, args):
     """Set the simulation tools."""
-
+    # Get the current simulation tool
+    current_tool = params.get('simulation_tool', None)
+    # Capitalize the current tool name
+    if current_tool:
+        current_tool = current_tool.capitalize()
+    # Check if Gazebo is installed
+    if not is_gazebo_installed():
+        simulation_tools.pop('gazebo', None)
+    # Find all installed Isaac Sim versions
+    isaac_sim_list = find_all_isaac_sim()
+    # Remove Isaac Sim from the list if no versions are found
+    if not isaac_sim_list:
+        simulation_tools.pop('isaac-sim', None)
+    # Get the version of Isaac Sim if it is already set
+    version = None
+    if 'isaac_sim_path' in params:
+        version = params['isaac_sim_path'].split("isaac-sim-")[-1]  # Extract version after "isaac-sim-"
+    # Check if any simulation tools are available
+    if not simulation_tools:
+        print(TerminalFormatter.color_text("No simulation tools available. Please install a simulator first.", color='red'))
+        return False
+    # Ask the user to select a simulation tool
     questions = [
         inquirer.List(
             'simulation_tool',
-            message="Set the simulation tools:",
+            message="Set the simulation tools",
             choices=[tool.capitalize() for tool in simulation_tools.keys()],
-            default=params.get('simulation_tool', None)
+            default=current_tool
+        ),
+        inquirer.List(
+            'isaac-sim',
+            message="Select Isaac Sim version",
+            choices=list(isaac_sim_list.keys()),
+            default=version,
+            ignore=lambda answers: answers['simulation_tool'] != 'Isaac-sim' or not isaac_sim_list
         )
     ]
     # Ask the user to select a simulation tool
@@ -225,6 +281,10 @@ def simulation_set(platform, params: Params, args):
         return False
     # Save the selected simulation tool
     params['simulation_tool'] = answers['simulation_tool'].lower()
-    print(TerminalFormatter.color_text(f"Selected {answers['simulation_tool']}", color='green'))
+    if params['simulation_tool'] == 'isaac-sim' and answers['isaac-sim'] is not None:
+        params['isaac_sim_path'] = isaac_sim_list[answers['isaac-sim']]
+        print(TerminalFormatter.color_text(f"Selected Isaac Sim version: {answers['isaac-sim']}", color='green'))
+    else:
+        print(TerminalFormatter.color_text(f"Selected {answers['simulation_tool']}", color='green'))
     return True
 # EOF
