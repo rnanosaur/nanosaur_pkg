@@ -110,10 +110,11 @@ def simulation_info(params: Params, verbose):
         if isaac_sim_list := find_all_isaac_sim():
             print(TerminalFormatter.color_text("   Isaac Sim installed:", bold=True))
             for version, path in isaac_sim_list.items():
-                    print(f"    - Isaac Sim {version}: {path}")
+                print(f"    - Isaac Sim {version}: {path}")
         # Check if Gazebo is installed
         if is_gazebo_installed():
             print(TerminalFormatter.color_text("   Gazebo is installed", bold=True))
+
 
 def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     # Get the simulation tool from the parameters
