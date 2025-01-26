@@ -29,12 +29,15 @@ import inquirer
 from inquirer.themes import GreenPassion
 import argparse
 import subprocess
+import logging
 from nanosaur import workspace
 from nanosaur.ros import get_ros2_path
 from nanosaur.docker import docker_simulator_start
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, RobotList
 
+# Set up the logger
+logger = logging.getLogger(__name__)
 
 # Dictionary of simulation tools and their commands
 simulation_tools = {
@@ -237,8 +240,8 @@ def simulation_start_debug(simulation_ws_path, simulation_tool, isaac_sim_path=N
 def simulation_start(platform, params: Params, args):
     # Check if debug mode is enabled
     debug_mode = None
-    if 'debug' in params:
-        debug_mode = params['debug']
+    if 'ws_debug' in params:
+        debug_mode = params['ws_debug']
         print(TerminalFormatter.color_text(f"Default debug mode: {debug_mode}", color='yellow'))
     # Get the ROS 2 installation path if available
     ros2_installed = get_ros2_path(workspace.ROS_DISTRO)

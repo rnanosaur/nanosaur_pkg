@@ -28,12 +28,15 @@ from inquirer.themes import GreenPassion
 import argparse
 import subprocess
 import shlex
+import logging
 from nanosaur import workspace
 from nanosaur import docker
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, RobotList
 from nanosaur.utilities import ENGINES_CHOICES, CAMERA_CHOICES, LIDAR_CHOICES
 
+# Set up the logger
+logger = logging.getLogger(__name__)
 
 def add_robot_config_subcommands(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     robot_data = RobotList.get_robot(params)
@@ -91,6 +94,13 @@ def parser_robot_menu(subparsers: argparse._SubParsersAction, params: Params) ->
     return parser_robot, parser_config
 
 
+def wizard(platform, params: Params, args):
+    args.new = None
+    
+    for func in [robot_set_name, robot_set_domain_id, robot_set_camera, robot_set_lidar, robot_configure_engines]:
+        if not func(platform, params, args):
+            return False
+
 def robot_set_name(platform, params: Params, args):
     """Configure the robot name."""
     robot = RobotList.get_robot(params)
@@ -121,8 +131,8 @@ def robot_set_name(platform, params: Params, args):
         RobotList.update_robot(params, robot)
         print(TerminalFormatter.color_text(f"Robot name set to: {robot.name}", color='green'))
     else:
-        print(TerminalFormatter.color_text(f"Robot name {new_name} is already set", color='yellow'))
-
+        logger.debug(TerminalFormatter.color_text(f"Robot name {new_name} is already set", color='yellow'))
+    return True
 
 def robot_set_domain_id(platform, params: Params, args):
     """Configure the domain ID."""
@@ -151,7 +161,8 @@ def robot_set_domain_id(platform, params: Params, args):
         RobotList.update_robot(params, robot)
         print(TerminalFormatter.color_text(f"Domain ID set to: {robot.domain_id}", color='green'))
     else:
-        print(TerminalFormatter.color_text(f"Domain ID {new_domain_id} is already set", color='yellow'))
+        logger.debug(TerminalFormatter.color_text(f"Domain ID {new_domain_id} is already set", color='yellow'))
+    return True
 
 
 def robot_set_camera(platform, params: Params, args):
@@ -189,7 +200,8 @@ def robot_set_camera(platform, params: Params, args):
         RobotList.update_robot(params, robot)
         print(TerminalFormatter.color_text(f"Camera set to: {robot.camera_type or 'No camera'}", color='green'))
     else:
-        print(TerminalFormatter.color_text(f"Camera {selected_camera or 'No camera'} is already selected", color='yellow'))
+        logger.debug(TerminalFormatter.color_text(f"Camera {selected_camera or 'No camera'} is already selected", color='yellow'))
+    return True
 
 
 def robot_set_lidar(platform, params: Params, args):
@@ -227,7 +239,8 @@ def robot_set_lidar(platform, params: Params, args):
         RobotList.update_robot(params, robot)
         print(TerminalFormatter.color_text(f"Lidar set to: {robot.lidar_type or 'No lidar'}", color='green'))
     else:
-        print(TerminalFormatter.color_text(f"Lidar {selected_lidar or 'No lidar'} is already selected", color='yellow'))
+        logger.debug(TerminalFormatter.color_text(f"Lidar {selected_lidar or 'No lidar'} is already selected", color='yellow'))
+    return True
 
 
 def robot_configure_engines(platform, params: Params, args):
@@ -260,7 +273,8 @@ def robot_configure_engines(platform, params: Params, args):
     if robot.engines:
         print(TerminalFormatter.color_text(f"Engines updated: {', '.join(robot.engines)}", color='green'))
     else:
-        print(TerminalFormatter.color_text("No engines selected", color='yellow'))
+        logger.debug(TerminalFormatter.color_text("No engines selected", color='yellow'))
+    return True
 
 
 def robot_reset(platform, params: Params, args):

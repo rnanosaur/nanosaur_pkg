@@ -24,10 +24,14 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # https://gabrieldemarmiesse.github.io/python-on-whales/
+import os
+import logging
 from python_on_whales import docker, DockerClient, DockerException
 from nanosaur.utilities import Params, RobotList, get_nanosaur_home, build_env_file
 from nanosaur.prompt_colors import TerminalFormatter
-import os
+
+# Set up the logger
+logger = logging.getLogger(__name__)
 
 
 def docker_service_run_command(platform, params: Params, service, command=None, name=None, volumes=None):

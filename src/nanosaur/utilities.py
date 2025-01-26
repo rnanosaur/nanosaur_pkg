@@ -29,8 +29,12 @@ import yaml
 import pexpect
 import getpass
 import requests
+import logging
 from nanosaur import __version__
 from nanosaur.prompt_colors import TerminalFormatter
+
+# Set up the logger
+logger = logging.getLogger(__name__)
 
 DEFAULT_ROBOT_CONFIG = {
     'name': 'nanosaur',

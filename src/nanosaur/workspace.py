@@ -27,6 +27,7 @@
 import os
 import yaml
 import argparse
+import logging
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur import ros
 from nanosaur.docker import docker_service_run_command
@@ -34,6 +35,8 @@ from nanosaur.simulation import simulation_robot_start_debug, simulation_start_d
 from nanosaur import utilities
 import inquirer
 
+# Set up the logger
+logger = logging.getLogger(__name__)
 
 # Default colcon settings
 COLCON_DEFAULTS = {
@@ -63,8 +66,8 @@ NANOSAUR_DOCKER_PACKAGE_PERCEPTION = "perception"
 def get_starting_location(params: utilities.Params) -> str:
     """Prompt the user to select the location to run the command."""
     debug_mode = None
-    if 'debug' in params:
-        debug_mode = params['debug']
+    if 'ws_debug' in params:
+        debug_mode = params['ws_debug']
         print(TerminalFormatter.color_text(f"Default debug mode: {debug_mode}", color='yellow'))
     # Get the ROS 2 installation path if available
     ros2_installed = ros.get_ros2_path(ROS_DISTRO)
@@ -294,8 +297,8 @@ def debug(platform, params: utilities.Params, args):
     """ Debug the workspace """
     # Get the debug mode
     debug_mode = None
-    if 'debug' in params:
-        debug_mode = params['debug']
+    if 'ws_debug' in params:
+        debug_mode = params['ws_debug']
         print(TerminalFormatter.color_text(f"Default debug mode: {debug_mode}", color='yellow'))
     # Get the ROS 2 installation path if available
     ros2_installed = ros.get_ros2_path(ROS_DISTRO)

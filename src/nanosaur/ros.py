@@ -32,11 +32,15 @@ import select
 import termios
 import tty
 import signal
+import shutil
+import logging
 from python_on_whales import docker, DockerException
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import get_nanosaur_home
 from git import Repo, GitCommandError
-import shutil
+
+# Set up the logger
+logger = logging.getLogger(__name__)
 
 ISAAC_ROS_COMMON_FOLDER = 'isaac_ros_common'
 ISAAC_ROS_COMMON_REPO = 'https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_common'
