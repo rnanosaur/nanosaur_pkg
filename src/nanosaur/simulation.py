@@ -36,11 +36,11 @@ from nanosaur.utilities import Params, RobotList
 
 # Dictionary of simulation tools and their commands
 simulation_tools = {
-    "Isaac Sim": {
+    "isaac-sim": {
         "simulator": "ros2 launch isaac_sim_wrapper isaac_sim_server.launch.py",
         "robot": "ros2 launch nanosaur_isaac_sim nanosaur_bridge.launch.py"
     },
-    "Gazebo": {
+    "gazebo": {
         "simulator": "ros2 launch nanosaur_gazebo gazebo.launch.py",
         "robot": "ros2 launch nanosaur_gazebo nanosaur_bridge.launch.py"
     }
@@ -119,21 +119,16 @@ def simulation_robot_start_debug(params):
         print(f"An error occurred while running the command: {e}")
         return False
 
-
-def simulation_start_debug(platform, params: Params, args):
+def simulation_start_debug(simulation_ws_path, simulation_tool):
     """Install the simulation tools."""
-    nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
-    bash_file = f'{nanosaur_ws_path}/install/setup.bash'
-    # Check which simulation tool is selected
-    if 'simulation_tool' not in params:
-        print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
-        return False
 
-    if params['simulation_tool'] not in simulation_tools:
-        print(TerminalFormatter.color_text(f"Unknown simulation tool: {params['simulation_tool']}", color='red'))
+    bash_file = f'{simulation_ws_path}/install/setup.bash'
+    # Check if the install folder exists
+    if not os.path.exists(bash_file):
+        print(TerminalFormatter.color_text("Workspace not built. Build before to debug", color='red'))
         return False
-
-    command = simulation_tools[params['simulation_tool']]['simulator']
+    
+    command = simulation_tools[simulation_tool]['simulator']
 
     try:
         # Combine sourcing the bash file with running the command
@@ -166,9 +161,25 @@ def simulation_start_debug(platform, params: Params, args):
 
 
 def simulation_start(platform, params: Params, args):
-    debug_mode = args.debug or params.get('mode', '') in ['maintainer', 'Raffo']
+    # Check if debug mode is enabled
+    debug_mode = None
+    if 'debug' in params:
+        debug_mode = params['debug']
+        print(TerminalFormatter.color_text(f"Default debug mode: {debug_mode}", color='yellow'))
+    
+    # Check which simulation tool is selected
+    if 'simulation_tool' not in params:
+        print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
+        return False
+
+    if params['simulation_tool'] not in simulation_tools:
+        print(TerminalFormatter.color_text(f"Unknown simulation tool: {params['simulation_tool']}", color='red'))
+        return False
+    
     if debug_mode:
-        return simulation_start_debug(platform, params, args)
+        nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
+        simulator_tool = params['simulation_tool']
+        return simulation_start_debug(nanosaur_ws_path, simulator_tool)
     # Run from docker container
     return docker_simulator_start(platform, params, args)
 
@@ -180,7 +191,7 @@ def simulation_set(platform, params: Params, args):
         inquirer.List(
             'simulation_tool',
             message="Set the simulation tools:",
-            choices=list(simulation_tools.keys()),
+            choices=[tool.capitalize() for tool in simulation_tools.keys()],
             default=params.get('simulation_tool', None)
         )
     ]
@@ -189,7 +200,7 @@ def simulation_set(platform, params: Params, args):
     if answers is None:
         return False
     # Save the selected simulation tool
-    params['simulation_tool'] = answers['simulation_tool']
+    params['simulation_tool'] = answers['simulation_tool'].lower()
     print(TerminalFormatter.color_text(f"Selected {answers['simulation_tool']}", color='green'))
     return True
 # EOF

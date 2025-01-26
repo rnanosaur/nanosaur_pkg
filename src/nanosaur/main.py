@@ -187,6 +187,7 @@ def main():
         description="Nanosaur CLI - A command-line interface for the Nanosaur package.")
 
     parser.add_argument('--mode', type=str, help="Specify the mode of operation")
+    parser.add_argument('--default-debug', type=str, choices=['host', 'docker'], help="Select the debug mode if on host or in docker")
     # Define subcommands
     subparsers = parser.add_subparsers(dest='command', help="Available commands")
 
@@ -236,6 +237,12 @@ def main():
     # Override mode if provided as an argument
     if args.mode:
         params.set('mode', args.mode, save=False)
+    
+    # Print all arguments
+    if args.default_debug is not None:
+        params.set('debug', args.default_debug)
+        print(TerminalFormatter.color_text(f"Debug mode: {args.default_debug}", bold=True))
+        return True
 
     # Handle subcommands without a specific type
     if args.command in ['workspace', 'ws'] and not args.workspace_type:

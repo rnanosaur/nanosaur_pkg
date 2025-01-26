@@ -29,7 +29,8 @@ import yaml
 import argparse
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur import ros
-from nanosaur.simulation import simulation_robot_start_debug
+from nanosaur.docker import docker_service_run_command
+from nanosaur.simulation import simulation_robot_start_debug, simulation_start_debug
 from nanosaur import utilities
 import inquirer
 
@@ -90,9 +91,10 @@ def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.Ar
     add_workspace_subcommand('clean', "Clean the workspace", clean)
     add_workspace_subcommand('update', "Update the workspace", update)
     add_workspace_subcommand('build', "Build the workspace", build)
-    add_workspace_subcommand('debug', "Debug the workspace", debug)
+    parser_debug = add_workspace_subcommand('debug', "Debug the workspace", debug)
     parser_deploy = add_workspace_subcommand('deploy', "Deploy workspace to docker image", deploy)
     parser_deploy.add_argument('image_name', type=str, nargs='?', help="Specify the image name")
+    parser_debug.add_argument('image_name', type=str, nargs='?', help="Specify the image name")
     return parser_workspace
 
 
@@ -252,16 +254,72 @@ def build(platform, params: utilities.Params, args, password=None):
 
 def debug(platform, params: utilities.Params, args):
     """ Debug the workspace """
+    # Get the debug mode
+    debug_mode = None
+    if 'debug' in params:
+        debug_mode = params['debug']
+        print(TerminalFormatter.color_text(f"Default debug mode: {debug_mode}", color='yellow'))
+
+    def debug_simulation(params: utilities.Params, args):
+        # Get the selected launcher
+        questions = [
+            inquirer.List(
+                'launcher',
+                message="Select a launcher to debug",
+                choices=['gazebo', 'isaac-sim', 'robot'],
+                ignore=lambda answers: args.image_name is not None,
+            ),
+            inquirer.List(
+                'location',
+                message="Run locally or on docker?",
+                choices=['host', 'docker'],
+                ignore=lambda answers: debug_mode,
+            ),
+        ]
+        # Ask the user to select a launcher
+        answers = inquirer.prompt(questions)
+        selected_launcher = answers['launcher'] if args.image_name is None else args.image_name
+        selected_location = answers['location'] if debug_mode is None else debug_mode
+        # Create the Nanosaur home folder
+        nanosaur_home_path = utilities.get_nanosaur_home()
+        nanosaur_shared_src = os.path.join(nanosaur_home_path, "shared_src")
+        simulation_ws_path = get_workspace_path(params, 'ws_simulation_name')
+
+        print(TerminalFormatter.color_text(f"Debugging {selected_launcher} in {selected_location}", bold=True))
+        # Debug the simulation workspace
+        if selected_location == 'host':
+            # Debug locally
+            if selected_launcher == 'robot':
+                return simulation_robot_start_debug(params)
+            return simulation_start_debug(simulation_ws_path, selected_launcher)
+        elif selected_location == 'docker':
+            # Set the volumes
+            volumes = [
+                (simulation_ws_path, '/ros_ws'),
+                (nanosaur_shared_src, '/shared_src'),
+            ]
+            # Get the robot object
+            robot = utilities.RobotList.get_robot(params)
+            core_tag = "simulation" if robot.simulation else "robot"
+            container_name = f"{robot.name}-{core_tag}-debug" if selected_launcher == 'robot' else f"{selected_launcher}-debug"
+            # Debug in Docker container
+            return docker_service_run_command(
+            platform, params, selected_launcher, command=['bash'],
+            name=container_name, volumes=volumes
+            )
+        
+        return False
+    
     workspace_actions = {
         'developer': lambda: ros.run_docker_isaac_ros(get_workspace_path(params, 'ws_developer_name')),
-        'simulation': lambda: simulation_robot_start_debug(params),
+        'simulation': lambda: debug_simulation(params, args),
         'perception': lambda: ros.run_docker_isaac_ros(get_workspace_path(params, 'ws_perception_name'))
     }
     workspace = get_selected_workspace(params, workspace_actions, args)
     if workspace is None:
         return False
     # Debug the workspace
-    print(TerminalFormatter.color_text(f"Debugging {workspace}", bold=True))
+    # print(TerminalFormatter.color_text(f"Debugging {workspace}", bold=True))
     if action := workspace_actions.get(workspace):
         return action()
     print(TerminalFormatter.color_text(f"I cannot debug this {workspace}", color='red'))

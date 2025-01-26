@@ -57,6 +57,11 @@ def is_ros2_version_installed(version, folder="/opt/ros"):
     return os.path.exists(version_path) and os.path.isdir(version_path)
 
 
+def run_docker_ros(docker_image):
+    
+    docker.run(docker_image, command="bash")
+
+
 def run_docker_isaac_ros(workspace_path, auto_commands=[]):
     nanosaur_home_path = get_nanosaur_home()
     # Path to the Isaac ROS common package

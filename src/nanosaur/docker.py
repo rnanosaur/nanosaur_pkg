@@ -30,9 +30,14 @@ from nanosaur.prompt_colors import TerminalFormatter
 import os
 
 
-def docker_robot_run_command(platform, params: Params, command, name=None):
+def docker_service_run_command(platform, params: Params, service, command=None, name=None, volumes=None):
     """Run a command in the robot container."""
 
+    if command is None:
+        command = []
+    if volumes is None:
+        volumes = []
+    
     if not docker.compose.is_installed():
         print(TerminalFormatter.color_text("Please install Docker and Docker Compose before running the simulation.", color='red'))
         return False
@@ -45,22 +50,17 @@ def docker_robot_run_command(platform, params: Params, command, name=None):
     docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
     env_file_path = os.path.join(nanosaur_home_path, f'{robot.name}.env')
 
-    # Check which simulation tool is selected only if robot.simulation is true
-    if robot.simulation and 'simulation_tool' not in params:
-        print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
-        return False
-
     # Build env file
     build_env_file(params)
-
     # Create a DockerClient object with the docker-compose file
     nanosaur_compose = DockerClient(compose_files=[docker_compose_path], compose_env_files=[env_file_path])
+    print(TerminalFormatter.color_text(f"Running command in the robot {robot.name} container", color='green'))
     try:
-        # TODO make a new docker only for this command
-        nanosaur_compose.compose.run(service='gazebo', command=command, remove=True, tty=True, name=name)
+        nanosaur_compose.compose.run(service=service, command=command, remove=True, tty=True, name=name, volumes=volumes)
     except DockerException as e:
         print(TerminalFormatter.color_text(f"Error running the command: {e}", color='red'))
         return False
+    return True
 
 
 def docker_robot_start(platform, params: Params, args):
@@ -119,10 +119,6 @@ def docker_simulator_start(platform, params: Params, args):
     docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
     env_file_path = os.path.join(nanosaur_home_path, f'{robot.name}.env')
 
-    # Check which simulation tool is selected
-    if 'simulation_tool' not in params:
-        print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
-        return False
     # Start the container in detached mode
     simulation_tool = params['simulation_tool'].lower().replace(' ', '-')
     # Create a DockerClient object with the docker-compose file
