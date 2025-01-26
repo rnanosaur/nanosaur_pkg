@@ -33,7 +33,7 @@ from nanosaur import docker
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, RobotList
 from nanosaur.utilities import ENGINES_CHOICES, CAMERA_CHOICES, LIDAR_CHOICES
-
+from nanosaur.ros import get_ros2_path
 
 def add_robot_config_subcommands(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     robot_data = RobotList.get_robot(params)
@@ -273,35 +273,52 @@ def robot_reset(platform, params: Params, args):
 
 def control_keyboard(platform, params: Params, args):
     """Control the robot using the keyboard."""
+    # Get location starting function (host or docker)
+    selected_location = workspace.get_starting_location(params)
+    if selected_location is None:
+        return False
+    # Get the robot
     robot = RobotList.get_robot(params)
     command = f"ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args --remap /cmd_vel:=/{robot.name}/key_vel"
     # Run from local machine
-    if params.get('mode', '') in ['maintainer', 'Raffo']:
+    if selected_location == 'host':
         nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
         bash_file = f'{nanosaur_ws_path}/install/setup.bash'
         # Read the robot name
         print(TerminalFormatter.color_text(f"Control the robot {robot.name} using the keyboard", color='green'))
         subprocess.run(f'source {bash_file} && {command}', shell=True, executable='/bin/bash')
         return True
-    # Run from docker container
-    service = 'gazebo'  # TODO: Change to the correct service
-    docker.docker_service_run_command(platform, params, service, shlex.split(command), name=f"{robot.name}-keyboard")
-    return True
-
+    elif selected_location == 'docker':
+        # Run from docker container
+        service = 'gazebo'  # TODO: Change to the correct service
+        docker.docker_service_run_command(platform, params, service, shlex.split(command), name=f"{robot.name}-keyboard")
+        return True
+    else:
+        print(TerminalFormatter.color_text(f"Unknown debug mode: {selected_location}", color='red'))
+        return False
 
 def robot_display(platform, params: Params, args):
     """Display the robot configuration."""
+    # Get location starting function (host or docker)
+    selected_location = workspace.get_starting_location(params)
+    if selected_location is None:
+        return False
+    # Get the robot
     robot = RobotList.get_robot(params)
     command = f"ros2 launch nanosaur_visualization robot_display.launch.py robot_name:={robot.name}"
     # Run from local machine
-    if params.get('mode', '') in ['maintainer', 'Raffo']:
+    if selected_location == 'host':
         nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
         bash_file = f'{nanosaur_ws_path}/install/setup.bash'
         print(TerminalFormatter.color_text(f"Display the robot {robot.name}", color='green'))
         subprocess.run(f'source {bash_file} && {command}', shell=True, executable='/bin/bash')
         return True
-    # Run from docker container
-    service = 'gazebo'  # TODO: Change to the correct service
-    docker.docker_service_run_command(platform, params, service, shlex.split(command), name=f"{robot.name}-rviz")
-    return True
+    elif selected_location == 'docker':
+        # Run from docker container
+        service = 'gazebo'  # TODO: Change to the correct service
+        docker.docker_service_run_command(platform, params, service, shlex.split(command), name=f"{robot.name}-rviz")
+        return True
+    else:
+        print(TerminalFormatter.color_text(f"Unknown debug mode: {selected_location}", color='red'))
+        return False
 # EOF

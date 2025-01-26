@@ -29,6 +29,7 @@ from inquirer.themes import GreenPassion
 import argparse
 import subprocess
 from nanosaur import workspace
+from nanosaur.ros import get_ros2_path
 from nanosaur.docker import docker_simulator_start
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, RobotList
@@ -46,6 +47,20 @@ simulation_tools = {
     }
 }
 
+def find_all_isaac_sim():
+    # Path where Isaac Sim is usually installed
+    base_path = os.path.expanduser("~/.local/share/ov/pkg")
+    isaac_sim_folders = {}
+
+    if os.path.exists(base_path):
+        # Look for directories that contain "isaac-sim" in their names
+        for folder in os.listdir(base_path):
+            if "isaac-sim" in folder:
+                version = folder.split("isaac-sim-")[-1]  # Extract version after "isaac-sim-"
+                full_path = os.path.join(base_path, folder)
+                isaac_sim_folders[version] = full_path
+    # Return a dictionary with the version as key and the full path as value
+    return isaac_sim_folders
 
 def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     # Get the simulation tool from the parameters
@@ -167,22 +182,28 @@ def simulation_start(platform, params: Params, args):
     if 'debug' in params:
         debug_mode = params['debug']
         print(TerminalFormatter.color_text(f"Default debug mode: {debug_mode}", color='yellow'))
-
+    # Get the ROS 2 installation path if available
+    ros2_installed = get_ros2_path(workspace.ROS_DISTRO)
+    debug_mode = 'docker' if ros2_installed is None else debug_mode
     # Check which simulation tool is selected
     if 'simulation_tool' not in params:
         print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
         return False
-
+    # Check if the simulation tool is valid
     if params['simulation_tool'] not in simulation_tools:
         print(TerminalFormatter.color_text(f"Unknown simulation tool: {params['simulation_tool']}", color='red'))
         return False
-
-    if debug_mode:
+    # Check if the debug mode is enabled
+    if debug_mode == 'host':
         nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
         simulator_tool = params['simulation_tool']
         return simulation_start_debug(nanosaur_ws_path, simulator_tool)
-    # Run from docker container
-    return docker_simulator_start(platform, params, args)
+    elif debug_mode == 'docker':
+        # Run from docker container
+        return docker_simulator_start(platform, params, args)
+    else:
+        print(TerminalFormatter.color_text(f"Unknown debug mode: {debug_mode}", color='red'))
+        return False
 
 
 def simulation_set(platform, params: Params, args):

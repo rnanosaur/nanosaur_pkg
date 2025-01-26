@@ -45,16 +45,10 @@ ISAAC_ROS_COMMON_FOLDER = 'isaac_ros_common'
 ISAAC_ROS_COMMON_REPO = 'https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_common'
 
 
-def is_ros2_version_installed(version, folder="/opt/ros"):
-    """
-    Check if a specific ROS 2 version is installed.
-
-    :param version: The ROS 2 version to check (e.g., 'foxy', 'humble').
-    :param folder: Path to the folder where ROS distributions are installed (default: /opt/ros).
-    :return: True if the specified version is installed, False otherwise.
-    """
+def get_ros2_path(version, folder="/opt/ros"):
+    """Check if a specific ROS 2 version is installed and return its path."""
     version_path = os.path.join(folder, version)
-    return os.path.exists(version_path) and os.path.isdir(version_path)
+    return version_path if os.path.isdir(version_path) else None
 
 
 def run_docker_ros(docker_image):

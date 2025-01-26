@@ -44,6 +44,7 @@ COLCON_DEFAULTS = {
     }
 }
 
+ROS_DISTRO = "humble"
 ISAAC_ROS_RELEASE = "release-3.2"
 ISAAC_ROS_DISTRO_SUFFIX = "ros2_humble"
 ISAAC_ROS_DOCKER_CAMERA_LIST = ["realsense", "zed"]
@@ -57,6 +58,30 @@ DEFAULT_WORKSPACE_DEVELOPER = 'ros_ws'
 NANOSAUR_DOCKER_PACKAGE_ROBOT = "nanosaur"
 NANOSAUR_DOCKER_PACKAGE_SIMULATION = "simulation"
 NANOSAUR_DOCKER_PACKAGE_PERCEPTION = "perception"
+
+
+def get_starting_location(params: utilities.Params) -> str:
+    """Prompt the user to select the location to run the command."""
+    debug_mode = None
+    if 'debug' in params:
+        debug_mode = params['debug']
+        print(TerminalFormatter.color_text(f"Default debug mode: {debug_mode}", color='yellow'))
+    # Get the ROS 2 installation path if available
+    ros2_installed = ros.get_ros2_path(ROS_DISTRO)
+    debug_mode = 'docker' if ros2_installed is None else debug_mode
+    # Ask the user to select the location
+    questions = [
+        inquirer.List(
+            'location',
+            message="Run locally or on docker?",
+            choices=['host', 'docker'],
+            ignore=lambda answers: debug_mode,
+        ),
+    ]
+    answers = inquirer.prompt(questions)
+    if answers is None:
+        return None
+    return answers['location'] if debug_mode is None else debug_mode
 
 
 def workspaces_info(params: utilities.Params, verbose: bool):
@@ -74,6 +99,9 @@ def workspaces_info(params: utilities.Params, verbose: bool):
 
 
 def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    # Check if ROS 2 is installed
+    ros2_installed = ros.get_ros2_path(ROS_DISTRO)
+    # Add workspace subcommand
     parser_workspace = subparsers.add_parser(
         'workspace', aliases=["ws"], help="Manage the Nanosaur workspace")
     workspace_subparsers = parser_workspace.add_subparsers(
@@ -90,7 +118,8 @@ def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.Ar
     # Add workspace clean subcommand
     add_workspace_subcommand('clean', "Clean the workspace", clean)
     add_workspace_subcommand('update', "Update the workspace", update)
-    add_workspace_subcommand('build', "Build the workspace", build)
+    if ros2_installed is not None:
+        add_workspace_subcommand('build', "Build the workspace", build)
     parser_debug = add_workspace_subcommand('debug', "Debug the workspace", debug)
     parser_deploy = add_workspace_subcommand('deploy', "Deploy workspace to docker image", deploy)
     parser_deploy.add_argument('image_name', type=str, nargs='?', help="Specify the image name")
@@ -259,7 +288,9 @@ def debug(platform, params: utilities.Params, args):
     if 'debug' in params:
         debug_mode = params['debug']
         print(TerminalFormatter.color_text(f"Default debug mode: {debug_mode}", color='yellow'))
-
+    # Get the ROS 2 installation path if available
+    ros2_installed = ros.get_ros2_path(ROS_DISTRO)
+    debug_mode = 'docker' if ros2_installed is None else debug_mode
     def debug_simulation(params: utilities.Params, args):
         # Get the selected launcher
         questions = [
@@ -278,6 +309,8 @@ def debug(platform, params: utilities.Params, args):
         ]
         # Ask the user to select a launcher
         answers = inquirer.prompt(questions)
+        if answers is None:
+            return False
         selected_launcher = answers['launcher'] if args.image_name is None else args.image_name
         selected_location = answers['location'] if debug_mode is None else debug_mode
         # Create the Nanosaur home folder

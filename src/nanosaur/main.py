@@ -32,12 +32,21 @@ from inquirer.themes import GreenPassion
 from jtop import jtop, JtopException
 
 from nanosaur.docker import docker_robot_start, docker_robot_stop
-from nanosaur.workspace import workspaces_info, parser_workspace_menu, create_simple, create_developer_workspace, create_maintainer_workspace, get_workspaces_path
 from nanosaur.robot import parser_robot_menu
 from nanosaur.simulation import parser_simulation_menu
 from nanosaur.swarm import parser_swarm_menu
 from nanosaur.prompt_colors import TerminalFormatter
+from nanosaur.ros import get_ros2_path
 from nanosaur.utilities import Params, RobotList, package_info
+from nanosaur.workspace import (
+    workspaces_info,
+    parser_workspace_menu,
+    create_simple,
+    create_developer_workspace,
+    create_maintainer_workspace,
+    get_workspaces_path,
+    ROS_DISTRO,
+    )
 
 
 NANOSAUR_INSTALL_OPTIONS_RULES = {
@@ -169,6 +178,8 @@ def robot_control(params, subparsers):
 def main():
     # Load the parameters
     params = Params.load(DEFAULT_PARAMS)
+    # Get the ROS 2 installation path if available
+    ros2_installed = get_ros2_path(ROS_DISTRO)
 
     # Extract device information with jtop
     try:
@@ -187,7 +198,8 @@ def main():
         description="Nanosaur CLI - A command-line interface for the Nanosaur package.")
 
     parser.add_argument('--mode', type=str, help="Specify the mode of operation")
-    parser.add_argument('--default-debug', type=str, choices=['host', 'docker'], help="Select the debug mode if on host or in docker")
+    if ros2_installed is not None:
+        parser.add_argument('--default-debug', '-dd', type=str, choices=['host', 'docker'], help="Select the debug mode if on host or in docker")
     # Define subcommands
     subparsers = parser.add_subparsers(dest='command', help="Available commands")
 
@@ -239,7 +251,7 @@ def main():
         params.set('mode', args.mode, save=False)
 
     # Print all arguments
-    if args.default_debug is not None:
+    if hasattr(args, 'default_debug') and args.default_debug is not None:
         params.set('debug', args.default_debug)
         print(TerminalFormatter.color_text(f"Debug mode: {args.default_debug}", bold=True))
         return True
