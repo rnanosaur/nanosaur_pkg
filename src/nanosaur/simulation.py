@@ -78,6 +78,7 @@ def is_gazebo_installed(folder="/usr/share/gazebo"):
     # Check if the default Gazebo folder exists
     return bool(os.path.exists(folder) and os.path.isdir(folder))
 
+
 def is_simulation_tool_installed():
     """
     Check if either Gazebo or Isaac Sim is installed.
@@ -85,6 +86,7 @@ def is_simulation_tool_installed():
     :return: A dictionary indicating the installation status of Gazebo and Isaac Sim.
     """
     return bool(find_all_isaac_sim()) or is_gazebo_installed()
+
 
 def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     # Get the simulation tool from the parameters
