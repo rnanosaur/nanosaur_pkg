@@ -38,9 +38,6 @@ from nanosaur.utilities import get_nanosaur_home
 from git import Repo, GitCommandError
 import shutil
 
-ros2_distro = 'humble'
-ros2_sources = f'/opt/ros/{ros2_distro}/setup.bash'
-
 ISAAC_ROS_COMMON_FOLDER = 'isaac_ros_common'
 ISAAC_ROS_COMMON_REPO = 'https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_common'
 
@@ -183,13 +180,14 @@ def run_vcs_import(workspace_path, rosinstall_path, src_folder="src") -> bool:
         return False
 
 
-def run_rosdep(folder_path, password) -> bool:
+def run_rosdep(ros2_path, folder_path, password) -> bool:
     if password is None:
         print(TerminalFormatter.color_text("Error: No password provided.", color='red'))
         return False
     result = False
     try:
-        child = pexpect.spawn(f"bash -c 'source {ros2_sources} && rosdep install --from-paths {folder_path}/src --ignore-src -r -y'", encoding='utf-8', timeout=None)
+        ros2_setup_path = os.path.join(ros2_path, 'setup.bash')
+        child = pexpect.spawn(f"bash -c 'source {ros2_setup_path} && rosdep install --from-paths {folder_path}/src --ignore-src -r -y'", encoding='utf-8', timeout=None)
         # Stream all command output to the terminal in real time
         child.logfile = sys.stdout
         # Wait for password prompt with timeout
@@ -218,16 +216,16 @@ def run_rosdep(folder_path, password) -> bool:
     return result
 
 
-def run_colcon_build(folder_path) -> bool:
+def run_colcon_build(ros2_path, folder_path) -> bool:
 
     # Move to the folder_path and run the colcon build command
     try:
         os.chdir(folder_path)
         print(f"Changed directory to: {folder_path}")
-
+        ros2_setup_path = os.path.join(ros2_path, 'setup.bash')
         # Run the command and stream the output live
         process = subprocess.Popen(
-            f"source {ros2_sources} && colcon build --symlink-install --merge-install",
+            f"source {ros2_setup_path} && colcon build --symlink-install --merge-install",
             shell=True,
             executable="/bin/bash",
             stdout=subprocess.PIPE,

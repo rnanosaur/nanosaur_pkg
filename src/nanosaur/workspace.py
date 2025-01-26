@@ -139,11 +139,13 @@ def get_selected_workspace(params, workspace_actions, args):
         print(TerminalFormatter.color_text("No workspaces found.", color='red'))
         return None
     # Ask the user to select a workspace
-    questions = [
-        inquirer.List('workspace', message="Select a workspace", choices=workspaces),
-    ]
-    answers = inquirer.prompt(questions)
-    return answers['workspace'] if answers else None
+    if len(workspaces) > 1:
+        questions = [
+            inquirer.List('workspace', message="Select a workspace", choices=workspaces),
+        ]
+        answers = inquirer.prompt(questions)
+        return answers['workspace'] if answers else None
+    return list(workspaces.keys())[0]
 
 
 def clean(platform, params: utilities.Params, args):
@@ -254,11 +256,12 @@ def build(platform, params: utilities.Params, args, password=None):
         if not workspace_path:
             return False
         print(TerminalFormatter.color_text(f"- Install all dependencies on workspace {workspace_path}", bold=True))
-        if not ros.run_rosdep(workspace_path, password):
+        ros2_path = ros.get_ros2_path(ROS_DISTRO)
+        if not ros.run_rosdep(ros2_path, workspace_path, password):
             print(TerminalFormatter.color_text("Failed to install dependencies", color='red'))
             return False
         print(TerminalFormatter.color_text(f"- Build workspace {workspace_path}", bold=True))
-        if not ros.run_colcon_build(workspace_path):
+        if not ros.run_colcon_build(ros2_path, workspace_path):
             print(TerminalFormatter.color_text(f"Failed to build workspace {workspace_path}", color='red'))
             return False
         return True
@@ -569,6 +572,8 @@ def create_developer_workspace(platform, params: utilities.Params, args, passwor
 
 
 def create_maintainer_workspace(platform, params: utilities.Params, args, password=None) -> bool:
+    # Check if ROS 2 is installed
+    ros2_installed = ros.get_ros2_path(ROS_DISTRO)
     # determine the device type
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
     # Create the Nanosaur home folder
@@ -613,6 +618,7 @@ def create_maintainer_workspace(platform, params: utilities.Params, args, passwo
     # Update all workspaces
     update(platform, params, args)
     # Build all workspaces
-    build(platform, params, args)
+    if ros2_installed is not None:
+        build(platform, params, args)
     return True
 # EOF
