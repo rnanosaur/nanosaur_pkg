@@ -328,7 +328,8 @@ def debug(platform, params: utilities.Params, args):
             # Debug locally
             if selected_launcher == 'robot':
                 return simulation_robot_start_debug(params)
-            return simulation_start_debug(simulation_ws_path, selected_launcher)
+            isaac_sim_path = params.get('isaac_sim_path', None)
+            return simulation_start_debug(simulation_ws_path, selected_launcher, isaac_sim_path=isaac_sim_path)
         elif selected_location == 'docker':
             # Set the volumes
             volumes = [

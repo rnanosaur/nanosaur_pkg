@@ -40,7 +40,7 @@ from nanosaur.utilities import Params, RobotList
 simulation_tools = {
     "isaac-sim": {
         "simulator": "ros2 launch isaac_sim_wrapper isaac_sim_server.launch.py",
-        "robot": "ros2 launch nanosaur_isaac_sim nanosaur_bridge.launch.py"
+        "robot": "ros2 launch nanosaur_isaac-sim nanosaur_bridge.launch.py"
     },
     "gazebo": {
         "simulator": "ros2 launch nanosaur_gazebo gazebo.launch.py",
@@ -88,7 +88,7 @@ def is_simulation_tool_installed():
     return bool(find_all_isaac_sim()) or is_gazebo_installed()
 
 
-def simulation_info(params: Params, verbose):
+def simulation_info(platform, params: Params, verbose):
     """
     Print information about the installed simulation tools.
     """
@@ -100,10 +100,12 @@ def simulation_info(params: Params, verbose):
     print(TerminalFormatter.color_text("Simulation:", bold=True))
     if 'simulation_tool' in params:
         isaac_sim_version = ""
-        if 'isaac_sim_path' in params:
+        if 'isaac_sim_path' in params and params['simulation_tool'] == 'isaac-sim':
             isaac_sim_version = params['isaac_sim_path'].split("isaac-sim-")[-1]  # Extract version after "isaac-sim-"
         text_message = f"{TerminalFormatter.color_text('   selected:', bold=True)} {params['simulation_tool']} {isaac_sim_version}"
         print(text_message)
+    elif platform['Machine'] != 'jetson':
+        print(TerminalFormatter.color_text("   No simulation tool selected", color='red'))
 
     # Check if Isaac Sim is installed
     if verbose:
@@ -201,7 +203,7 @@ def simulation_start_debug(simulation_ws_path, simulation_tool, isaac_sim_path=N
     command = simulation_tools[simulation_tool]['simulator']
     # add isaac_sim_path if available
     if isaac_sim_path:
-        command = f"{command} isaac_sim_path:={isaac_sim_path}"
+        command = f"{command} isaac_sim_path:={isaac_sim_path} headless:=false"
     try:
         # Combine sourcing the bash file with running the command
         process = subprocess.Popen(

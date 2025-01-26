@@ -110,7 +110,7 @@ def info(platform, params: Params, args):
         robot_list.print_all_robots(params.get('robot_idx', 0))
     # Print simulation tools if they exist
     print()
-    simulation_info(params, args.verbose)
+    simulation_info(platform, params, args.verbose)
     # Print installed workspaces
     workspaces_info(params, args.verbose)
     # Print all robot configurations
