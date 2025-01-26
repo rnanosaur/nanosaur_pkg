@@ -284,7 +284,7 @@ def control_keyboard(platform, params: Params, args):
         subprocess.run(f'source {bash_file} && {command}', shell=True, executable='/bin/bash')
         return True
     # Run from docker container
-    service = 'gazebo' # TODO: Change to the correct service
+    service = 'gazebo'  # TODO: Change to the correct service
     docker.docker_service_run_command(platform, params, service, shlex.split(command), name=f"{robot.name}-keyboard")
     return True
 
@@ -301,7 +301,7 @@ def robot_display(platform, params: Params, args):
         subprocess.run(f'source {bash_file} && {command}', shell=True, executable='/bin/bash')
         return True
     # Run from docker container
-    service = 'gazebo' # TODO: Change to the correct service
+    service = 'gazebo'  # TODO: Change to the correct service
     docker.docker_service_run_command(platform, params, service, shlex.split(command), name=f"{robot.name}-rviz")
     return True
 # EOF

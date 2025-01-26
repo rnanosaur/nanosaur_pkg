@@ -47,28 +47,28 @@ NANOSAUR_INSTALL_OPTIONS_RULES = {
         'description': "Simple workspace with basic tools",
         'color': 'green',
         'show': True
-        },
+    },
     'developer': {
         'rule': ['simple'],
         'function': create_developer_workspace,
         'description': "Developer workspace with additional tools",
         'color': 'blue',
         'show': True
-        },
+    },
     'maintainer': {
         'rule': ['simple', 'developer'],
         'function': create_maintainer_workspace,
         'description': "Maintainer workspace with additional tools",
         'color': 'red',
         'show': True
-        },
+    },
     'Raffo': {
         'rule': ['simple', 'developer', 'maintainer'],
         'function': create_maintainer_workspace,
         'description': "Raffo workspace with additional tools",
         'color': 'cyan',
         'show': False
-        },
+    },
 }
 
 # Define default parameters
@@ -237,7 +237,7 @@ def main():
     # Override mode if provided as an argument
     if args.mode:
         params.set('mode', args.mode, save=False)
-    
+
     # Print all arguments
     if args.default_debug is not None:
         params.set('debug', args.default_debug)

@@ -304,12 +304,12 @@ def debug(platform, params: utilities.Params, args):
             container_name = f"{robot.name}-{core_tag}-debug" if selected_launcher == 'robot' else f"{selected_launcher}-debug"
             # Debug in Docker container
             return docker_service_run_command(
-            platform, params, selected_launcher, command=['bash'],
-            name=container_name, volumes=volumes
+                platform, params, selected_launcher, command=['bash'],
+                name=container_name, volumes=volumes
             )
-        
+
         return False
-    
+
     workspace_actions = {
         'developer': lambda: ros.run_docker_isaac_ros(get_workspace_path(params, 'ws_developer_name')),
         'simulation': lambda: debug_simulation(params, args),

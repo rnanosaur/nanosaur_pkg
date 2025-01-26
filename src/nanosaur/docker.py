@@ -37,7 +37,7 @@ def docker_service_run_command(platform, params: Params, service, command=None, 
         command = []
     if volumes is None:
         volumes = []
-    
+
     if not docker.compose.is_installed():
         print(TerminalFormatter.color_text("Please install Docker and Docker Compose before running the simulation.", color='red'))
         return False

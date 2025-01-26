@@ -119,6 +119,7 @@ def simulation_robot_start_debug(params):
         print(f"An error occurred while running the command: {e}")
         return False
 
+
 def simulation_start_debug(simulation_ws_path, simulation_tool):
     """Install the simulation tools."""
 
@@ -127,7 +128,7 @@ def simulation_start_debug(simulation_ws_path, simulation_tool):
     if not os.path.exists(bash_file):
         print(TerminalFormatter.color_text("Workspace not built. Build before to debug", color='red'))
         return False
-    
+
     command = simulation_tools[simulation_tool]['simulator']
 
     try:
@@ -166,7 +167,7 @@ def simulation_start(platform, params: Params, args):
     if 'debug' in params:
         debug_mode = params['debug']
         print(TerminalFormatter.color_text(f"Default debug mode: {debug_mode}", color='yellow'))
-    
+
     # Check which simulation tool is selected
     if 'simulation_tool' not in params:
         print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
@@ -175,7 +176,7 @@ def simulation_start(platform, params: Params, args):
     if params['simulation_tool'] not in simulation_tools:
         print(TerminalFormatter.color_text(f"Unknown simulation tool: {params['simulation_tool']}", color='red'))
         return False
-    
+
     if debug_mode:
         nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
         simulator_tool = params['simulation_tool']

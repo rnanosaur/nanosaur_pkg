@@ -58,7 +58,7 @@ def is_ros2_version_installed(version, folder="/opt/ros"):
 
 
 def run_docker_ros(docker_image):
-    
+
     docker.run(docker_image, command="bash")
 
 
