@@ -33,7 +33,7 @@ from nanosaur import docker
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, RobotList
 from nanosaur.utilities import ENGINES_CHOICES, CAMERA_CHOICES, LIDAR_CHOICES
-from nanosaur.ros import get_ros2_path
+
 
 def add_robot_config_subcommands(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     robot_data = RobotList.get_robot(params)
@@ -296,6 +296,7 @@ def control_keyboard(platform, params: Params, args):
     else:
         print(TerminalFormatter.color_text(f"Unknown debug mode: {selected_location}", color='red'))
         return False
+
 
 def robot_display(platform, params: Params, args):
     """Display the robot configuration."""

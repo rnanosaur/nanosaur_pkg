@@ -291,6 +291,7 @@ def debug(platform, params: utilities.Params, args):
     # Get the ROS 2 installation path if available
     ros2_installed = ros.get_ros2_path(ROS_DISTRO)
     debug_mode = 'docker' if ros2_installed is None else debug_mode
+
     def debug_simulation(params: utilities.Params, args):
         # Get the selected launcher
         questions = [

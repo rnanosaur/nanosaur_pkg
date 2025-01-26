@@ -47,6 +47,7 @@ simulation_tools = {
     }
 }
 
+
 def find_all_isaac_sim():
     # Path where Isaac Sim is usually installed
     base_path = os.path.expanduser("~/.local/share/ov/pkg")
@@ -61,6 +62,7 @@ def find_all_isaac_sim():
                 isaac_sim_folders[version] = full_path
     # Return a dictionary with the version as key and the full path as value
     return isaac_sim_folders
+
 
 def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     # Get the simulation tool from the parameters

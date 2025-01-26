@@ -46,7 +46,7 @@ from nanosaur.workspace import (
     create_maintainer_workspace,
     get_workspaces_path,
     ROS_DISTRO,
-    )
+)
 
 
 NANOSAUR_INSTALL_OPTIONS_RULES = {
