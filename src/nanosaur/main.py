@@ -33,7 +33,7 @@ from jtop import jtop, JtopException
 
 from nanosaur.docker import docker_robot_start, docker_robot_stop
 from nanosaur.robot import parser_robot_menu
-from nanosaur.simulation import parser_simulation_menu
+from nanosaur.simulation import parser_simulation_menu, simulation_info
 from nanosaur.swarm import parser_swarm_menu
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.ros import get_ros2_path
@@ -95,7 +95,10 @@ def info(platform, params: Params, args):
             color = NANOSAUR_INSTALL_OPTIONS_RULES[mode]['color']
             mode_string = TerminalFormatter.color_text(f"{mode}", color=color, bold=True)
             print(f"{TerminalFormatter.color_text('Mode: ', bold=True)} {mode_string}")
-
+    if 'debug' in params:
+        debug_string = TerminalFormatter.color_text(f"{params['debug']}", color="yellow", bold=True)
+        print(f"{TerminalFormatter.color_text('Default debug: ', bold=True)} {debug_string}")
+    # Load the robot list
     robot_list = RobotList.load(params)
     # Print current robot configuration
     robot_data = RobotList.get_robot(params)
@@ -106,8 +109,8 @@ def info(platform, params: Params, args):
         print()
         robot_list.print_all_robots(params.get('robot_idx', 0))
     # Print simulation tools if they exist
-    if 'simulation_tool' in params:
-        print(f"\n{TerminalFormatter.color_text('Simulation Tool:', bold=True)} {params['simulation_tool']}")
+    print()
+    simulation_info(params, args.verbose)
     # Print installed workspaces
     workspaces_info(params, args.verbose)
     # Print all robot configurations

@@ -88,6 +88,33 @@ def is_simulation_tool_installed():
     return bool(find_all_isaac_sim()) or is_gazebo_installed()
 
 
+def simulation_info(params: Params, verbose):
+    """
+    Print information about the installed simulation tools.
+    """
+    # Check if any simulation tools are installed
+    if not is_simulation_tool_installed():
+        print(TerminalFormatter.color_text("No simulation tools installed", color='red'))
+        return
+
+    print(TerminalFormatter.color_text("Simulation:", bold=True))
+    if 'simulation_tool' in params:
+        isaac_sim_version = ""
+        if 'isaac_sim_path' in params:
+            isaac_sim_version = params['isaac_sim_path'].split("isaac-sim-")[-1]  # Extract version after "isaac-sim-"
+        text_message = f"{TerminalFormatter.color_text('   selected:', bold=True)} {params['simulation_tool']} {isaac_sim_version}"
+        print(text_message)
+
+    # Check if Isaac Sim is installed
+    if verbose:
+        if isaac_sim_list := find_all_isaac_sim():
+            print(TerminalFormatter.color_text("   Isaac Sim installed:", bold=True))
+            for version, path in isaac_sim_list.items():
+                    print(f"    - Isaac Sim {version}: {path}")
+        # Check if Gazebo is installed
+        if is_gazebo_installed():
+            print(TerminalFormatter.color_text("   Gazebo is installed", bold=True))
+
 def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     # Get the simulation tool from the parameters
     simulation_type = params.get('simulation_tool', "NOT SELECTED")
