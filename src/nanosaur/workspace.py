@@ -433,6 +433,8 @@ def deploy(platform, params: utilities.Params, args):
         'perception': lambda: deploy_perception(args.image_name),
     }
     if args.all:
+        workspaces = get_workspaces_path(params)
+        workspace_actions = {k: v for k, v in workspace_actions.items() if k in workspaces}
         print(TerminalFormatter.color_text("Deploying all workspaces", bold=True))
         return all(action() for action in workspace_actions.values())
     # Get the workspace
