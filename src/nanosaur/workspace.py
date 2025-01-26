@@ -157,6 +157,8 @@ def clean(platform, params: utilities.Params, args):
         'perception': lambda: clean_workspace(params.get('ws_perception_name', DEFAULT_WORKSPACE_PERCEPTION))
     }
     if args.all:
+        workspaces = get_workspaces_path(params)
+        workspace_actions = {k: v for k, v in workspace_actions.items() if k in workspaces}
         print(TerminalFormatter.color_text("Cleaning all workspaces", bold=True))
         return all(action() for action in workspace_actions.values())
     # Get the workspace
@@ -201,7 +203,7 @@ def update(platform, params: utilities.Params, args):
         workspace_path = get_workspace_path(params, workspace_name_key)
         if not workspace_path:
             print(TerminalFormatter.color_text(f"Workspace {workspace_type} not found", color='red'))
-            return True
+            return False
         rosinstall_path = os.path.join(workspace_path, f"{workspace_type}.rosinstall")
         if not skip_rosinstall_update:
             # Download rosinstall for this device
@@ -230,6 +232,8 @@ def update(platform, params: utilities.Params, args):
         ros.manage_isaac_ros_common_repo(nanosaur_home_path, isaac_ros_branch, args.force)
         print(TerminalFormatter.color_text("Updating all workspaces", bold=True))
         update_shared_workspace(args.force)
+        workspaces = get_workspaces_path(params)
+        workspace_actions = {k: v for k, v in workspace_actions.items() if k in workspaces}
         return all(action() for action in workspace_actions.values())
     # Get the workspace
     workspace = get_selected_workspace(params, workspace_actions, args)
@@ -270,6 +274,8 @@ def build(platform, params: utilities.Params, args, password=None):
         'simulation': lambda: get_build_action('ws_simulation_name'),
     }
     if args.all:
+        workspaces = get_workspaces_path(params)
+        workspace_actions = {k: v for k, v in workspace_actions.items() if k in workspaces}
         print(TerminalFormatter.color_text("Building all workspaces", bold=True))
         return all(action() for action in workspace_actions.values())
     # Get the workspace
