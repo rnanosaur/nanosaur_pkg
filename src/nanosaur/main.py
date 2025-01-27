@@ -163,13 +163,12 @@ def install(platform, params: Params, args):
     if answers['confirm'] is False:
         print(TerminalFormatter.color_text("Installation cancelled", color='red'))
         return False
-
     # Get the selected install type
     print(TerminalFormatter.color_text(f"Installing {install_type} workspace...", bold=True))
     if not NANOSAUR_INSTALL_OPTIONS_RULES[install_type]['function'](platform, params, args):
         return False
     # Set params in maintainer mode
-    current_mode = params.get('mode')
+    current_mode = params.get('mode', 'simple')
     if (
         install_type not in NANOSAUR_INSTALL_OPTIONS_RULES[current_mode]['rule']
     ):
