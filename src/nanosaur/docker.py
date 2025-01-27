@@ -68,6 +68,7 @@ def is_docker_installed():
         return False
     return True
 
+
 def check_nvidia_container_cli():
     try:
         # Run the command and capture the output
@@ -79,7 +80,7 @@ def check_nvidia_container_cli():
         )
 
         if result.returncode == 0:
-            return result.stdout.splitlines()[0].split(' ')[-1] # Return the first line of the version string
+            return result.stdout.splitlines()[0].split(' ')[-1]  # Return the first line of the version string
         logger.debug(TerminalFormatter.color_text("Error:", color='red'), result.stderr.strip())
         return None
 
@@ -89,6 +90,7 @@ def check_nvidia_container_cli():
     except Exception as e:
         logger.debug(TerminalFormatter.color_text(f"An unexpected error occurred: {e}", color='red'))
         return None
+
 
 def docker_service_run_command(platform, params: Params, service, command=None, name=None, volumes=None):
     """Run a command in the robot container."""
