@@ -269,7 +269,7 @@ def main():
         parser_workspace = parser_workspace_menu(subparsers)
 
     # Subcommand: simulation (with a sub-menu for simulation types)
-    if device_type == 'desktop':
+    if device_type == 'desktop' and 'mode' in params:
         # Add simulation subcommand
         parser_simulation = parser_simulation_menu(subparsers, params)
 
@@ -281,7 +281,7 @@ def main():
         parser_swarm = parser_swarm_menu(subparsers, params)
 
     # Subcommand: wakeup (with a sub-menu for wakeup operations)
-    if 'robots' in params:
+    if 'mode' in params and 'robots' in params:
         robot_control(params, subparsers)
 
     # Enable tab completion
