@@ -263,16 +263,16 @@ def main():
         robot_control(params, subparsers)
 
     # Enable tab completion
-    argcomplete.autocomplete(parser)    
+    argcomplete.autocomplete(parser)
     # Parse the arguments
     args = parser.parse_args()
-    
+
     # Set up logger with the specified level
     log_level = getattr(logging, args.log_level.upper(), logging.INFO)
     setup_logger(level=log_level)
     # Get the logger for the main script
     logging.getLogger(__name__)
-    
+
     # Override mode if provided as an argument
     if args.mode:
         params.set('mode', args.mode, save=False)

@@ -99,7 +99,7 @@ def workspaces_info(params: utilities.Params, verbose: bool):
             print(f"  {TerminalFormatter.color_text(ws_name, bold=True)}: {TerminalFormatter.clickable_link(ws_path)}")
     elif verbose:
         print(TerminalFormatter.color_text("No workspaces installed", bold=True))
-    
+
     if verbose:
         # Print ROS 2 installation path
         ros2_path = ros.get_ros2_path(ROS_DISTRO)

@@ -26,6 +26,7 @@
 
 import logging
 
+
 def setup_logger(level: int = logging.DEBUG):
     """
     Set up a logger for console-only output.

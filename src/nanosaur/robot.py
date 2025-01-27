@@ -38,6 +38,7 @@ from nanosaur.utilities import ENGINES_CHOICES, CAMERA_CHOICES, LIDAR_CHOICES
 # Set up the logger
 logger = logging.getLogger(__name__)
 
+
 def add_robot_config_subcommands(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     # Get the robot data
     robot_data = RobotList.current_robot(params)
@@ -105,7 +106,6 @@ def parser_robot_menu(subparsers: argparse._SubParsersAction, params: Params) ->
         return parser_robot, None
 
 
-
 def wizard(platform, params: Params, args):
     # Get the device type (robot or desktop)
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
@@ -122,6 +122,7 @@ def wizard(platform, params: Params, args):
     for func in functions_list:
         if not func(platform, params, args):
             return False
+
 
 def robot_set_name(platform, params: Params, args):
     """Configure the robot name."""
@@ -156,6 +157,7 @@ def robot_set_name(platform, params: Params, args):
         logger.debug(TerminalFormatter.color_text(f"Robot name {new_name} is already set", color='yellow'))
     return True
 
+
 def robot_set_domain_id(platform, params: Params, args):
     """Configure the domain ID."""
     robot = RobotList.current_robot(params)
@@ -186,6 +188,7 @@ def robot_set_domain_id(platform, params: Params, args):
         logger.debug(TerminalFormatter.color_text(f"Domain ID {new_domain_id} is already set", color='yellow'))
     return True
 
+
 def robot_set_simulation(platform, params: Params, args):
     """Configure the robot if is real or a simulation."""
     robot = RobotList.current_robot(params)
@@ -207,6 +210,7 @@ def robot_set_simulation(platform, params: Params, args):
     RobotList.update_robot(params, robot)
     print(TerminalFormatter.color_text(f"Simulator set to: {answers['simulation']}", color='green'))
     return True
+
 
 def robot_set_camera(platform, params: Params, args):
     """Configure the camera."""

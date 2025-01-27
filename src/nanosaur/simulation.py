@@ -143,6 +143,7 @@ def simulation_info(platform, params: Params, verbose):
         if is_gazebo_installed():
             print(TerminalFormatter.color_text("   Gazebo is installed", bold=True))
 
+
 def simulation_robot_start_debug(params):
     nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
     bash_file = os.path.join(nanosaur_ws_path, 'install', 'setup.bash')

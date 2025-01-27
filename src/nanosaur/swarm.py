@@ -34,6 +34,7 @@ from nanosaur.utilities import Params, RobotList, Robot
 # Set up the logger
 logger = logging.getLogger(__name__)
 
+
 def parser_swarm_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     # Get the robot index from the parameters
     try:
