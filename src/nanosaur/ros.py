@@ -201,6 +201,7 @@ def rosinstall_reader(workspace_path, rosinstall_path, src_folder="src") -> bool
                 return False
     return True
 
+
 def run_vcs_import(workspace_path, rosinstall_path, src_folder="src") -> bool:
     """ 
     Run the vcs import command to import repositories into a ROS workspace.

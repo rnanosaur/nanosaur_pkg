@@ -221,7 +221,7 @@ def main():
     parser.add_argument('--mode', type=str, help="Specify the mode of operation")
     if ros2_installed is not None:
         parser.add_argument('--default-debug', '-dd', type=str, choices=['host', 'docker'], help="Select the debug mode if on host or in docker")
-    
+
     if 'mode' in params and params['mode'] in ['Raffo']:
         help_message = "Set the log level (default: INFO)"
     else:
