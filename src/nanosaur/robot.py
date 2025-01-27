@@ -32,32 +32,37 @@ import logging
 from nanosaur import workspace
 from nanosaur import docker
 from nanosaur.prompt_colors import TerminalFormatter
-from nanosaur.utilities import Params, RobotList
+from nanosaur.utilities import Params, RobotList, Robot
 from nanosaur.utilities import ENGINES_CHOICES, CAMERA_CHOICES, LIDAR_CHOICES
 
 # Set up the logger
 logger = logging.getLogger(__name__)
 
 def add_robot_config_subcommands(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
-    robot_data = RobotList.get_robot(params)
+    # Get the robot data
+    robot_data = RobotList.current_robot(params)
     parser_robot_config = subparsers.add_parser('config', help=f"Configure the robot settings [{robot_data.name}]")
     config_subparsers = parser_robot_config.add_subparsers(dest='config_type', help="Configuration options")
     # Add robot name subcommand
-    parser_robot_name = config_subparsers.add_parser('name', help=f"Change the robot name [{robot_data.name}]")
+    parser_robot_name = config_subparsers.add_parser('name', help=f"Set robot name [{robot_data.name}]")
     parser_robot_name.set_defaults(func=robot_set_name)
     # Add robot domain id subcommand
-    parser_robot_domain_id = config_subparsers.add_parser('domain_id', help=f"Change the robot domain ID [{robot_data.domain_id}]")
+    parser_robot_domain_id = config_subparsers.add_parser('domain_id', help=f"Set robot domain ID [{robot_data.domain_id}]")
     parser_robot_domain_id.set_defaults(func=robot_set_domain_id)
+    # Add robot simulation subcommand
+    parser_robot_simulation = config_subparsers.add_parser('simulation', help=f"Set robot real or simulation [{'simulation' if robot_data.simulation else 'real'}]")
+    parser_robot_simulation.set_defaults(func=robot_set_simulation)
     # Add robot camera subcommand
-    parser_robot_camera = config_subparsers.add_parser('camera', help=f"Change the robot camera type [{robot_data.camera_type}]")
+    parser_robot_camera = config_subparsers.add_parser('camera', help=f"Set robot camera type [{robot_data.camera_type or 'NOT SELECTED'}]")
     parser_robot_camera.add_argument('--new', type=str, help=f"Specify the new camera type (options: {', '.join(CAMERA_CHOICES)})")
     parser_robot_camera.set_defaults(func=robot_set_camera)
     # Add robot lidar subcommand
-    parser_robot_lidar = config_subparsers.add_parser('lidar', help=f"Change the robot lidar type [{robot_data.lidar_type}]")
+    parser_robot_lidar = config_subparsers.add_parser('lidar', help=f"Set robot lidar type [{robot_data.lidar_type or 'NOT SELECTED'}]")
     parser_robot_lidar.add_argument('--new', type=str, choices=LIDAR_CHOICES, help=f"Specify the new lidar type (options: {', '.join(LIDAR_CHOICES)})")
     parser_robot_lidar.set_defaults(func=robot_set_lidar)
     # Add robot engines subcommand
-    parser_robot_engines = config_subparsers.add_parser('engines', help=f"Configure the robot engines [{', '.join(robot_data.engines)}]")
+    engines_help = f"Configure robot engines [{', '.join(robot_data.engines) if robot_data.engines else 'NO ENGINES'}]"
+    parser_robot_engines = config_subparsers.add_parser('engines', help=engines_help)
     parser_robot_engines.add_argument('--new', type=str, help="Specify the new engine configuration")
     parser_robot_engines.set_defaults(func=robot_configure_engines)
     # Add robot reset subcommand
@@ -68,42 +73,59 @@ def add_robot_config_subcommands(subparsers: argparse._SubParsersAction, params:
 
 
 def parser_robot_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
-    robot_data = RobotList.get_robot(params)
-    parser_robot = subparsers.add_parser('robot', help=f"Manage the Nanosaur robot [{robot_data.name}]")
-    robot_subparsers = parser_robot.add_subparsers(dest='robot_type', help="Robot operations")
-    # Add robot display subcommand
-    parser_robot_display = robot_subparsers.add_parser('display', help="Show the robot")
-    parser_robot_display.set_defaults(func=robot_display)
-    # Add robot drive subcommand
-    parser_robot_drive = robot_subparsers.add_parser('drive', help="Control the robot")
-    parser_robot_drive.set_defaults(func=control_keyboard)
-    # Add robot start subcommand
-    parser_robot_start = robot_subparsers.add_parser('start', help="Activate the robot")
-    parser_robot_start.add_argument(
-        '--profile', type=str, help="Specify the profile name to use")
-    parser_robot_start.add_argument(
-        '--detach', action='store_true', help="Run the robot in detached mode")
-    parser_robot_start.set_defaults(func=docker.docker_robot_start)
-    # Add robot stop subcommand
-    parser_robot_stop = robot_subparsers.add_parser('stop', help="Deactivate the robot")
-    parser_robot_stop.set_defaults(func=docker.docker_robot_stop)
+    try:
+        robot_data = RobotList.current_robot(params)
+        parser_robot = subparsers.add_parser('robot', help=f"Manage the Nanosaur robot [{robot_data.name}]")
+        robot_subparsers = parser_robot.add_subparsers(dest='robot_type', help="Robot operations")
+        # Add robot display subcommand
+        parser_robot_display = robot_subparsers.add_parser('display', help="Show the robot")
+        parser_robot_display.set_defaults(func=robot_display)
+        # Add robot drive subcommand
+        parser_robot_drive = robot_subparsers.add_parser('drive', help="Control the robot")
+        parser_robot_drive.set_defaults(func=control_keyboard)
+        # Add robot start subcommand
+        parser_robot_start = robot_subparsers.add_parser('start', help="Activate the robot")
+        parser_robot_start.add_argument(
+            '--profile', type=str, help="Specify the profile name to use")
+        parser_robot_start.add_argument(
+            '--detach', action='store_true', help="Run the robot in detached mode")
+        parser_robot_start.set_defaults(func=docker.docker_robot_start)
+        # Add robot stop subcommand
+        parser_robot_stop = robot_subparsers.add_parser('stop', help="Deactivate the robot")
+        parser_robot_stop.set_defaults(func=docker.docker_robot_stop)
 
-    # Add robot config subcommand
-    parser_config = add_robot_config_subcommands(robot_subparsers, params)
+        # Add robot config subcommand
+        parser_config = add_robot_config_subcommands(robot_subparsers, params)
 
-    return parser_robot, parser_config
+        return parser_robot, parser_config
+    except IndexError:
+        # No robot configured start the wizard
+        parser_robot = subparsers.add_parser('robot', help="Initialize a new Nanosaur robot")
+        parser_robot.set_defaults(func=wizard)
+        return parser_robot, None
+
 
 
 def wizard(platform, params: Params, args):
+    # Get the device type (robot or desktop)
+    device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
+    # Build the list of functions to run
+    functions_list = [robot_set_name] + [robot_set_simulation] if device_type == 'desktop' else []
+    functions_list += [robot_set_domain_id, robot_set_camera, robot_set_lidar, robot_configure_engines]
+    # Set new argument to None
     args.new = None
-    
-    for func in [robot_set_name, robot_set_domain_id, robot_set_camera, robot_set_lidar, robot_configure_engines]:
+    # Add a new robot
+    robot = Robot()
+    robot.simulation = device_type == 'desktop'
+    RobotList.add_robot(params, robot, save=False)
+    # Run the robot configuration wizard
+    for func in functions_list:
         if not func(platform, params, args):
             return False
 
 def robot_set_name(platform, params: Params, args):
     """Configure the robot name."""
-    robot = RobotList.get_robot(params)
+    robot = RobotList.current_robot(params)
 
     def validate_name(_, x):
         if not x.isalnum():
@@ -136,7 +158,7 @@ def robot_set_name(platform, params: Params, args):
 
 def robot_set_domain_id(platform, params: Params, args):
     """Configure the domain ID."""
-    robot = RobotList.get_robot(params)
+    robot = RobotList.current_robot(params)
 
     def validate_domain_id(_, x):
         if not x.isdigit():
@@ -164,10 +186,31 @@ def robot_set_domain_id(platform, params: Params, args):
         logger.debug(TerminalFormatter.color_text(f"Domain ID {new_domain_id} is already set", color='yellow'))
     return True
 
+def robot_set_simulation(platform, params: Params, args):
+    """Configure the robot if is real or a simulation."""
+    robot = RobotList.current_robot(params)
+
+    question = [
+        inquirer.List(
+            'simulation',
+            message="Is a simulated robot o real robot",
+            choices=['simulation', 'real'],
+            default='simulation' if robot.simulation else 'real'
+        )
+    ]
+
+    answers = inquirer.prompt(question, theme=GreenPassion())
+    if answers is None:
+        return False
+    is_simulation = answers['simulation'] == 'simulation'
+    robot.simulation = is_simulation
+    RobotList.update_robot(params, robot)
+    print(TerminalFormatter.color_text(f"Simulator set to: {answers['simulation']}", color='green'))
+    return True
 
 def robot_set_camera(platform, params: Params, args):
     """Configure the camera."""
-    robot = RobotList.get_robot(params)
+    robot = RobotList.current_robot(params)
 
     all_cameras = sorted(set(CAMERA_CHOICES + [robot.camera_type]))
 
@@ -206,7 +249,7 @@ def robot_set_camera(platform, params: Params, args):
 
 def robot_set_lidar(platform, params: Params, args):
     """Configure the lidar."""
-    robot = RobotList.get_robot(params)
+    robot = RobotList.current_robot(params)
 
     all_lidars = sorted(set(LIDAR_CHOICES + [robot.lidar_type]))
 
@@ -245,7 +288,7 @@ def robot_set_lidar(platform, params: Params, args):
 
 def robot_configure_engines(platform, params: Params, args):
     """Configure the robot engines."""
-    robot = RobotList.get_robot(params)
+    robot = RobotList.current_robot(params)
 
     if args.new is not None:
         if args.new not in robot.engines:
@@ -292,7 +335,7 @@ def control_keyboard(platform, params: Params, args):
     if selected_location is None:
         return False
     # Get the robot
-    robot = RobotList.get_robot(params)
+    robot = RobotList.current_robot(params)
     command = f"ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args --remap /cmd_vel:=/{robot.name}/key_vel"
     # Run from local machine
     if selected_location == 'host':
@@ -319,7 +362,7 @@ def robot_display(platform, params: Params, args):
     if selected_location is None:
         return False
     # Get the robot
-    robot = RobotList.get_robot(params)
+    robot = RobotList.current_robot(params)
     command = f"ros2 launch nanosaur_visualization robot_display.launch.py robot_name:={robot.name}"
     # Run from local machine
     if selected_location == 'host':

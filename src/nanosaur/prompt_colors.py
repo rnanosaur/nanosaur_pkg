@@ -24,6 +24,10 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import logging
+
+# Set up the logger
+logger = logging.getLogger(__name__)
 
 
 class TerminalFormatter:

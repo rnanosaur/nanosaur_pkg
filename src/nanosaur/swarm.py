@@ -36,27 +36,29 @@ logger = logging.getLogger(__name__)
 
 def parser_swarm_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     # Get the robot index from the parameters
-    idx_swarm = params.get('robot_idx', 0)
-    current_robot_name = RobotList.load(params)._get_robot_by_idx(idx_swarm).name
-    # Subcommand: swarm (with a sub-menu for swarm operations)
-    parser_swarm = subparsers.add_parser('swarm', help="Manage swarm Nanosaur robots")
-    swarm_subparsers = parser_swarm.add_subparsers(dest='swarm_type', help="Robot operations")
-    # Add robot status subcommand
-    parser_robot_new = swarm_subparsers.add_parser('new', help="Get a new robot to control")
-    parser_robot_new.add_argument('name', type=str, nargs='?', help="New robot name")
-    parser_robot_new.set_defaults(func=robot_new)
-    # Add robot set subcommand
-    parser_robot_set = swarm_subparsers.add_parser('set', help=f"Set which robot to control [{current_robot_name}]")
-    parser_robot_set.add_argument('robot_name', type=str, nargs='?', help="Name of the robot to control")
-    parser_robot_set.set_defaults(func=robot_idx_set)
-    # Add robot remove subcommand
-    parser_robot_remove = swarm_subparsers.add_parser('remove', help="Remove a robot from the swarm")
-    parser_robot_remove.add_argument('robot_name', type=str, nargs='?', help="Name of the robot to remove")
-    parser_robot_remove.set_defaults(func=robot_remove)
-    # Add robot list subcommand
-    parser_robot_list = swarm_subparsers.add_parser('list', help="List all robots in the swarm")
-    parser_robot_list.set_defaults(func=robot_list)
-    return parser_swarm
+    try:
+        current_robot_name = RobotList.current_robot(params).name
+        # Subcommand: swarm (with a sub-menu for swarm operations)
+        parser_swarm = subparsers.add_parser('swarm', help="Manage swarm Nanosaur robots")
+        swarm_subparsers = parser_swarm.add_subparsers(dest='swarm_type', help="Robot operations")
+        # Add robot status subcommand
+        parser_robot_new = swarm_subparsers.add_parser('new', help="Get a new robot to control")
+        parser_robot_new.add_argument('name', type=str, nargs='?', help="New robot name")
+        parser_robot_new.set_defaults(func=robot_new)
+        # Add robot set subcommand
+        parser_robot_set = swarm_subparsers.add_parser('set', help=f"Set which robot to control [{current_robot_name}]")
+        parser_robot_set.add_argument('robot_name', type=str, nargs='?', help="Name of the robot to control")
+        parser_robot_set.set_defaults(func=robot_idx_set)
+        # Add robot remove subcommand
+        parser_robot_remove = swarm_subparsers.add_parser('remove', help="Remove a robot from the swarm")
+        parser_robot_remove.add_argument('robot_name', type=str, nargs='?', help="Name of the robot to remove")
+        parser_robot_remove.set_defaults(func=robot_remove)
+        # Add robot list subcommand
+        parser_robot_list = swarm_subparsers.add_parser('list', help="List all robots in the swarm")
+        parser_robot_list.set_defaults(func=robot_list)
+        return parser_swarm
+    except IndexError:
+        return None
 
 
 def robot_new(platform, params: Params, args):
@@ -88,7 +90,7 @@ def robot_idx_set(platform, params: Params, args):
     # Load the robot list
     robots = RobotList.load(params)
 
-    default = robots._get_robot_by_idx(params.get('robot_idx', 0))
+    default = robots.get_robot(params.get('robot_idx', 0))
     if args.robot_name is not None:
         default = robots._get_robot_by_name(args.robot_name)
 
@@ -114,7 +116,7 @@ def robot_idx_set(platform, params: Params, args):
 def robot_remove(platform, params: Params, args):
     """Remove a robot configuration."""
     if args.robot_name is None:
-        robot = RobotList.load(params)._get_robot_by_idx(params.get('robot_idx', 0))
+        robot = RobotList.load(params).get_robot(params.get('robot_idx', 0))
         args.robot_name = robot.name
 
     formatted_robot_name = TerminalFormatter.color_text(args.robot_name, color='green', bold=True)

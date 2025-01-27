@@ -50,7 +50,7 @@ def docker_service_run_command(platform, params: Params, service, command=None, 
     docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()
     # Create the full file path
-    robot = RobotList.get_robot(params)
+    robot = RobotList.current_robot(params)
     docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
     env_file_path = os.path.join(nanosaur_home_path, f'{robot.name}.env')
 
@@ -78,7 +78,7 @@ def docker_robot_start(platform, params: Params, args):
     docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()
     # Create the full file path
-    robot = RobotList.get_robot(params)
+    robot = RobotList.current_robot(params)
     docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
     env_file_path = os.path.join(nanosaur_home_path, f'{robot.name}.env')
 
@@ -119,7 +119,7 @@ def docker_simulator_start(platform, params: Params, args):
     docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()
     # Create the full file path
-    robot = RobotList.get_robot(params)
+    robot = RobotList.current_robot(params)
     docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
     env_file_path = os.path.join(nanosaur_home_path, f'{robot.name}.env')
 
@@ -155,7 +155,7 @@ def docker_robot_stop(platform, params: Params, args):
     docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()
     # Create the full file path
-    robot = RobotList.get_robot(params)
+    robot = RobotList.current_robot(params)
     docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
     env_file_path = os.path.join(nanosaur_home_path, f'{robot.name}.env')
 

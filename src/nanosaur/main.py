@@ -88,6 +88,7 @@ DEFAULT_PARAMS = {}
 
 def info(platform, params: Params, args):
     """Print version information."""
+    device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
     # Print version information
     package_info(params, args.verbose)
     # Print mode if it exists in params
@@ -102,17 +103,22 @@ def info(platform, params: Params, args):
         print(f"{TerminalFormatter.color_text('Default debug: ', bold=True)} {debug_string}")
     # Load the robot list
     robot_list = RobotList.load(params)
+    robot_idx = params.get('robot_idx', 0)
     # Print current robot configuration
-    robot_data = RobotList.get_robot(params)
     print()
-    robot_data.verbose()
+    if robot_list.robots:
+        robot_data = robot_list.get_robot(robot_idx)
+        robot_data.verbose()
+    else:
+        print(TerminalFormatter.color_text("No robot configuration found", color='red'))
     # Print other robots if they exist
     if len(robot_list.robots) > 1 or args.verbose:
         print()
-        robot_list.print_all_robots(params.get('robot_idx', 0))
+        robot_list.print_all_robots(robot_idx)
     # Print simulation tools if they exist
-    print()
-    simulation_info(platform, params, args.verbose)
+    if device_type == 'desktop':
+        print()
+        simulation_info(platform, params, args.verbose)
     # Print installed workspaces
     workspaces_info(params, args.verbose)
     # Print all robot configurations
@@ -152,6 +158,9 @@ def install(platform, params: Params, args):
     print(TerminalFormatter.color_text(f"Installing {install_type} workspace...", bold=True))
     if not NANOSAUR_INSTALL_OPTIONS_RULES[install_type]['function'](platform, params, args):
         return False
+    # Initialize the robot configuration if it doesn't exist
+    if 'robots' not in params:
+        wizard(platform, params, args)
     # Set params in maintainer mode
     current_mode = params.get('mode')
     if (
@@ -171,7 +180,7 @@ def nanosaur_wake_up(platform, params: Params, args):
 
 
 def robot_control(params, subparsers):
-    robot = RobotList.get_robot(params).name
+    robot = RobotList.current_robot(params).name
     robot_name = TerminalFormatter.color_text(robot, color='green', bold=True)
     parser_wakeup = subparsers.add_parser('wake-up', help=f"Start {robot_name} (same as 'nanosaur robot start')")
     parser_wakeup.set_defaults(func=nanosaur_wake_up)
@@ -202,6 +211,9 @@ def main():
     parser = argparse.ArgumentParser(
         description="Nanosaur CLI - A command-line interface for the Nanosaur package.")
     # Add arguments
+    parser.add_argument('--mode', type=str, help="Specify the mode of operation")
+    if ros2_installed is not None:
+        parser.add_argument('--default-debug', '-dd', type=str, choices=['host', 'docker'], help="Select the debug mode if on host or in docker")
     parser.add_argument(
         "--log-level",
         type=str,
@@ -209,9 +221,6 @@ def main():
         default="INFO",
         help="Set the logging level (default: INFO)",
     )
-    parser.add_argument('--mode', type=str, help="Specify the mode of operation")
-    if ros2_installed is not None:
-        parser.add_argument('--default-debug', '-dd', type=str, choices=['host', 'docker'], help="Select the debug mode if on host or in docker")
     # Define subcommands
     subparsers = parser.add_subparsers(dest='command', help="Available commands")
 
@@ -250,7 +259,7 @@ def main():
         parser_swarm = parser_swarm_menu(subparsers, params)
 
     # Subcommand: wakeup (with a sub-menu for wakeup operations)
-    if 'mode' in params:
+    if 'mode' in params and 'robots' in params:
         robot_control(params, subparsers)
 
     # Enable tab completion
@@ -267,9 +276,6 @@ def main():
     # Override mode if provided as an argument
     if args.mode:
         params.set('mode', args.mode, save=False)
-    
-    wizard(platform, params, args)
-    exit(0)
 
     # Print all arguments
     if hasattr(args, 'default_debug') and args.default_debug is not None:
@@ -282,9 +288,9 @@ def main():
         parser_workspace.print_help()
     elif args.command in ['simulation', 'sim'] and not args.simulation_type:
         parser_simulation.print_help()
-    elif args.command == 'robot' and not args.robot_type:
+    elif args.command == 'robot' and 'robot_type' in args and not args.robot_type:
         parser_robot.print_help()
-    elif args.command == 'robot' and args.robot_type == 'config' and not args.config_type:
+    elif args.command == 'robot' and 'robot_type' in args and args.robot_type == 'config' and not args.config_type:
         parser_config.print_help()
     elif args.command == 'swarm' and not args.swarm_type:
         parser_swarm.print_help()

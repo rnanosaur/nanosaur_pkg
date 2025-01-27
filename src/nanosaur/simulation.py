@@ -52,6 +52,29 @@ simulation_tools = {
 }
 
 
+def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
+    # Get the simulation tool from the parameters
+    simulation_type = params.get('simulation_tool', "NOT SELECTED")
+    # Add simulation subcommand
+    parser_simulation = subparsers.add_parser(
+        'simulation', aliases=["sim"], help=f"Work with simulation tools [{simulation_type}]")
+    simulation_subparsers = parser_simulation.add_subparsers(
+        dest='simulation_type', help="Simulation types")
+
+    # Add simulation start subcommand
+    parser_simulation_start = simulation_subparsers.add_parser(
+        'start', help="Start the selected simulation")
+    parser_simulation_start.add_argument(
+        '--debug', action='store_true', help="Start the simulation in debug mode")
+    parser_simulation_start.set_defaults(func=simulation_start)
+
+    # Add simulation set subcommand
+    parser_simulation_set = simulation_subparsers.add_parser(
+        'set', help="Select the simulator you want to use")
+    parser_simulation_set.set_defaults(func=simulation_set)
+    return parser_simulation
+
+
 def find_all_isaac_sim():
     # Path where Isaac Sim is usually installed
     base_path = os.path.expanduser("~/.local/share/ov/pkg")
@@ -120,30 +143,6 @@ def simulation_info(platform, params: Params, verbose):
         if is_gazebo_installed():
             print(TerminalFormatter.color_text("   Gazebo is installed", bold=True))
 
-
-def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
-    # Get the simulation tool from the parameters
-    simulation_type = params.get('simulation_tool', "NOT SELECTED")
-    # Add simulation subcommand
-    parser_simulation = subparsers.add_parser(
-        'simulation', aliases=["sim"], help=f"Work with simulation tools [{simulation_type}]")
-    simulation_subparsers = parser_simulation.add_subparsers(
-        dest='simulation_type', help="Simulation types")
-
-    # Add simulation start subcommand
-    parser_simulation_start = simulation_subparsers.add_parser(
-        'start', help="Start the selected simulation")
-    parser_simulation_start.add_argument(
-        '--debug', action='store_true', help="Start the simulation in debug mode")
-    parser_simulation_start.set_defaults(func=simulation_start)
-
-    # Add simulation set subcommand
-    parser_simulation_set = simulation_subparsers.add_parser(
-        'set', help="Select the simulator you want to use")
-    parser_simulation_set.set_defaults(func=simulation_set)
-    return parser_simulation
-
-
 def simulation_robot_start_debug(params):
     nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
     bash_file = os.path.join(nanosaur_ws_path, 'install', 'setup.bash')
@@ -158,7 +157,7 @@ def simulation_robot_start_debug(params):
     # Check if the simulation tool is valid and get the command
     command = simulation_tools[params['simulation_tool']]['robot']
     # Load the robot configuration
-    robot = RobotList.get_robot(params)
+    robot = RobotList.current_robot(params)
     print(TerminalFormatter.color_text(f"Starting {robot}", color='green'))
 
     # Print the command to be run

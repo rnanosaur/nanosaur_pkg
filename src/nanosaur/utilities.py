@@ -129,11 +129,11 @@ class RobotList:
         return cls.load(params)._get_idx_by_name(robot_name)
 
     @classmethod
-    def add_robot(cls, params, robot) -> bool:
+    def add_robot(cls, params, robot, save=True) -> bool:
         robot_list = cls.load(params)
         if robot_list._add_robot(robot):
-            params['robots'] = robot_list.to_dict()
-            params['robot_idx'] = params.get('robot_idx', 0) + 1
+            params.set('robots', robot_list.to_dict(), save=save)
+            params.set('robot_idx', len(robot_list.to_list()) - 1, save=save)
             return True
         return False
 
@@ -162,20 +162,17 @@ class RobotList:
         return False
 
     @classmethod
-    def get_robot(cls, params, idx=None) -> Robot:
+    def current_robot(cls, params, idx=None) -> Robot:
         if idx is None:
             idx = params.get('robot_idx', 0)
-        return cls.load(params)._get_robot_by_idx(idx)
+        return cls.load(params).get_robot(idx)
 
     @classmethod
     def load(cls, params):
         return cls() if 'robots' not in params else cls(params['robots'])
 
     def __init__(self, robots=None):
-        if robots is None:
-            self.robots = [Robot()]
-        else:
-            self.robots = [Robot(robot) for robot in robots]
+        self.robots = [] if robots is None else [Robot(robot) for robot in robots]
 
     def _add_robot(self, robot) -> bool:
         def is_robot(robot):
@@ -198,7 +195,7 @@ class RobotList:
     def _get_idx_by_name(self, name) -> int:
         return next((i for i, robot in enumerate(self.robots) if robot.name == name), None)
 
-    def _get_robot_by_idx(self, idx) -> Robot:
+    def get_robot(self, idx) -> Robot:
         return self.robots[idx]
 
     def _get_robot_by_name(self, name) -> Robot:
@@ -279,7 +276,7 @@ class Params:
             # Get the current nanosaur's home directory
             create_nanosaur_home()
             # Save the parameters to the file
-            print(TerminalFormatter.color_text(f"Saving parameters to {params_file}", color='yellow'))
+            logger.debug(TerminalFormatter.color_text(f"Saving parameters to {params_file}", color='yellow'))
             with open(params_file, 'w') as file:
                 yaml.dump(self._params_dict, file)
 
@@ -312,7 +309,7 @@ def is_env_file():
 def build_env_file(params):
     nanosaur_home_path = get_nanosaur_home()
     # Get current robot running
-    robot = RobotList.get_robot(params)
+    robot = RobotList.current_robot(params)
     uid = os.getuid()
     gid = os.getgid()
     env_path = os.path.join(nanosaur_home_path, f'{robot.name}.env')
