@@ -84,7 +84,7 @@ NANOSAUR_INSTALL_OPTIONS_RULES = {
 
 # Define default parameters
 DEFAULT_PARAMS = {}
-
+hardware = {}
 
 def info(platform, params: Params, args):
     """Print version information."""
@@ -129,6 +129,12 @@ def info(platform, params: Params, args):
             print(f"   {TerminalFormatter.color_text(key, bold=True)}: {value}")
         # Print Docker info
         docker_info(platform)
+        if hardware:
+            print(TerminalFormatter.color_text("\nHardware Information:", bold=True))
+            # Print specific hardware information
+            for info in ['Module', 'L4T', 'Jetpack']:
+                if info in hardware:
+                    print(f"   {TerminalFormatter.color_text(info, bold=True)}: {hardware[info]}")
 
 
 def install(platform, params: Params, args):
@@ -207,6 +213,9 @@ def main():
         with jtop() as device:
             if device.ok():
                 platform = device.board['platform']
+                if platform['Machine'] == 'aarch64':
+                    global hardware
+                    hardware = device.board['hardware']
     except JtopException as e:
         print(f"Error: {e}")
         sys.exit(1)
