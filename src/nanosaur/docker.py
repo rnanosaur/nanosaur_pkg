@@ -52,9 +52,9 @@ def docker_info(platform):
         print(f"{TerminalFormatter.color_text('   Docker compose:', bold=True)} {TerminalFormatter.color_text('not installed', color='red', bold=True)}")
 
     if version := check_nvidia_container_cli():
-        print(f"{TerminalFormatter.color_text('   Nvidia container:', bold=True)} {version}")
+        print(f"{TerminalFormatter.color_text('   NVIDIA container:', bold=True)} {version}")
     else:
-        print(f"{TerminalFormatter.color_text('   Nvidia container:', bold=True)} {TerminalFormatter.color_text('not installed', color='red', bold=True)}")
+        print(f"{TerminalFormatter.color_text('   NVIDIA container:', bold=True)} {TerminalFormatter.color_text('not installed', color='red', bold=True)}")
 
 
 def is_docker_installed():

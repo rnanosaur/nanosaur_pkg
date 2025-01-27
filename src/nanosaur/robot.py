@@ -39,7 +39,7 @@ from nanosaur.utilities import ENGINES_CHOICES, CAMERA_CHOICES, LIDAR_CHOICES
 logger = logging.getLogger(__name__)
 
 
-def add_robot_config_subcommands(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
+def add_robot_config_subcommands(platform, subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     # Get the robot data
     robot_data = RobotList.current_robot(params)
     parser_robot_config = subparsers.add_parser('config', help=f"Configure the robot settings [{robot_data.name}]")
@@ -51,8 +51,10 @@ def add_robot_config_subcommands(subparsers: argparse._SubParsersAction, params:
     parser_robot_domain_id = config_subparsers.add_parser('domain_id', help=f"Set robot domain ID [{robot_data.domain_id}]")
     parser_robot_domain_id.set_defaults(func=robot_set_domain_id)
     # Add robot simulation subcommand
-    parser_robot_simulation = config_subparsers.add_parser('simulation', help=f"Set robot real or simulation [{'simulation' if robot_data.simulation else 'real'}]")
-    parser_robot_simulation.set_defaults(func=robot_set_simulation)
+    device_type = "robot" if platform['Machine'] == 'aarch64' else "desktop"
+    if device_type == 'desktop':
+        parser_robot_simulation = config_subparsers.add_parser('simulation', help=f"Set robot real or simulation [{'simulation' if robot_data.simulation else 'real'}]")
+        parser_robot_simulation.set_defaults(func=robot_set_simulation)
     # Add robot camera subcommand
     parser_robot_camera = config_subparsers.add_parser('camera', help=f"Set robot camera type [{robot_data.camera_type or 'NOT SELECTED'}]")
     parser_robot_camera.add_argument('--new', type=str, help=f"Specify the new camera type (options: {', '.join(CAMERA_CHOICES)})")
@@ -73,7 +75,7 @@ def add_robot_config_subcommands(subparsers: argparse._SubParsersAction, params:
     return parser_robot_config
 
 
-def parser_robot_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
+def parser_robot_menu(platform, subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     try:
         robot_data = RobotList.current_robot(params)
         parser_robot = subparsers.add_parser('robot', help=f"Manage the Nanosaur robot [{robot_data.name}]")
@@ -96,7 +98,7 @@ def parser_robot_menu(subparsers: argparse._SubParsersAction, params: Params) ->
         parser_robot_stop.set_defaults(func=docker.docker_robot_stop)
 
         # Add robot config subcommand
-        parser_config = add_robot_config_subcommands(robot_subparsers, params)
+        parser_config = add_robot_config_subcommands(platform, robot_subparsers, params)
 
         return parser_robot, parser_config
     except IndexError:
