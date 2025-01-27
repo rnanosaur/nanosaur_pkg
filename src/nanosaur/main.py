@@ -99,6 +99,8 @@ def info(platform, params: Params, args):
             color = NANOSAUR_INSTALL_OPTIONS_RULES[mode]['color']
             mode_string = TerminalFormatter.color_text(f"{mode}", color=color, bold=True)
             print(f"{TerminalFormatter.color_text('Mode: ', bold=True)} {mode_string}")
+    else:
+        print(f"{TerminalFormatter.color_text('Mode: ', bold=True)} {TerminalFormatter.color_text('missing', color='red', bold=True)}")
     if 'ws_debug' in params:
         debug_string = TerminalFormatter.color_text(f"{params['ws_debug']}", color="yellow", bold=True)
         print(f"{TerminalFormatter.color_text('Default debug: ', bold=True)} {debug_string}")
