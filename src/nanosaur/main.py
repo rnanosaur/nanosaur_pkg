@@ -86,6 +86,7 @@ NANOSAUR_INSTALL_OPTIONS_RULES = {
 DEFAULT_PARAMS = {}
 hardware = {}
 
+
 def info(platform, params: Params, args):
     """Print version information."""
     device_type = "robot" if platform['Machine'] == 'aarch64' else "desktop"
