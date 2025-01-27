@@ -123,6 +123,21 @@ def simulation_info(platform, params: Params, verbose):
     """
     Print information about the installed simulation tools.
     """
+
+    def print_simulation_tool():
+        isaac_sim_version = ""
+        if 'isaac_sim_path' in params and params['simulation_tool'] == 'isaac-sim' and params['isaac_sim_path']:
+            isaac_sim_version = params['isaac_sim_path'].split("isaac-sim-")[-1]  # Extract version after "isaac-sim-"
+        text_message = f"{TerminalFormatter.color_text('   selected:', bold=True)} {params['simulation_tool']} {isaac_sim_version}"
+        print(text_message)
+        headless_md = params.get('simulation_headless', False)
+        headless_string = TerminalFormatter.color_text('enabled', color='green') if headless_md else TerminalFormatter.color_text('disabled', color='red')
+        print(f"{TerminalFormatter.color_text('   Headless mode:', bold=True)} {headless_string}")
+        if headless_md and params['simulation_tool'] == 'isaac-sim':
+            hostname = f"{os.uname()[1]}.local"
+            link_webrtc = TerminalFormatter.clickable_link(f"http://{hostname}:8211/streaming/webrtc-client/")
+            print(f"{TerminalFormatter.color_text('   WebRTC:', bold=True)} {link_webrtc}")
+
     # Check if any simulation tools are installed
     if not is_simulation_tool_installed():
         print(TerminalFormatter.color_text("No simulation tools installed", color='red'))
@@ -130,11 +145,8 @@ def simulation_info(platform, params: Params, verbose):
 
     print(TerminalFormatter.color_text("Simulation:", bold=True))
     if 'simulation_tool' in params:
-        isaac_sim_version = ""
-        if 'isaac_sim_path' in params and params['simulation_tool'] == 'isaac-sim' and params['isaac_sim_path']:
-            isaac_sim_version = params['isaac_sim_path'].split("isaac-sim-")[-1]  # Extract version after "isaac-sim-"
-        text_message = f"{TerminalFormatter.color_text('   selected:', bold=True)} {params['simulation_tool']} {isaac_sim_version}"
-        print(text_message)
+        print_simulation_tool()
+            
     elif platform['Machine'] != 'aarch64':
         print(TerminalFormatter.color_text("   No simulation tool selected", color='red'))
 
