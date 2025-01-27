@@ -356,7 +356,8 @@ def debug(platform, params: utilities.Params, args):
             if selected_launcher == 'robot':
                 return simulation_robot_start_debug(params)
             isaac_sim_path = params.get('isaac_sim_path', None)
-            return simulation_start_debug(simulation_ws_path, selected_launcher, isaac_sim_path=isaac_sim_path)
+            headless = params.get('simulation_headless', False)
+            return simulation_start_debug(simulation_ws_path, selected_launcher, headless, isaac_sim_path=isaac_sim_path)
         elif selected_location == 'docker':
             # Set the volumes
             volumes = [

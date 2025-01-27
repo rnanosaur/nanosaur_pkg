@@ -34,9 +34,6 @@ dependencies = { file = ["requirements.txt"] }
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools]
-editable = true
-
 [project.scripts]
 nanosaur = "nanosaur.main:main"
 

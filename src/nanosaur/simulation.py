@@ -72,6 +72,11 @@ def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Param
     parser_simulation_set = simulation_subparsers.add_parser(
         'set', help="Select the simulator you want to use")
     parser_simulation_set.set_defaults(func=simulation_set)
+    
+    # Add simulation headless subcommand
+    parser_simulation_headless = simulation_subparsers.add_parser(
+        'headless', help="Set the simulation in headless mode")
+    parser_simulation_headless.set_defaults(func=simulation_set_headless)
     return parser_simulation
 
 
@@ -194,7 +199,7 @@ def simulation_robot_start_debug(params):
         return False
 
 
-def simulation_start_debug(simulation_ws_path, simulation_tool, isaac_sim_path=None):
+def simulation_start_debug(simulation_ws_path, simulation_tool, headless, isaac_sim_path=None):
     """Install the simulation tools."""
 
     bash_file = f'{simulation_ws_path}/install/setup.bash'
@@ -204,9 +209,11 @@ def simulation_start_debug(simulation_ws_path, simulation_tool, isaac_sim_path=N
         return False
 
     command = simulation_tools[simulation_tool]['simulator']
+    command += f" headless:={str(headless).lower()}"
     # add isaac_sim_path if available
     if isaac_sim_path:
-        command = f"{command} isaac_sim_path:={isaac_sim_path} headless:=false"
+        command = f"{command} isaac_sim_path:={isaac_sim_path}"
+    logger.debug(command)
     try:
         # Combine sourcing the bash file with running the command
         process = subprocess.Popen(
@@ -262,7 +269,8 @@ def simulation_start(platform, params: Params, args):
     if debug_mode == 'host':
         nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
         simulator_tool = params['simulation_tool']
-        return simulation_start_debug(nanosaur_ws_path, simulator_tool, isaac_sim_path=params.get('isaac_sim_path', None))
+        headless = params.get('simulation_headless', False)
+        return simulation_start_debug(nanosaur_ws_path, simulator_tool, headless, isaac_sim_path=params.get('isaac_sim_path', None))
     elif debug_mode == 'docker':
         # Run from docker container
         return docker_simulator_start(platform, params, args)
@@ -319,4 +327,24 @@ def simulation_set(platform, params: Params, args):
     else:
         print(TerminalFormatter.color_text(f"Selected {answers['simulation_tool']}", color='green'))
     return True
-# EOF
+
+def simulation_set_headless(platform, params: Params, args):
+    # Get the current simulation tool
+    headless_mode = params.get('simulation_headless', False)
+    # Ask the user if they want to run in headless mode
+    question = [
+        inquirer.List(
+            'headless',
+            message="Select if you want run the simulation in headless mode",
+            choices=['Yes', 'No'],
+            default='Yes' if headless_mode else 'No'
+        )
+    ]
+    # Get the user's answer
+    answer = inquirer.prompt(question, theme=GreenPassion())
+    if answer is None:
+        return False
+    # Save the headless mode setting
+    params['simulation_headless'] = (answer['headless'] == 'Yes')
+    print(TerminalFormatter.color_text(f"Headless mode set to: {answer['headless']}", color='green'))
+    return True

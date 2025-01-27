@@ -372,7 +372,10 @@ def robot_display(platform, params: Params, args):
         nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
         bash_file = f'{nanosaur_ws_path}/install/setup.bash'
         print(TerminalFormatter.color_text(f"Display the robot {robot.name}", color='green'))
-        subprocess.run(f'source {bash_file} && {command}', shell=True, executable='/bin/bash')
+        try:
+            subprocess.run(f'source {bash_file} && {command}', shell=True, executable='/bin/bash')
+        except KeyboardInterrupt:
+            print(TerminalFormatter.color_text("Keyboard interrupt received, stopping robot display", color='yellow'))
         return True
     elif selected_location == 'docker':
         # Run from docker container

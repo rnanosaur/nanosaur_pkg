@@ -340,6 +340,8 @@ def build_env_file(params):
         if 'simulation_tool' in params:
             simulation_tool = params['simulation_tool'].lower().replace(' ', '-')
             env_file.write(f"SIMULATION={simulation_tool}\n")
+        if 'simulation_headless' in params:
+            env_file.write(f"SIMULATION_HEADLESS={params['simulation_headless']}\n")
         # Pass robot ros commands
         env_file.write(f"COMMANDS={robot.config_to_ros()}\n")
 
