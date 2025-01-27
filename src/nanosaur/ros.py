@@ -34,10 +34,12 @@ import tty
 import signal
 import shutil
 import logging
+import yaml
+import urllib.parse
 from python_on_whales import docker, DockerException
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import get_nanosaur_home
-from git import Repo, GitCommandError
+from git import Repo, GitCommandError, GitCommandError
 
 # Set up the logger
 logger = logging.getLogger(__name__)
@@ -150,7 +152,60 @@ def run_docker_isaac_ros(workspace_path, auto_commands=[]):
     print(TerminalFormatter.color_text("Dev script finished", color='green'))
 
 
+def rosinstall_reader(workspace_path, rosinstall_path, src_folder="src") -> bool:
+    folder_path = os.path.join(workspace_path, src_folder)
+    if not os.path.exists(folder_path):
+        print(TerminalFormatter.color_text(f"Error: Folder {folder_path} does not exist.", color='red'))
+        return False
+    # Load the YAML file
+    with open(rosinstall_path, 'r') as file:
+        repos = yaml.safe_load(file)
+    # Iterate over the repositories in the YAML file
+    for repo in repos:
+        if git_info := repo.get('git'):
+            # Fetch the details from the YAML
+            local_name = git_info.get('local-name')
+            version = git_info.get('version', 'main')  # Default to 'main' if no version is provided
+            uri = git_info.get('uri')
+
+            # Ensure that local_name is always defined
+            if not local_name:
+                # Extract the repository name from the URI (the last part of the URL)
+                parsed_uri = urllib.parse.urlparse(uri)
+                local_name = os.path.splitext(os.path.basename(parsed_uri.path))[0]
+        # If the repo does not exist, clone it
+        repo_path = os.path.join(folder_path, local_name)
+        print(f"=== {os.path.abspath(local_name)} ({uri}) ===")
+        if not os.path.exists(repo_path):
+            print(f"Cloning {repo_path}...")
+            Repo.clone_from(uri, repo_path, branch=version)
+        else:
+            # Open the existing repo and fetch the latest changes
+            repo_dir = Repo(repo_path)
+            # Fetch the latest changes
+            origin = repo_dir.remotes.origin
+            origin.fetch()
+            # Checkout the specified version (branch or tag)
+            try:
+                repo_dir.git.checkout(version)
+                # Check if there are any modified files
+                if modified_files := repo_dir.git.diff('--name-only'):
+                    print(f"\nAlready on '{version}'")
+                    for file in modified_files.splitlines():
+                        print(TerminalFormatter.color_text(f"M\t{file}", color='yellow'))
+                else:
+                    print(f"\nAlready on '{version}'")
+                print(f"Your branch is up to date with 'origin/{version}'.")
+            except GitCommandError:
+                print(f"Error: Version {version} not found in {local_name}.")
+                return False
+    return True
+
 def run_vcs_import(workspace_path, rosinstall_path, src_folder="src") -> bool:
+    """ 
+    Run the vcs import command to import repositories into a ROS workspace.
+    NOT USED ANYMORE, now we use the rosinstall_reader function.
+    """
     try:
         # Run the command and stream the output live
         process = subprocess.Popen(

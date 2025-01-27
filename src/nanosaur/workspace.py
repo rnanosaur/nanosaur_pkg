@@ -212,7 +212,7 @@ def update(platform, params: utilities.Params, args):
             print(TerminalFormatter.color_text(f"Failed to download {workspace_type}.rosinstall", color='red'))
         if os.path.exists(rosinstall_path):
             print(TerminalFormatter.color_text(f"Found rosinstall file: {rosinstall_path}", bold=True))
-            if not ros.run_vcs_import(nanosaur_home_path, rosinstall_path, src_folder="shared_src"):
+            if not ros.rosinstall_reader(nanosaur_home_path, rosinstall_path, src_folder="shared_src"):
                 return False
         return True
     # Update rosinstall file and run vcs import
@@ -234,7 +234,7 @@ def update(platform, params: utilities.Params, args):
         # run vcs import to sync the workspace
         if os.path.exists(rosinstall_path):
             print(TerminalFormatter.color_text(f"Found rosinstall file: {rosinstall_path}", bold=True))
-            if not ros.run_vcs_import(workspace_path, rosinstall_path):
+            if not ros.rosinstall_reader(workspace_path, rosinstall_path):
                 return False
         return True
 
