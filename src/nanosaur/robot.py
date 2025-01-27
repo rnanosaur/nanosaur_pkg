@@ -118,10 +118,7 @@ def wizard(platform, params: Params, args):
     robot = Robot()
     robot.simulation = device_type == 'desktop'
     RobotList.add_robot(params, robot, save=False)
-    # Run the robot configuration wizard
-    for func in functions_list:
-        if not func(platform, params, args):
-            return False
+    return all(func(platform, params, args) for func in functions_list)
 
 
 def robot_set_name(platform, params: Params, args):

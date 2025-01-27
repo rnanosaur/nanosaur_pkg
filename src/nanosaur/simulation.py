@@ -126,7 +126,7 @@ def simulation_info(platform, params: Params, verbose):
     print(TerminalFormatter.color_text("Simulation:", bold=True))
     if 'simulation_tool' in params:
         isaac_sim_version = ""
-        if 'isaac_sim_path' in params and params['simulation_tool'] == 'isaac-sim':
+        if 'isaac_sim_path' in params and params['simulation_tool'] == 'isaac-sim' and params['isaac_sim_path']:
             isaac_sim_version = params['isaac_sim_path'].split("isaac-sim-")[-1]  # Extract version after "isaac-sim-"
         text_message = f"{TerminalFormatter.color_text('   selected:', bold=True)} {params['simulation_tool']} {isaac_sim_version}"
         print(text_message)
@@ -283,9 +283,6 @@ def simulation_set(platform, params: Params, args):
         simulation_tools.pop('gazebo', None)
     # Find all installed Isaac Sim versions
     isaac_sim_list = find_all_isaac_sim()
-    # Remove Isaac Sim from the list if no versions are found
-    if not isaac_sim_list:
-        simulation_tools.pop('isaac-sim', None)
     # Get the version of Isaac Sim if it is already set
     version = None
     if 'isaac_sim_path' in params:
@@ -304,7 +301,7 @@ def simulation_set(platform, params: Params, args):
         ),
         inquirer.List(
             'isaac-sim',
-            message="Select Isaac Sim version",
+            message="Select Isaac Sim version for run on host",
             choices=list(isaac_sim_list.keys()),
             default=version,
             ignore=lambda answers: answers['simulation_tool'] != 'Isaac-sim' or not isaac_sim_list

@@ -376,7 +376,7 @@ def get_nanosaur_docker_user(params: Params) -> str:
 
 def get_nanosaur_raw_github_url(params: Params) -> str:
     nanosaur_github_url = params.get('nanosaur_github', NANOSAUR_MAIN_GITHUB_URL)
-    nanosaur_branch = params.get('nanosaur_branch', NANOSAUR_MAIN_BRANCH)
+    nanosaur_branch = params['nanosaur_branch']
     # Replace 'github.com' with 'raw.githubusercontent.com' in the URL
     nanosaur_github_url = nanosaur_github_url.replace('www.github.com', 'raw.githubusercontent.com')
     nanosaur_github_url = nanosaur_github_url.replace('github.com', 'raw.githubusercontent.com')
@@ -412,7 +412,7 @@ def download_file(url, folder_path, file_name, force=False) -> str:
 
     # Check if the file already exists
     if not force and os.path.exists(file_path):
-        print(TerminalFormatter.color_text(f"File '{file_name}' already exists in '{folder_path}'. Skip download", color='yellow'))
+        logger.debug(TerminalFormatter.color_text(f"File '{file_name}' already exists in '{folder_path}'. Skip download", color='yellow'))
         return file_path  # Cancel download
 
     # Send a request to download the file
@@ -423,10 +423,10 @@ def download_file(url, folder_path, file_name, force=False) -> str:
         file_path = os.path.join(folder_path, file_name)
         with open(file_path, 'wb') as file:
             file.write(response.content)
-        print(TerminalFormatter.color_text(f"File '{file_name}' downloaded successfully to '{folder_path}'.", color='green'))
+        logger.debug(TerminalFormatter.color_text(f"File '{file_name}' downloaded successfully to '{folder_path}'.", color='green'))
         return file_path
     else:
-        print(TerminalFormatter.color_text(f"Failed to download file. Status code: {response.status_code}", color='red'))
+        logger.debug(TerminalFormatter.color_text(f"Failed to download file. Status code: {response.status_code}", color='red'))
         return None
 
 

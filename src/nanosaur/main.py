@@ -130,11 +130,15 @@ def info(platform, params: Params, args):
 
 
 def install(platform, params: Params, args):
+    # Initialize the robot configuration if it doesn't exist
+    first_install = 'robots' not in params
+    if first_install and not wizard(platform, params, args):
+        return False
     # Questions to ask the user
     questions = [
         inquirer.List(
             'choice',
-            message="What would you like to install?",
+            message="Select the type of installation to perform",
             choices=[key for key, value in NANOSAUR_INSTALL_OPTIONS_RULES.items() if value['show']],
             ignore=lambda answers: args.name is not None,
         ),
@@ -154,20 +158,18 @@ def install(platform, params: Params, args):
     if answers['confirm'] is False:
         print(TerminalFormatter.color_text("Installation cancelled", color='red'))
         return False
+
     # Get the selected install type
     print(TerminalFormatter.color_text(f"Installing {install_type} workspace...", bold=True))
     if not NANOSAUR_INSTALL_OPTIONS_RULES[install_type]['function'](platform, params, args):
         return False
-    # Initialize the robot configuration if it doesn't exist
-    if 'robots' not in params:
-        wizard(platform, params, args)
     # Set params in maintainer mode
     current_mode = params.get('mode')
     if (
-        current_mode not in NANOSAUR_INSTALL_OPTIONS_RULES
-        or install_type not in NANOSAUR_INSTALL_OPTIONS_RULES[current_mode]
+        install_type not in NANOSAUR_INSTALL_OPTIONS_RULES[current_mode]['rule']
     ):
         params['mode'] = install_type
+    print(TerminalFormatter.color_text(f"Installation of {install_type} workspace complete", color='green'))
     return True
 
 
@@ -230,7 +232,7 @@ def main():
     parser_info.set_defaults(func=info)
 
     # Subcommand: install (hidden if workspace already exists)
-    if 'mode' not in params:
+    if 'mode' not in params or params['mode'] not in ['maintainer']:
         parser_install = subparsers.add_parser('install', help=f"Install nanosaur on your {device_type}")
     else:
         parser_install = subparsers.add_parser('install')

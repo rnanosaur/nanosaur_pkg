@@ -93,7 +93,8 @@ def workspaces_info(params: utilities.Params, verbose: bool):
     def ros_info(params):
         # Print ROS 2 installation path
         ros2_path = ros.get_ros2_path(ROS_DISTRO)
-        ros2_string = TerminalFormatter.color_text(f"ROS 2 {ROS_DISTRO.capitalize()} path:", bold=True)
+        ros2_version_color = TerminalFormatter.color_text(ROS_DISTRO.capitalize(), color='blue', bold=True)
+        ros2_string = TerminalFormatter.color_text(f"ROS 2 {ros2_version_color}:", bold=True)
         print(f"{ros2_string} {TerminalFormatter.clickable_link(ros2_path)}")
         # Print Isaac ROS installation path
         isaac_ros_version = params.get('isaac_ros_branch', ISAAC_ROS_RELEASE)
@@ -245,7 +246,7 @@ def update(platform, params: utilities.Params, args):
     }
     if args.all:
         print(TerminalFormatter.color_text("Updating isaac_ros_common repository", bold=True))
-        isaac_ros_branch = params.get('isaac_ros_branch', ISAAC_ROS_RELEASE)
+        isaac_ros_branch = params['isaac_ros_branch']
         ros.manage_isaac_ros_common_repo(nanosaur_home_path, isaac_ros_branch, args.force)
         print(TerminalFormatter.color_text("Updating all workspaces", bold=True))
         update_shared_workspace(args.force)
@@ -258,7 +259,7 @@ def update(platform, params: utilities.Params, args):
         return False
     # Update the workspace
     print(TerminalFormatter.color_text("Updating isaac_ros_common repository", bold=True))
-    isaac_ros_branch = params.get('isaac_ros_branch', ISAAC_ROS_RELEASE)
+    isaac_ros_branch = params['isaac_ros_branch']
     ros.manage_isaac_ros_common_repo(nanosaur_home_path, isaac_ros_branch, args.force)
     print(TerminalFormatter.color_text(f"Updating {workspace}", bold=True))
     if action := workspace_actions.get(workspace):
@@ -568,6 +569,8 @@ def clean_workspace(nanosaur_ws_name) -> bool:
 def create_simple(platform, params: utilities.Params, args) -> bool:
     # Create the Nanosaur home folder
     nanosaur_home_path = utilities.create_nanosaur_home()
+    # Store nanosaur distro and Isaac ROS distro
+    params['nanosaur_branch'] = params.get('nanosaur_branch', utilities.NANOSAUR_MAIN_BRANCH)
     # Determine the device type
     workspace_type = "robot" if platform['Machine'] == 'jetson' else "simulation"
     docker_compose = f"docker-compose.{workspace_type}.yml"
@@ -584,6 +587,8 @@ def create_developer_workspace(platform, params: utilities.Params, args, passwor
     create_simple(platform, params, args)
     # Create the Nanosaur home folder
     nanosaur_home_path = utilities.create_nanosaur_home()
+    # Store nanosaur distro and Isaac ROS distro
+    params['isaac_ros_branch'] = params.get('isaac_ros_branch', ISAAC_ROS_RELEASE)
     # Create the shared source folder
     create_shared_workspace()
     # Create developer workspace
@@ -604,6 +609,9 @@ def create_maintainer_workspace(platform, params: utilities.Params, args, passwo
     device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
     # Create the Nanosaur home folder
     nanosaur_home_path = utilities.create_nanosaur_home()
+    # Store nanosaur distro and Isaac ROS distro
+    params['nanosaur_branch'] = params.get('nanosaur_branch', utilities.NANOSAUR_MAIN_BRANCH)
+    params['isaac_ros_branch'] = params.get('isaac_ros_branch', ISAAC_ROS_RELEASE)
     # Create the shared source folder
     create_shared_workspace()
     if device_type == "robot" or args.all:
