@@ -37,8 +37,6 @@ logger = logging.getLogger(__name__)
 
 def docker_info(platform):
     """Print Docker information."""
-    # Determine the device type
-    device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
     # Print docker information
     version_info = docker.version()
     print(f"{TerminalFormatter.color_text('   Docker version:', bold=True)} {version_info.client.version}")

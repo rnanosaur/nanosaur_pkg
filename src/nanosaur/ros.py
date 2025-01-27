@@ -39,7 +39,7 @@ import urllib.parse
 from python_on_whales import docker, DockerException
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import get_nanosaur_home
-from git import Repo, GitCommandError, GitCommandError
+from git import Repo, GitCommandError
 
 # Set up the logger
 logger = logging.getLogger(__name__)
@@ -203,7 +203,7 @@ def rosinstall_reader(workspace_path, rosinstall_path, src_folder="src") -> bool
 
 
 def run_vcs_import(workspace_path, rosinstall_path, src_folder="src") -> bool:
-    """ 
+    """
     Run the vcs import command to import repositories into a ROS workspace.
     NOT USED ANYMORE, now we use the rosinstall_reader function.
     """
