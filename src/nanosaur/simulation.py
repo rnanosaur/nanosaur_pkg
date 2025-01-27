@@ -146,7 +146,7 @@ def simulation_info(platform, params: Params, verbose):
     print(TerminalFormatter.color_text("Simulation:", bold=True))
     if 'simulation_tool' in params:
         print_simulation_tool()
-            
+
     elif platform['Machine'] != 'aarch64':
         print(TerminalFormatter.color_text("   No simulation tool selected", color='red'))
 
