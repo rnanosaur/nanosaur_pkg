@@ -96,7 +96,7 @@ def workspaces_info(params: utilities.Params, verbose: bool):
         ros2_version_color = TerminalFormatter.color_text(ROS_DISTRO.capitalize(), color='blue', bold=True)
         ros2_string = TerminalFormatter.color_text(f"ROS 2 {ros2_version_color}:", bold=True)
         version = TerminalFormatter.clickable_link(ros2_path) if ros2_path else TerminalFormatter.color_text('Not installed', color='red')
-        print(f"{ros2_string}: {version}")
+        print(f"{ros2_string} {version}")
         # Print Isaac ROS installation path
         isaac_ros_version = params.get('isaac_ros_branch', ISAAC_ROS_RELEASE)
         isaac_ros_string = TerminalFormatter.color_text("Isaac ROS:", bold=True)
@@ -114,6 +114,7 @@ def workspaces_info(params: utilities.Params, verbose: bool):
         print(TerminalFormatter.color_text("No workspaces installed", bold=True))
     # Print ROS 2 and Isaac ROS information
     if verbose:
+        print()
         ros_info(params)
 
 
