@@ -89,7 +89,7 @@ def get_starting_location(params: utilities.Params) -> str:
 
 def workspaces_info(params: utilities.Params, verbose: bool):
     """Print information about the workspaces."""
-    
+
     def ros_info(params):
         # Print ROS 2 installation path
         ros2_path = ros.get_ros2_path(ROS_DISTRO)
@@ -100,7 +100,7 @@ def workspaces_info(params: utilities.Params, verbose: bool):
         isaac_ros_version = params.get('isaac_ros_branch', ISAAC_ROS_RELEASE)
         isaac_ros_string = TerminalFormatter.color_text("Isaac ROS:", bold=True)
         print(f"{isaac_ros_string} {isaac_ros_version}")
-    
+
     # Print installed workspaces
     workspaces = get_workspaces_path(params)
     print()
