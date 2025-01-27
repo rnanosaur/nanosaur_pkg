@@ -26,6 +26,7 @@
 # https://gabrieldemarmiesse.github.io/python-on-whales/
 import os
 import logging
+import subprocess
 from python_on_whales import docker, DockerClient, DockerException
 from nanosaur.utilities import Params, RobotList, get_nanosaur_home, build_env_file
 from nanosaur.prompt_colors import TerminalFormatter
@@ -34,6 +35,61 @@ from nanosaur.prompt_colors import TerminalFormatter
 logger = logging.getLogger(__name__)
 
 
+def docker_info(platform):
+    """Print Docker information."""
+    # Determine the device type
+    device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
+    # Print docker information
+    version_info = docker.version()
+    print(f"{TerminalFormatter.color_text('   Docker version:', bold=True)} {version_info.client.version}")
+    if docker.buildx.is_installed():
+        version = docker.buildx.version().split(' ')[-2]
+        print(f"{TerminalFormatter.color_text('   Docker buildx:', bold=True)} {version}")
+    else:
+        print(f"{TerminalFormatter.color_text('   Docker buildx:', bold=True)} {TerminalFormatter.color_text('not installed', color='red', bold=True)}")
+    if docker.compose.is_installed():
+        version = docker.compose.version().split(' ')[-1]
+        print(f"{TerminalFormatter.color_text('   Docker compose:', bold=True)} {version}")
+    else:
+        print(f"{TerminalFormatter.color_text('   Docker compose:', bold=True)} {TerminalFormatter.color_text('not installed', color='red', bold=True)}")
+
+    if version := check_nvidia_container_cli():
+        print(f"{TerminalFormatter.color_text('   Nvidia container:', bold=True)} {version}")
+    else:
+        print(f"{TerminalFormatter.color_text('   Nvidia container:', bold=True)} {TerminalFormatter.color_text('not installed', color='red', bold=True)}")
+
+
+def is_docker_installed():
+    if not docker.compose.is_installed():
+        print(TerminalFormatter.color_text("Please install Docker and Docker Compose.", color='red'))
+        return False
+    if not check_nvidia_container_cli():
+        print(TerminalFormatter.color_text("Please install Nvidia container CLI.", color='red'))
+        return False
+    return True
+
+def check_nvidia_container_cli():
+    try:
+        # Run the command and capture the output
+        result = subprocess.run(
+            ["nvidia-container-cli", "--version"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+        if result.returncode == 0:
+            return result.stdout.splitlines()[0].split(' ')[-1] # Return the first line of the version string
+        logger.debug(TerminalFormatter.color_text("Error:", color='red'), result.stderr.strip())
+        return None
+
+    except FileNotFoundError:
+        logger.debug(TerminalFormatter.color_text("Error: nvidia-container-cli is not installed or not in the PATH.", color='red'))
+        return None
+    except Exception as e:
+        logger.debug(TerminalFormatter.color_text(f"An unexpected error occurred: {e}", color='red'))
+        return None
+
 def docker_service_run_command(platform, params: Params, service, command=None, name=None, volumes=None):
     """Run a command in the robot container."""
 
@@ -41,11 +97,6 @@ def docker_service_run_command(platform, params: Params, service, command=None, 
         command = []
     if volumes is None:
         volumes = []
-
-    if not docker.compose.is_installed():
-        print(TerminalFormatter.color_text("Please install Docker and Docker Compose before running the simulation.", color='red'))
-        return False
-
     workspace_type = "robot" if platform['Machine'] == 'jetson' else "simulation"
     docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()
@@ -69,11 +120,6 @@ def docker_service_run_command(platform, params: Params, service, command=None, 
 
 def docker_robot_start(platform, params: Params, args):
     """Start the docker container."""
-
-    if not docker.compose.is_installed():
-        print(TerminalFormatter.color_text("Please install Docker and Docker Compose before running the simulation.", color='red'))
-        return False
-
     workspace_type = "robot" if platform['Machine'] == 'jetson' else "simulation"
     docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()
@@ -110,11 +156,6 @@ def docker_robot_start(platform, params: Params, args):
 
 def docker_simulator_start(platform, params: Params, args):
     """Start the simulation tools."""
-
-    if not docker.compose.is_installed():
-        print(TerminalFormatter.color_text("Please install Docker and Docker Compose before running the simulation.", color='red'))
-        return False
-
     workspace_type = "robot" if platform['Machine'] == 'jetson' else "simulation"
     docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()
@@ -146,11 +187,6 @@ def docker_simulator_start(platform, params: Params, args):
 
 def docker_robot_stop(platform, params: Params, args):
     """Stop the docker container."""
-
-    if not docker.compose.is_installed():
-        print(TerminalFormatter.color_text("Please install Docker and Docker Compose before running the simulation.", color='red'))
-        return False
-
     workspace_type = "robot" if platform['Machine'] == 'jetson' else "simulation"
     docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()

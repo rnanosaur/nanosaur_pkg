@@ -33,7 +33,7 @@ from inquirer.themes import GreenPassion
 from jtop import jtop, JtopException
 
 from nanosaur.logger_config import setup_logger
-from nanosaur.docker import docker_robot_start, docker_robot_stop
+from nanosaur.docker import docker_info, is_docker_installed, docker_robot_start, docker_robot_stop
 from nanosaur.robot import parser_robot_menu, wizard
 from nanosaur.simulation import parser_simulation_menu, simulation_info
 from nanosaur.swarm import parser_swarm_menu
@@ -126,10 +126,15 @@ def info(platform, params: Params, args):
         # Print device information
         print(TerminalFormatter.color_text("\nPlatform Information:", bold=True))
         for key, value in platform.items():
-            print(f"  {key}: {value}")
+            print(f"   {TerminalFormatter.color_text(key, bold=True)}: {value}")
+        # Print Docker info
+        docker_info(platform)
 
 
 def install(platform, params: Params, args):
+    # Check minimal requirements
+    if not all([is_docker_installed()]):
+        return False
     # Initialize the robot configuration if it doesn't exist
     first_install = 'robots' not in params
     if first_install and not wizard(platform, params, args):
