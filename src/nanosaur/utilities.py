@@ -53,6 +53,8 @@ ENGINES_CHOICES = ['vslam', 'nvblox', 'apriltag']
 NANOSAUR_CONFIG_FILE_NAME = 'nanosaur.yaml'
 NANOSAUR_HOME_NAME = 'nanosaur'
 NANOSAUR_WEBSITE_URL = 'https://nanosaur.ai'
+NANOSAUR_DISCORD_URL = 'https://discord.gg/rCHgeUpUj9'
+NANOSAUR_INSTAGRAM_URL = 'robo.panther'
 NANOSAUR_MAIN_GITHUB_URL = 'https://github.com/rnanosaur/nanosaur.git'
 NANOSAUR_MAIN_BRANCH = 'nanosaur2'
 
@@ -346,6 +348,10 @@ def package_info(params: Params, verbose: bool):
     # Print version information
     nanosaur_website = TerminalFormatter.clickable_link(NANOSAUR_WEBSITE_URL)
     print(f"{TerminalFormatter.color_text('Nanosaur website:', bold=True)} {nanosaur_website}")
+    nanosaur_discord = TerminalFormatter.clickable_link(NANOSAUR_DISCORD_URL)
+    print(f"{TerminalFormatter.color_text('Nanosaur Discord:', bold=True)} {nanosaur_discord}")
+    nanosaur_instagram = TerminalFormatter.clickable_link(f"https://www.instagram.com/{NANOSAUR_INSTAGRAM_URL}")
+    print(f"{TerminalFormatter.color_text(f'Follow {NANOSAUR_INSTAGRAM_URL}:', bold=True)} {nanosaur_instagram}")
     nanosaur_home_folder = TerminalFormatter.clickable_link(get_nanosaur_home())
     print(f"{TerminalFormatter.color_text('Nanosaur home:', bold=True)} {nanosaur_home_folder}")
     # Print verbose information
@@ -360,6 +366,7 @@ def package_info(params: Params, verbose: bool):
         print(f"{TerminalFormatter.color_text('Nanosaur version (branch):', bold=True)} {nanosaur_branch}")
         print(f"{TerminalFormatter.color_text('Nanosaur package:', bold=True)} {__version__}")
     if verbose:
+        print()
         print_verbose_info(params)
 
 

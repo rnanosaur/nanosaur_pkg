@@ -89,6 +89,17 @@ def get_starting_location(params: utilities.Params) -> str:
 
 def workspaces_info(params: utilities.Params, verbose: bool):
     """Print information about the workspaces."""
+    
+    def ros_info(params):
+        # Print ROS 2 installation path
+        ros2_path = ros.get_ros2_path(ROS_DISTRO)
+        ros2_string = TerminalFormatter.color_text(f"ROS 2 {ROS_DISTRO.capitalize()} path:", bold=True)
+        print(f"{ros2_string} {TerminalFormatter.clickable_link(ros2_path)}")
+        # Print Isaac ROS installation path
+        isaac_ros_version = params.get('isaac_ros_branch', ISAAC_ROS_RELEASE)
+        isaac_ros_string = TerminalFormatter.color_text("Isaac ROS:", bold=True)
+        print(f"{isaac_ros_string} {isaac_ros_version}")
+    
     # Print installed workspaces
     workspaces = get_workspaces_path(params)
     print()
@@ -99,12 +110,9 @@ def workspaces_info(params: utilities.Params, verbose: bool):
             print(f"  {TerminalFormatter.color_text(ws_name, bold=True)}: {TerminalFormatter.clickable_link(ws_path)}")
     elif verbose:
         print(TerminalFormatter.color_text("No workspaces installed", bold=True))
-
+    # Print ROS 2 and Isaac ROS information
     if verbose:
-        # Print ROS 2 installation path
-        ros2_path = ros.get_ros2_path(ROS_DISTRO)
-        ros2_string = TerminalFormatter.color_text(f"ROS 2 {ROS_DISTRO.capitalize()} path:", bold=True)
-        print(f"{ros2_string} {TerminalFormatter.clickable_link(ros2_path)}")
+        ros_info(params)
 
 
 def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:

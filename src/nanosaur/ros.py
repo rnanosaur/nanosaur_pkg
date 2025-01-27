@@ -69,13 +69,13 @@ def run_docker_isaac_ros(workspace_path, auto_commands=[]):
 
     # Get the path to the Isaac ROS common package
     os.chdir(isaac_ros_common_path)
-    # print(f"Changed directory to: {isaac_ros_common_path}")
+    logger.debug(f"Changed directory to: {isaac_ros_common_path}")
 
     # Check if .isaac_ros_common-config exists and remove it
     config_path = os.path.join(isaac_ros_common_path, 'scripts', '.isaac_ros_common-config')
     if os.path.exists(config_path):
         os.remove(config_path)
-        print(TerminalFormatter.color_text(f"Removed existing config file: {config_path}", color='yellow'))
+        logger.debug(TerminalFormatter.color_text(f"Removed existing config file: {config_path}", color='yellow'))
 
     # Save the original terminal settings
     original_termios = termios.tcgetattr(sys.stdin)
