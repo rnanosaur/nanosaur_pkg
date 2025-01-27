@@ -108,9 +108,9 @@ def parser_robot_menu(subparsers: argparse._SubParsersAction, params: Params) ->
 
 def wizard(platform, params: Params, args):
     # Get the device type (robot or desktop)
-    device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
+    device_type = "robot" if platform['Machine'] == 'aarch64' else "desktop"
     # Build the list of functions to run
-    functions_list = [robot_set_name] + [robot_set_simulation] if device_type == 'desktop' else []
+    functions_list = [robot_set_name] + ([robot_set_simulation] if device_type == 'desktop' else [])
     functions_list += [robot_set_domain_id, robot_set_camera, robot_set_lidar, robot_configure_engines]
     # Set new argument to None
     args.new = None

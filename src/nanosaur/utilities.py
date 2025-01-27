@@ -426,7 +426,7 @@ def download_file(url, folder_path, file_name, force=False) -> str:
         logger.debug(TerminalFormatter.color_text(f"File '{file_name}' downloaded successfully to '{folder_path}'.", color='green'))
         return file_path
     else:
-        logger.debug(TerminalFormatter.color_text(f"Failed to download file. Status code: {response.status_code}", color='red'))
+        print(TerminalFormatter.color_text(f"Failed to download file. Status code: {response.status_code}", color='red'))
         return None
 
 

@@ -97,7 +97,7 @@ def docker_service_run_command(platform, params: Params, service, command=None, 
         command = []
     if volumes is None:
         volumes = []
-    workspace_type = "robot" if platform['Machine'] == 'jetson' else "simulation"
+    workspace_type = "robot" if platform['Machine'] == 'aarch64' else "simulation"
     docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()
     # Create the full file path
@@ -120,7 +120,7 @@ def docker_service_run_command(platform, params: Params, service, command=None, 
 
 def docker_robot_start(platform, params: Params, args):
     """Start the docker container."""
-    workspace_type = "robot" if platform['Machine'] == 'jetson' else "simulation"
+    workspace_type = "robot" if platform['Machine'] == 'aarch64' else "simulation"
     docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()
     # Create the full file path
@@ -156,7 +156,7 @@ def docker_robot_start(platform, params: Params, args):
 
 def docker_simulator_start(platform, params: Params, args):
     """Start the simulation tools."""
-    workspace_type = "robot" if platform['Machine'] == 'jetson' else "simulation"
+    workspace_type = "robot" if platform['Machine'] == 'aarch64' else "simulation"
     docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()
     # Create the full file path
@@ -187,7 +187,7 @@ def docker_simulator_start(platform, params: Params, args):
 
 def docker_robot_stop(platform, params: Params, args):
     """Stop the docker container."""
-    workspace_type = "robot" if platform['Machine'] == 'jetson' else "simulation"
+    workspace_type = "robot" if platform['Machine'] == 'aarch64' else "simulation"
     docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()
     # Create the full file path

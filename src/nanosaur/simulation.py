@@ -130,7 +130,7 @@ def simulation_info(platform, params: Params, verbose):
             isaac_sim_version = params['isaac_sim_path'].split("isaac-sim-")[-1]  # Extract version after "isaac-sim-"
         text_message = f"{TerminalFormatter.color_text('   selected:', bold=True)} {params['simulation_tool']} {isaac_sim_version}"
         print(text_message)
-    elif platform['Machine'] != 'jetson':
+    elif platform['Machine'] != 'aarch64':
         print(TerminalFormatter.color_text("   No simulation tool selected", color='red'))
 
     # Check if Isaac Sim is installed

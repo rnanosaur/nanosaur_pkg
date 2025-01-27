@@ -95,7 +95,8 @@ def workspaces_info(params: utilities.Params, verbose: bool):
         ros2_path = ros.get_ros2_path(ROS_DISTRO)
         ros2_version_color = TerminalFormatter.color_text(ROS_DISTRO.capitalize(), color='blue', bold=True)
         ros2_string = TerminalFormatter.color_text(f"ROS 2 {ros2_version_color}:", bold=True)
-        print(f"{ros2_string} {TerminalFormatter.clickable_link(ros2_path)}")
+        version = TerminalFormatter.clickable_link(ros2_path) if ros2_path else TerminalFormatter.color_text('Not installed', color='red')
+        print(f"{ros2_string}: {version}")
         # Print Isaac ROS installation path
         isaac_ros_version = params.get('isaac_ros_branch', ISAAC_ROS_RELEASE)
         isaac_ros_string = TerminalFormatter.color_text("Isaac ROS:", bold=True)
@@ -231,6 +232,7 @@ def update(platform, params: utilities.Params, args):
                 print(TerminalFormatter.color_text(f"Update {workspace_type}.rosinstall", bold=True))
             else:
                 print(TerminalFormatter.color_text(f"Failed to download {workspace_type}.rosinstall", color='red'))
+                return False
         # run vcs import to sync the workspace
         if os.path.exists(rosinstall_path):
             print(TerminalFormatter.color_text(f"Found rosinstall file: {rosinstall_path}", bold=True))
@@ -424,7 +426,7 @@ def deploy(platform, params: utilities.Params, args):
     def deploy_perception(image_name):
         """ Deploy the perception workspace """
         # determine the device type
-        device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
+        device_type = "robot" if platform['Machine'] == 'aarch64' else "desktop"
         # Get the path to the perception workspace
         perception_ws_path = get_workspace_path(params, 'ws_perception_name')
         # Get the release tag name
@@ -572,14 +574,13 @@ def create_simple(platform, params: utilities.Params, args) -> bool:
     # Store nanosaur distro and Isaac ROS distro
     params['nanosaur_branch'] = params.get('nanosaur_branch', utilities.NANOSAUR_MAIN_BRANCH)
     # Determine the device type
-    workspace_type = "robot" if platform['Machine'] == 'jetson' else "simulation"
+    workspace_type = "robot" if platform['Machine'] == 'aarch64' else "simulation"
     docker_compose = f"docker-compose.{workspace_type}.yml"
     # Get the Nanosaur home folder and branch
     nanosaur_raw_url = utilities.get_nanosaur_raw_github_url(params)
     url = f"{nanosaur_raw_url}/nanosaur/compose/{docker_compose}"
     # Download the docker-compose file
-    utilities.download_file(url, nanosaur_home_path, docker_compose, force=args.force)
-    return True
+    return utilities.download_file(url, nanosaur_home_path, docker_compose, force=args.force) is not None
 
 
 def create_developer_workspace(platform, params: utilities.Params, args, password=None) -> bool:
@@ -606,7 +607,7 @@ def create_maintainer_workspace(platform, params: utilities.Params, args, passwo
     # Check if ROS 2 is installed
     ros2_installed = ros.get_ros2_path(ROS_DISTRO)
     # determine the device type
-    device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
+    device_type = "robot" if platform['Machine'] == 'aarch64' else "desktop"
     # Create the Nanosaur home folder
     nanosaur_home_path = utilities.create_nanosaur_home()
     # Store nanosaur distro and Isaac ROS distro
@@ -624,6 +625,17 @@ def create_maintainer_workspace(platform, params: utilities.Params, args, passwo
     # Make the perception workspace
     create_workspace(nanosaur_home_path, params.get('ws_perception_name', DEFAULT_WORKSPACE_PERCEPTION))
 
+    # set all workspaces to be updated
+    args.all = True
+    if args.force:
+        clean(platform, params, args)
+    # Update all workspaces
+    if not update(platform, params, args):
+        return False
+    # Build all workspaces
+    if ros2_installed is not None:
+        build(platform, params, args)
+
     # Check if docker-compose files exist
     def handle_docker_compose_file(docker_compose_file):
         # Check if the docker-compose file exists
@@ -634,25 +646,22 @@ def create_maintainer_workspace(platform, params: utilities.Params, args, passwo
             print(TerminalFormatter.color_text(f"Renamed existing {docker_compose_file} to {old_path}", color='yellow'))
         # Create a symlink to the new docker-compose file
         new_path = os.path.join(nanosaur_home_path, 'shared_src', 'nanosaur', 'nanosaur', 'compose', docker_compose_file)
+        if not os.path.exists(new_path):
+            print(TerminalFormatter.color_text(f"Could not find {docker_compose_file} in {new_path}", color='red'))
+            return False
         if os.path.exists(docker_compose_path):
             os.remove(docker_compose_path)
         os.symlink(new_path, docker_compose_path)
         print(TerminalFormatter.color_text(f"Created symlink for {docker_compose_file} to {new_path}", color='green'))
+        return True
 
     # Check if docker-compose files exist
     if device_type == "robot" or args.all:
-        handle_docker_compose_file('docker-compose.robot.yml')
+        if not handle_docker_compose_file('docker-compose.robot.yml'):
+            return False
     if device_type == "desktop" or args.all:
-        handle_docker_compose_file('docker-compose.simulation.yml')
+        if not handle_docker_compose_file('docker-compose.simulation.yml'):
+            return False
 
-    # set all workspaces to be updated
-    args.all = True
-    if args.force:
-        clean(platform, params, args)
-    # Update all workspaces
-    update(platform, params, args)
-    # Build all workspaces
-    if ros2_installed is not None:
-        build(platform, params, args)
     return True
 # EOF

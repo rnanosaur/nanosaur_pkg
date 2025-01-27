@@ -88,7 +88,7 @@ DEFAULT_PARAMS = {}
 
 def info(platform, params: Params, args):
     """Print version information."""
-    device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
+    device_type = "robot" if platform['Machine'] == 'aarch64' else "desktop"
     # Print version information
     package_info(params, args.verbose)
     # Print mode if it exists in params
@@ -161,11 +161,12 @@ def install(platform, params: Params, args):
         return False
     # Check if the user wants to continue
     if answers['confirm'] is False:
-        print(TerminalFormatter.color_text("Installation cancelled", color='red'))
+        print(TerminalFormatter.color_text("Installation cancelled", color='yellow'))
         return False
     # Get the selected install type
     print(TerminalFormatter.color_text(f"Installing {install_type} workspace...", bold=True))
     if not NANOSAUR_INSTALL_OPTIONS_RULES[install_type]['function'](platform, params, args):
+        print(TerminalFormatter.color_text(f"Installation of {install_type} failed", color='red'))
         return False
     # Set params in maintainer mode
     current_mode = params.get('mode', 'simple')
@@ -211,7 +212,7 @@ def main():
         sys.exit(1)
 
     # Determine the device type
-    device_type = "robot" if platform['Machine'] == 'jetson' else "desktop"
+    device_type = "robot" if platform['Machine'] == 'aarch64' else "desktop"
 
     # Create the argument parser
     parser = argparse.ArgumentParser(
