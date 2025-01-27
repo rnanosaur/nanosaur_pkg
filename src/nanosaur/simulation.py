@@ -72,7 +72,7 @@ def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Param
     parser_simulation_set = simulation_subparsers.add_parser(
         'set', help="Select the simulator you want to use")
     parser_simulation_set.set_defaults(func=simulation_set)
-    
+
     # Add simulation headless subcommand
     parser_simulation_headless = simulation_subparsers.add_parser(
         'headless', help="Set the simulation in headless mode")
@@ -327,6 +327,7 @@ def simulation_set(platform, params: Params, args):
     else:
         print(TerminalFormatter.color_text(f"Selected {answers['simulation_tool']}", color='green'))
     return True
+
 
 def simulation_set_headless(platform, params: Params, args):
     # Get the current simulation tool
