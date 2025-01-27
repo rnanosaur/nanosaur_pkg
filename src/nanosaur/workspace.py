@@ -658,6 +658,7 @@ def create_maintainer_workspace(platform, params: utilities.Params, args, passwo
         return True
 
     # Check if docker-compose files exist
+    # sourcery skip: merge-nested-ifs
     if device_type == "robot" or args.all:
         if not handle_docker_compose_file('docker-compose.robot.yml'):
             return False
