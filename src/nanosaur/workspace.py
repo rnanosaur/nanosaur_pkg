@@ -64,6 +64,7 @@ NANOSAUR_DOCKER_PACKAGE_PERCEPTION = "perception"
 
 NANOSAUR_SIMULATION_IMAGES = ['gazebo', 'isaac-sim', 'robot']
 
+
 def get_starting_location(params: utilities.Params) -> str:
     """Prompt the user to select the location to run the command."""
     debug_mode = None
