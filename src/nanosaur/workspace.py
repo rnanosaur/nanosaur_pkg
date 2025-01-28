@@ -62,6 +62,7 @@ NANOSAUR_DOCKER_PACKAGE_ROBOT = "nanosaur"
 NANOSAUR_DOCKER_PACKAGE_SIMULATION = "simulation"
 NANOSAUR_DOCKER_PACKAGE_PERCEPTION = "perception"
 
+NANOSAUR_SIMULATION_IMAGES = ['gazebo', 'isaac-sim', 'robot']
 
 def get_starting_location(params: utilities.Params) -> str:
     """Prompt the user to select the location to run the command."""
@@ -328,7 +329,7 @@ def debug(platform, params: utilities.Params, args):
             inquirer.List(
                 'launcher',
                 message="Select a launcher to debug",
-                choices=['gazebo', 'isaac-sim', 'robot'],
+                choices=NANOSAUR_SIMULATION_IMAGES,
                 ignore=lambda answers: args.image_name is not None,
             ),
             inquirer.List(
@@ -403,13 +404,13 @@ def deploy(platform, params: utilities.Params, args):
         """ Deploy the simulation workspace """
         # Get the selected image to deploy
         if args.all:
-            image_list = ['gazebo', 'isaac-sim', 'robot']
+            image_list = NANOSAUR_SIMULATION_IMAGES
         elif image_name is None:
             questions = [
                 inquirer.Checkbox(
                     'image',
                     message="Select a simulation you want deploy",
-                    choices=['gazebo', 'isaac-sim', 'robot']
+                    choices=NANOSAUR_SIMULATION_IMAGES
                 )
             ]
             answers = inquirer.prompt(questions)
