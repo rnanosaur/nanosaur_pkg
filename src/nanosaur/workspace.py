@@ -64,6 +64,21 @@ NANOSAUR_DOCKER_PACKAGE_PERCEPTION = "perception"
 
 NANOSAUR_SIMULATION_IMAGES = ['gazebo', 'isaac-sim', 'robot']
 
+NANOSAUR_DOCKER_PACKAGE = {
+    'simulation': {
+        'x86_64': ['simulation:gazebo', 'simulation:isaac-sim', 'nanosaur:simulation'],
+        'aarch64': [],
+    },
+    'perception': {
+        'x86_64': ['perception:simulation'],
+        'aarch64': ['perception:realsense', 'perception:zed'],
+    },
+    'robot': {
+        'x86_64': [],
+        'aarch64': ['nanosaur:robot'],
+    }
+}
+
 
 def get_starting_location(params: utilities.Params) -> str:
     """Prompt the user to select the location to run the command."""
