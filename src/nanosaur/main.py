@@ -32,6 +32,7 @@ import logging
 from inquirer.themes import GreenPassion
 from jtop import jtop, JtopException
 
+from nanosaur import __version__
 from nanosaur.logger_config import setup_logger
 from nanosaur.docker import docker_info, is_docker_installed, docker_robot_start, docker_robot_stop
 from nanosaur.robot import parser_robot_menu, wizard
@@ -231,6 +232,7 @@ def main():
     parser = argparse.ArgumentParser(
         description=f"Nanosaur CLI - A command-line interface for the {nanosaur_green} robot.")
     # Add arguments
+    parser.add_argument('--version', '-v', action='version', version=__version__)
     parser.add_argument('--mode', type=str, help="Specify the mode of operation")
     if ros2_installed is not None:
         parser.add_argument('--default-debug', '-dd', type=str, choices=['host', 'docker'], help="Select the debug mode if on host or in docker")
