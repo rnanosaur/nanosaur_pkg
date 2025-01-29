@@ -58,11 +58,7 @@ DEFAULT_WORKSPACE_SIMULATION = 'simulation_ws'
 DEFAULT_WORKSPACE_ROBOT = 'robot_ws'
 DEFAULT_WORKSPACE_DEVELOPER = 'ros_ws'
 
-NANOSAUR_DOCKER_PACKAGE_ROBOT = "nanosaur"
-NANOSAUR_DOCKER_PACKAGE_SIMULATION = "simulation"
-NANOSAUR_DOCKER_PACKAGE_PERCEPTION = "perception"
-
-NANOSAUR_SIMULATION_IMAGES = ['gazebo', 'isaac-sim', 'robot']
+NANOSAUR_SIMULATION_IMAGES = ['gazebo', 'isaac-sim', 'nanosaur']
 
 NANOSAUR_DOCKER_PACKAGE = {
     'simulation': {
@@ -370,7 +366,7 @@ def debug(platform, params: utilities.Params, args):
         # Debug the simulation workspace
         if selected_location == 'host':
             # Debug locally
-            if selected_launcher == 'robot':
+            if selected_launcher == 'nanosaur':
                 return simulation_robot_start_debug(params)
             isaac_sim_path = params.get('isaac_sim_path', None)
             headless = params.get('simulation_headless', False)
@@ -442,19 +438,19 @@ def deploy(platform, params: utilities.Params, args):
         # Build Gazebo sim docker
         for image in image_list:
             if image == 'gazebo':
-                tag_image = f"{nanosaur_docker_user}/{NANOSAUR_DOCKER_PACKAGE_SIMULATION}:gazebo"
+                tag_image = f"{nanosaur_docker_user}/simulation:gazebo"
                 dockerfile_path = f"{nanosaur_simulations_path}/Dockerfile.gazebo"
                 if not ros.deploy_docker_image(dockerfile_path, tag_image):
                     return False
             # Build Isaac Sim docker
             if image == 'isaac-sim':
-                tag_image = f"{nanosaur_docker_user}/{NANOSAUR_DOCKER_PACKAGE_SIMULATION}:isaac-sim"
+                tag_image = f"{nanosaur_docker_user}/simulation:isaac-sim"
                 dockerfile_path = f"{nanosaur_simulations_path}/Dockerfile.isaac-sim"
                 if not ros.deploy_docker_image(dockerfile_path, tag_image):
                     return False
             # Build the Docker image for nanosaur bridge
-            if image == 'robot':
-                tag_image = f"{nanosaur_docker_user}/{NANOSAUR_DOCKER_PACKAGE_ROBOT}:simulation"
+            if image == 'nanosaur':
+                tag_image = f"{nanosaur_docker_user}/nanosaur:simulation"
                 dockerfile_path = f"{nanosaur_simulations_path}/Dockerfile.nanosaur"
                 if not ros.deploy_docker_image(dockerfile_path, tag_image):
                     return False
@@ -467,7 +463,7 @@ def deploy(platform, params: utilities.Params, args):
         # Get the path to the perception workspace
         perception_ws_path = get_workspace_path(params, 'ws_perception_name')
         # Get the release tag name
-        release_tag_name = f"{nanosaur_docker_user}/{NANOSAUR_DOCKER_PACKAGE_PERCEPTION}"
+        release_tag_name = f"{nanosaur_docker_user}/perception"
         # Deploy the perception workspace
         if device_type == "robot":
             # Deploy the perception workspace for each camera
