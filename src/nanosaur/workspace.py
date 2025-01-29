@@ -433,25 +433,25 @@ def deploy(platform, params: utilities.Params, args):
             image_list = [image_name]
         # Get the path to the simulation workspace
         simulation_ws_path = get_workspace_path(params, 'ws_simulation_name')
-        # Get the path to the nanosaur_simulations package
-        nanosaur_simulations_path = os.path.join(simulation_ws_path, 'src', 'nanosaur_simulations')
+        # Get the path to the nanosaur_simulation package
+        nanosaur_simulation_path = os.path.join(simulation_ws_path, 'src', 'nanosaur_simulation')
         # Build Gazebo sim docker
         for image in image_list:
             if image == 'gazebo':
                 tag_image = f"{nanosaur_docker_user}/simulation:gazebo"
-                dockerfile_path = f"{nanosaur_simulations_path}/Dockerfile.gazebo"
+                dockerfile_path = f"{nanosaur_simulation_path}/Dockerfile.gazebo"
                 if not ros.deploy_docker_image(dockerfile_path, tag_image):
                     return False
             # Build Isaac Sim docker
             if image == 'isaac-sim':
                 tag_image = f"{nanosaur_docker_user}/simulation:isaac-sim"
-                dockerfile_path = f"{nanosaur_simulations_path}/Dockerfile.isaac-sim"
+                dockerfile_path = f"{nanosaur_simulation_path}/Dockerfile.isaac-sim"
                 if not ros.deploy_docker_image(dockerfile_path, tag_image):
                     return False
             # Build the Docker image for nanosaur bridge
             if image == 'nanosaur':
                 tag_image = f"{nanosaur_docker_user}/nanosaur:simulation"
-                dockerfile_path = f"{nanosaur_simulations_path}/Dockerfile.nanosaur"
+                dockerfile_path = f"{nanosaur_simulation_path}/Dockerfile.nanosaur"
                 if not ros.deploy_docker_image(dockerfile_path, tag_image):
                     return False
         return True
