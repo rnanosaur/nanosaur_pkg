@@ -226,9 +226,10 @@ def main():
     # Determine the device type
     device_type = "robot" if platform['Machine'] == 'aarch64' else "desktop"
 
+    nanosaur_green = TerminalFormatter.color_text("nanosaur", color='green', bold=True)
     # Create the argument parser
     parser = argparse.ArgumentParser(
-        description="Nanosaur CLI - A command-line interface for the Nanosaur package.")
+        description=f"Nanosaur CLI - A command-line interface for the {nanosaur_green} robot.")
     # Add arguments
     parser.add_argument('--mode', type=str, help="Specify the mode of operation")
     if ros2_installed is not None:
@@ -293,6 +294,8 @@ def main():
 
     # Set up logger with the specified level
     log_level = getattr(logging, args.log_level.upper(), logging.INFO)
+    if 'mode' in params and params['mode'] in ['Raffo']:
+        log_level = logging.DEBUG
     setup_logger(level=log_level)
     # Get the logger for the main script
     logging.getLogger(__name__)
