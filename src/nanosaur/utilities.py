@@ -55,6 +55,7 @@ NANOSAUR_HOME_NAME = 'nanosaur'
 NANOSAUR_WEBSITE_URL = 'https://nanosaur.ai'
 NANOSAUR_SPONSOR_URL = 'https://github.com/sponsors/rbonghi'
 NANOSAUR_DISCORD_URL = 'https://discord.gg/rCHgeUpUj9'
+NANOSAUR_GITHUB_ORG_URL = 'https://github.com/rnanosaur'
 NANOSAUR_INSTAGRAM_URL = 'robo.panther'
 NANOSAUR_MAIN_GITHUB_URL = 'https://github.com/rnanosaur/nanosaur.git'
 NANOSAUR_MAIN_BRANCH = 'nanosaur2'
@@ -362,9 +363,11 @@ def package_info(params: Params, verbose: bool):
     # Print verbose information
 
     def print_verbose_info(params):
+        nanosaur_github_url = TerminalFormatter.clickable_link(NANOSAUR_GITHUB_ORG_URL)
+        print(f"{TerminalFormatter.color_text(' 🐱 GitHub:', bold=True)} {nanosaur_github_url}")
         nanosaur_docker_user = get_nanosaur_docker_user(params)
         nanosaur_docker_home = TerminalFormatter.clickable_link(f"https://hub.docker.com/u/{nanosaur_docker_user}")
-        print(f"{TerminalFormatter.color_text('Nanosaur Docker Hub:', bold=True)} {nanosaur_docker_home}")
+        print(f"{TerminalFormatter.color_text(' 🐳 Docker Hub:', bold=True)} {nanosaur_docker_home}")
         config_file_path = TerminalFormatter.clickable_link(Params.get_params_file())
         print(f"{TerminalFormatter.color_text('Nanosaur config file:', bold=True)} {config_file_path}")
         nanosaur_branch = params.get('nanosaur_branch', NANOSAUR_MAIN_BRANCH)
