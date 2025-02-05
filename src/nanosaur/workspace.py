@@ -28,7 +28,6 @@ import os
 import yaml
 import argparse
 import logging
-from nanosaur import __version__
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur import ros
 from nanosaur.docker import docker_service_run_command
@@ -55,7 +54,7 @@ NANOSAUR_DISTRO_MAP = {
         'isaac_ros_release': 'release-3.2',
         'isaac_ros_distro': 'ros2_humble',
         'isaac_sim': '4.5.0',
-        },
+    },
 }
 NANOSAUR_CURRENT_DISTRO = '2.0.0'
 
@@ -91,7 +90,7 @@ def get_starting_location(params: utilities.Params) -> str:
     nanosaur_version = params['nanosaur_version']
     # Get the ROS distro name
     ros_distro_name = NANOSAUR_DISTRO_MAP[nanosaur_version]['ros']
-    
+
     debug_mode = None
     if 'ws_debug' in params:
         debug_mode = params['ws_debug']
@@ -318,6 +317,7 @@ def build(platform, params: utilities.Params, args, password=None):
     # Get the ROS distro name
     ros_distro_name = NANOSAUR_DISTRO_MAP[nanosaur_version]['ros']
     # Get the build action
+
     def get_build_action(workspace_name_key):
         workspace_path = get_workspace_path(params, workspace_name_key)
         if not workspace_path:
