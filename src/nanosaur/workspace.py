@@ -673,6 +673,7 @@ def create_developer_workspace(platform, params: utilities.Params, args, passwor
 def create_maintainer_workspace(platform, params: utilities.Params, args, password=None) -> bool:
     # Get the nanosaur version
     nanosaur_version = params.get('nanosaur_version', NANOSAUR_CURRENT_DISTRO)
+    params['nanosaur_version'] = nanosaur_version
     # Get the ROS distro name
     ros_distro_name = NANOSAUR_DISTRO_MAP[nanosaur_version]['ros']
     # Check if ROS 2 is installed
