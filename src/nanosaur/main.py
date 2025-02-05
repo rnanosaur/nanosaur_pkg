@@ -48,7 +48,9 @@ from nanosaur.workspace import (
     create_developer_workspace,
     create_maintainer_workspace,
     get_workspaces_path,
-    ROS_DISTRO,
+    requirements_info,
+    NANOSAUR_DISTRO_MAP,
+    NANOSAUR_CURRENT_DISTRO,
 )
 
 
@@ -93,6 +95,9 @@ def info(platform, params: Params, args):
     device_type = "robot" if platform['Machine'] == 'aarch64' else "desktop"
     # Print version information
     package_info(params, args.verbose)
+    # Requirements information
+    print()
+    requirements_info(params, args.verbose)
     # Print mode if it exists in params
     if 'mode' in params:
         mode = params['mode']
@@ -209,8 +214,15 @@ def robot_control(params, subparsers):
 def main():
     # Load the parameters
     params = Params.load(DEFAULT_PARAMS)
+    # Get current nanosaur version
+    nanosaur_version = params.get('nanosaur_version', NANOSAUR_CURRENT_DISTRO)
+    if nanosaur_version not in NANOSAUR_DISTRO_MAP:
+        print(TerminalFormatter.color_text(f"Error: {nanosaur_version} is not a valid Nanosaur version", color='red'))
+        sys.exit(1)
+    # Get the ROS distro
+    ros_distro = NANOSAUR_DISTRO_MAP[nanosaur_version]['ros']
     # Get the ROS 2 installation path if available
-    ros2_installed = get_ros2_path(ROS_DISTRO)
+    ros2_installed = get_ros2_path(ros_distro)
 
     # Extract device information with jtop
     try:
@@ -271,7 +283,7 @@ def main():
     # Subcommand: workspace (with a sub-menu for workspace operations)
     if get_workspaces_path(params):
         # Add workspace subcommand
-        parser_workspace = parser_workspace_menu(subparsers)
+        parser_workspace = parser_workspace_menu(subparsers, params)
 
     # Subcommand: simulation (with a sub-menu for simulation types)
     if device_type == 'desktop' and 'mode' in params:

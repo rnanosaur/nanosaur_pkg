@@ -30,7 +30,6 @@ import pexpect
 import getpass
 import requests
 import logging
-from nanosaur import __version__
 from nanosaur.prompt_colors import TerminalFormatter
 
 # Set up the logger
@@ -58,7 +57,6 @@ NANOSAUR_DISCORD_URL = 'https://discord.gg/rCHgeUpUj9'
 NANOSAUR_GITHUB_ORG_URL = 'https://github.com/rnanosaur'
 NANOSAUR_INSTAGRAM_URL = 'robo.panther'
 NANOSAUR_MAIN_GITHUB_URL = 'https://github.com/rnanosaur/nanosaur.git'
-NANOSAUR_MAIN_BRANCH = 'nanosaur2'
 
 NANOSAUR_DOCKER_USER = 'nanosaur'
 
@@ -370,11 +368,7 @@ def package_info(params: Params, verbose: bool):
         print(f"{TerminalFormatter.color_text(' 🐳 Docker Hub:', bold=True)} {nanosaur_docker_home}")
         config_file_path = TerminalFormatter.clickable_link(Params.get_params_file())
         print(f"{TerminalFormatter.color_text('Nanosaur config file:', bold=True)} {config_file_path}")
-        nanosaur_branch = params.get('nanosaur_branch', NANOSAUR_MAIN_BRANCH)
-        print(f"{TerminalFormatter.color_text('Nanosaur version (branch):', bold=True)} {nanosaur_branch}")
-        print(f"{TerminalFormatter.color_text('Nanosaur package:', bold=True)} {__version__}")
     if verbose:
-        print()
         print_verbose_info(params)
 
 

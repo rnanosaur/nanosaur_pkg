@@ -28,6 +28,7 @@ import os
 import yaml
 import argparse
 import logging
+from nanosaur import __version__
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur import ros
 from nanosaur.docker import docker_service_run_command
@@ -47,9 +48,17 @@ COLCON_DEFAULTS = {
     }
 }
 
-ROS_DISTRO = "humble"
-ISAAC_ROS_RELEASE = "release-3.2"
-ISAAC_ROS_DISTRO_SUFFIX = "ros2_humble"
+NANOSAUR_DISTRO_MAP = {
+    '2.0.0': {
+        'nanosaur_branch': 'nanosaur2',
+        'ros': 'humble',
+        'isaac_ros_release': 'release-3.2',
+        'isaac_ros_distro': 'ros2_humble',
+        'isaac_sim': '4.5.0',
+        },
+}
+NANOSAUR_CURRENT_DISTRO = '2.0.0'
+
 ISAAC_ROS_DOCKER_CAMERA_LIST = ["realsense", "zed"]
 NANOSAUR_DOCKERFILE_SUFFIX = "nanosaur"
 
@@ -78,12 +87,17 @@ NANOSAUR_DOCKER_PACKAGE = {
 
 def get_starting_location(params: utilities.Params) -> str:
     """Prompt the user to select the location to run the command."""
+    # Get the nanosaur version
+    nanosaur_version = params['nanosaur_version']
+    # Get the ROS distro name
+    ros_distro_name = NANOSAUR_DISTRO_MAP[nanosaur_version]['ros']
+    
     debug_mode = None
     if 'ws_debug' in params:
         debug_mode = params['ws_debug']
         print(TerminalFormatter.color_text(f"Default debug mode: {debug_mode}", color='yellow'))
     # Get the ROS 2 installation path if available
-    ros2_installed = ros.get_ros2_path(ROS_DISTRO)
+    ros2_installed = ros.get_ros2_path(ros_distro_name)
     debug_mode = 'docker' if ros2_installed is None else debug_mode
     # Ask the user to select the location
     questions = [
@@ -100,21 +114,32 @@ def get_starting_location(params: utilities.Params) -> str:
     return answers['location'] if debug_mode is None else debug_mode
 
 
+def requirements_info(params: utilities.Params, verbose: bool):
+    # Get the nanosaur version
+    nanosaur_version = params.get('nanosaur_version', NANOSAUR_CURRENT_DISTRO)
+    nanosaur_version_string = TerminalFormatter.color_text("Nanosaur Version:", bold=True)
+    if nanosaur_version != NANOSAUR_CURRENT_DISTRO:
+        print(TerminalFormatter.color_text(f"{nanosaur_version_string} {nanosaur_version}", color='yellow'))
+    else:
+        print(TerminalFormatter.color_text(f"{nanosaur_version_string} {nanosaur_version}"))
+
+    for key, default in NANOSAUR_DISTRO_MAP[nanosaur_version].items():
+        value = params.get(key, default)
+        if value != default or verbose:
+            if key == 'ros':
+                ros2_path = ros.get_ros2_path(value)
+                ros2_version_color = TerminalFormatter.color_text(value.capitalize(), color='yellow' if value != default else 'blue', bold=True)
+                version = TerminalFormatter.clickable_link(ros2_path) if ros2_path else TerminalFormatter.color_text('Not installed', color='red')
+                print(TerminalFormatter.color_text(f"  ROS 2 {ros2_version_color}: {version}", bold=True))
+            else:
+                color = 'yellow' if value != default else None
+                key_display = key.replace('_', ' ').title().replace('Ros', 'ROS')
+                key_string = TerminalFormatter.color_text(f"{key_display}:", bold=True)
+                print(TerminalFormatter.color_text(f"  {key_string} {value}", color=color))
+
+
 def workspaces_info(params: utilities.Params, verbose: bool):
     """Print information about the workspaces."""
-
-    def ros_info(params):
-        # Print ROS 2 installation path
-        ros2_path = ros.get_ros2_path(ROS_DISTRO)
-        ros2_version_color = TerminalFormatter.color_text(ROS_DISTRO.capitalize(), color='blue', bold=True)
-        ros2_string = TerminalFormatter.color_text(f"ROS 2 {ros2_version_color}:", bold=True)
-        version = TerminalFormatter.clickable_link(ros2_path) if ros2_path else TerminalFormatter.color_text('Not installed', color='red')
-        print(f"{ros2_string} {version}")
-        # Print Isaac ROS installation path
-        isaac_ros_version = params.get('isaac_ros_branch', ISAAC_ROS_RELEASE)
-        isaac_ros_string = TerminalFormatter.color_text("Isaac ROS:", bold=True)
-        print(f"{isaac_ros_string} {isaac_ros_version}")
-
     # Print installed workspaces
     workspaces = get_workspaces_path(params)
     print()
@@ -125,15 +150,15 @@ def workspaces_info(params: utilities.Params, verbose: bool):
             print(f"  {TerminalFormatter.color_text(ws_name, bold=True)}: {TerminalFormatter.clickable_link(ws_path)}")
     elif verbose:
         print(TerminalFormatter.color_text("No workspaces installed", bold=True))
-    # Print ROS 2 and Isaac ROS information
-    if verbose:
-        print()
-        ros_info(params)
 
 
-def parser_workspace_menu(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def parser_workspace_menu(subparsers: argparse._SubParsersAction, params: utilities.Params) -> argparse.ArgumentParser:
+    # Get the nanosaur version
+    nanosaur_version = params['nanosaur_version']
+    # Get the ROS distro name
+    ros_distro_name = NANOSAUR_DISTRO_MAP[nanosaur_version]['ros']
     # Check if ROS 2 is installed
-    ros2_installed = ros.get_ros2_path(ROS_DISTRO)
+    ros2_installed = ros.get_ros2_path(ros_distro_name)
     # Add workspace subcommand
     parser_workspace = subparsers.add_parser(
         'workspace', aliases=["ws"], help="Manage the Nanosaur workspace")
@@ -288,13 +313,17 @@ def update(platform, params: utilities.Params, args):
 @utilities.require_sudo_password
 def build(platform, params: utilities.Params, args, password=None):
     """ Build the workspace """
+    # Get the nanosaur version
+    nanosaur_version = params['nanosaur_version']
+    # Get the ROS distro name
+    ros_distro_name = NANOSAUR_DISTRO_MAP[nanosaur_version]['ros']
     # Get the build action
     def get_build_action(workspace_name_key):
         workspace_path = get_workspace_path(params, workspace_name_key)
         if not workspace_path:
             return False
         print(TerminalFormatter.color_text(f"- Install all dependencies on workspace {workspace_path}", bold=True))
-        ros2_path = ros.get_ros2_path(ROS_DISTRO)
+        ros2_path = ros.get_ros2_path(ros_distro_name)
         if not ros.run_rosdep(ros2_path, workspace_path, password):
             print(TerminalFormatter.color_text("Failed to install dependencies", color='red'))
             return False
@@ -331,8 +360,12 @@ def debug(platform, params: utilities.Params, args):
     if 'ws_debug' in params:
         debug_mode = params['ws_debug']
         print(TerminalFormatter.color_text(f"Default debug mode: {debug_mode}", color='yellow'))
+    # Get the nanosaur version
+    nanosaur_version = params['nanosaur_version']
+    # Get the ROS distro name
+    ros_distro_name = NANOSAUR_DISTRO_MAP[nanosaur_version]['ros']
     # Get the ROS 2 installation path if available
-    ros2_installed = ros.get_ros2_path(ROS_DISTRO)
+    ros2_installed = ros.get_ros2_path(ros_distro_name)
     debug_mode = 'docker' if ros2_installed is None else debug_mode
 
     def debug_simulation(params: utilities.Params, args):
@@ -409,8 +442,11 @@ def deploy(platform, params: utilities.Params, args):
     """ Deploy the workspace """
     # Get the Nanosaur docker user
     nanosaur_docker_user = utilities.get_nanosaur_docker_user(params)
+    # Get the Nanosaur version
+    nanosaur_version = params['nanosaur_version']
     # Get the Isaac ROS distro name
-    isaac_ros_distro_name = params.get('isaac_ros_distro', ISAAC_ROS_DISTRO_SUFFIX)
+    isaac_ros_distro = NANOSAUR_DISTRO_MAP[nanosaur_version]['isaac_ros_distro']
+    isaac_ros_distro_name = params.get('isaac_ros_distro', isaac_ros_distro)
 
     def deploy_simulation(image_name):
         """ Deploy the simulation workspace """
@@ -605,7 +641,7 @@ def create_simple(platform, params: utilities.Params, args) -> bool:
     # Create the Nanosaur home folder
     nanosaur_home_path = utilities.create_nanosaur_home()
     # Store nanosaur distro and Isaac ROS distro
-    params['nanosaur_branch'] = params.get('nanosaur_branch', utilities.NANOSAUR_MAIN_BRANCH)
+    params['nanosaur_version'] = params.get('nanosaur_version', NANOSAUR_CURRENT_DISTRO)
     # Determine the device type
     workspace_type = "robot" if platform['Machine'] == 'aarch64' else "simulation"
     docker_compose = f"docker-compose.{workspace_type}.yml"
@@ -621,8 +657,6 @@ def create_developer_workspace(platform, params: utilities.Params, args, passwor
     create_simple(platform, params, args)
     # Create the Nanosaur home folder
     nanosaur_home_path = utilities.create_nanosaur_home()
-    # Store nanosaur distro and Isaac ROS distro
-    params['isaac_ros_branch'] = params.get('isaac_ros_branch', ISAAC_ROS_RELEASE)
     # Create the shared source folder
     create_shared_workspace()
     # Create developer workspace
@@ -637,15 +671,21 @@ def create_developer_workspace(platform, params: utilities.Params, args, passwor
 
 
 def create_maintainer_workspace(platform, params: utilities.Params, args, password=None) -> bool:
+    # Get the nanosaur version
+    nanosaur_version = params.get('nanosaur_version', NANOSAUR_CURRENT_DISTRO)
+    # Get the ROS distro name
+    ros_distro_name = NANOSAUR_DISTRO_MAP[nanosaur_version]['ros']
     # Check if ROS 2 is installed
-    ros2_installed = ros.get_ros2_path(ROS_DISTRO)
+    ros2_installed = ros.get_ros2_path(ros_distro_name)
     # determine the device type
     device_type = "robot" if platform['Machine'] == 'aarch64' else "desktop"
     # Create the Nanosaur home folder
     nanosaur_home_path = utilities.create_nanosaur_home()
     # Store nanosaur distro and Isaac ROS distro
-    params['nanosaur_branch'] = params.get('nanosaur_branch', utilities.NANOSAUR_MAIN_BRANCH)
-    params['isaac_ros_branch'] = params.get('isaac_ros_branch', ISAAC_ROS_RELEASE)
+    nanosaur_branch = NANOSAUR_DISTRO_MAP[nanosaur_version]['nanosaur_branch']
+    params['nanosaur_branch'] = params.get('nanosaur_branch', nanosaur_branch)
+    isaac_ros_branch = NANOSAUR_DISTRO_MAP[nanosaur_version]['isaac_ros']
+    params['isaac_ros_branch'] = params.get('isaac_ros_branch', isaac_ros_branch)
     # Create the shared source folder
     create_shared_workspace()
     if device_type == "robot" or args.all:

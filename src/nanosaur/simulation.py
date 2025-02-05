@@ -257,13 +257,16 @@ def simulation_start_debug(simulation_ws_path, simulation_tool, headless, isaac_
 
 
 def simulation_start(platform, params: Params, args):
+    # Get the Nanosaur version
+    nanosaur_version = params['nanosaur_version']
+    ros_distro = workspace.NANOSAUR_DISTRO_MAP[nanosaur_version]['ros']
     # Check if debug mode is enabled
     debug_mode = None
     if 'ws_debug' in params:
         debug_mode = params['ws_debug']
         print(TerminalFormatter.color_text(f"Default debug mode: {debug_mode}", color='yellow'))
     # Get the ROS 2 installation path if available
-    ros2_installed = get_ros2_path(workspace.ROS_DISTRO)
+    ros2_installed = get_ros2_path(ros_distro)
     debug_mode = 'docker' if ros2_installed is None else debug_mode
     # Check which simulation tool is selected
     if 'simulation_tool' not in params:
