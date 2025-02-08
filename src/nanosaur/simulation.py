@@ -36,7 +36,6 @@ from nanosaur.ros import get_ros2_path
 from nanosaur.docker import docker_simulator_start
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, RobotList
-from packaging.version import parse
 
 # Set up the logger
 logger = logging.getLogger(__name__)
@@ -121,12 +120,14 @@ def check_isaac_sim(full_path):
             return vf.read().strip().split('-')[0]
     return None
 
+
 def validate_isaac_sim(isaac_sim_path, required):
     # Extract conditions properly
     conditions = PATTERN_VERSION.findall(required)
     if version := check_isaac_sim(isaac_sim_path):
         return all(eval(f"parse('{version}') {op} parse('{ver}')") for op, ver in conditions)
     return False
+
 
 def is_gazebo_installed(folder="/usr/share/gazebo"):
     """
@@ -395,7 +396,7 @@ def simulation_set(platform, params: Params, args):
         else:
             print(TerminalFormatter.color_text(f"Selected Isaac Sim version: {answers['isaac-sim']}", color='green'))
             params['isaac_sim_path'] = isaac_sim_list[answers['isaac-sim']]
-        
+
     else:
         print(TerminalFormatter.color_text(f"Selected {answers['simulation_tool']}", color='green'))
     return True
