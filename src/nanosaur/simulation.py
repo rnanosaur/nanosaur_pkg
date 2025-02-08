@@ -23,6 +23,7 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import re
 import os
 import shutil
 import inquirer
@@ -35,9 +36,13 @@ from nanosaur.ros import get_ros2_path
 from nanosaur.docker import docker_simulator_start
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, RobotList
+from packaging.version import parse
 
 # Set up the logger
 logger = logging.getLogger(__name__)
+
+# Regex to separate operator and version
+PATTERN_VERSION = re.compile(r'(>=|<=|>|<|==|!=)\s*([\d\.]+)')
 
 # Dictionary of simulation tools and their commands
 simulation_tools = {
@@ -93,13 +98,13 @@ def find_all_isaac_sim():
             # Look for directories in the base path
             for folder in os.listdir(base_path):
                 full_path = os.path.join(base_path, folder)
-                if version := validate_isaac_sim(full_path):
+                if version := check_isaac_sim(full_path):
                     isaac_sim_folders[version] = full_path
     # Return a dictionary with the version as key and the full path as value, sorted by latest version
     return dict(sorted(isaac_sim_folders.items(), key=lambda item: item[0], reverse=True))
 
 
-def validate_isaac_sim(full_path):
+def check_isaac_sim(full_path):
     """
     Validate if the given path contains a valid Isaac Sim installation.
 
@@ -116,6 +121,12 @@ def validate_isaac_sim(full_path):
             return vf.read().strip().split('-')[0]
     return None
 
+def validate_isaac_sim(isaac_sim_path, required):
+    # Extract conditions properly
+    conditions = PATTERN_VERSION.findall(required)
+    if version := check_isaac_sim(isaac_sim_path):
+        return all(eval(f"parse('{version}') {op} parse('{ver}')") for op, ver in conditions)
+    return False
 
 def is_gazebo_installed(folder="/usr/share/gazebo"):
     """
@@ -331,13 +342,17 @@ def simulation_set(platform, params: Params, args):
     # Find all installed Isaac Sim versions
     isaac_sim_list = find_all_isaac_sim()
     # Get the version of Isaac Sim if it is already set
-    version = None
+    current_version = None
     if 'isaac_sim_path' in params:
-        version = params['isaac_sim_path'].split("isaac-sim-")[-1]  # Extract version after "isaac-sim-"
+        current_version = params['isaac_sim_path'].split("isaac-sim-")[-1]  # Extract version after "isaac-sim-"
     # Check if any simulation tools are available
     if not simulation_tools:
         print(TerminalFormatter.color_text("No simulation tools available. Please install a simulator first.", color='red'))
         return False
+    # Get the Isaac Sim version required for the selected Nanosaur version
+    isaac_sim_required = workspace.NANOSAUR_DISTRO_MAP[params['nanosaur_version']]['isaac_sim']
+    # Filter the list with only the valid Isaac Sim versions
+    isaac_sim_list = {ver: path for ver, path in isaac_sim_list.items() if validate_isaac_sim(path, isaac_sim_required)}
     # Ask the user to select a simulation tool
     questions = [
         inquirer.List(
@@ -350,7 +365,7 @@ def simulation_set(platform, params: Params, args):
             'isaac-sim',
             message="Select Isaac Sim version for run on host",
             choices=list(isaac_sim_list.keys()) + ["Custom Path"],
-            default=version,
+            default=current_version,
             ignore=lambda answers: answers['simulation_tool'] != 'Isaac-sim' or not isaac_sim_list
         ),
         inquirer.Path(
@@ -368,8 +383,11 @@ def simulation_set(platform, params: Params, args):
     params['simulation_tool'] = answers['simulation_tool'].lower()
     if params['simulation_tool'] == 'isaac-sim' and answers['isaac-sim'] is not None:
         if answers['isaac-sim'] == "Custom Path":
-            if version := validate_isaac_sim(answers['custom_isaac_sim_path']):
-                print(TerminalFormatter.color_text(f"Selected Isaac Sim version: {version}", color='green'))
+            if version := check_isaac_sim(answers['custom_isaac_sim_path']):
+                if validate_isaac_sim(answers['custom_isaac_sim_path'], isaac_sim_required):
+                    print(TerminalFormatter.color_text(f"Selected Isaac Sim version: {version}", color='green'))
+                else:
+                    print(TerminalFormatter.color_text(f"Isaac Sim {version} not tested for this nanosaur version", color='yellow'))
                 params['isaac_sim_path'] = answers['custom_isaac_sim_path']
             else:
                 print(TerminalFormatter.color_text("Invalid Isaac Sim path", color='red'))

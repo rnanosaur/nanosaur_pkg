@@ -53,7 +53,7 @@ NANOSAUR_DISTRO_MAP = {
         'ros': 'humble',
         'isaac_ros_release': 'release-3.2',
         'isaac_ros_distro': 'ros2_humble',
-        'isaac_sim': '4.5.0',
+        'isaac_sim': '>=4.2, <=4.5',
     },
 }
 NANOSAUR_CURRENT_DISTRO = '2.0.0'
