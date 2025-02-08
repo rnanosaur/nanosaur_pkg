@@ -53,7 +53,7 @@ NANOSAUR_DISTRO_MAP = {
         'ros': 'humble',
         'isaac_ros_release': 'release-3.2',
         'isaac_ros_distro': 'ros2_humble',
-        'isaac_sim': '>=4.2, <=4.5',
+        'isaac_sim': '>=4.1, <=4.5',
     },
 }
 NANOSAUR_CURRENT_DISTRO = '2.0.0'
@@ -527,7 +527,7 @@ def deploy(platform, params: utilities.Params, args):
         'simulation': lambda: deploy_simulation(args.image_name),
         'perception': lambda: deploy_perception(args.image_name),
     }
-    if args.all:
+    if args.all and args.image_name is not None:
         workspaces = get_workspaces_path(params)
         workspace_actions = {k: v for k, v in workspace_actions.items() if k in workspaces}
         print(TerminalFormatter.color_text("Deploying all workspaces", bold=True))
