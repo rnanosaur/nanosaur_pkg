@@ -183,9 +183,8 @@ def simulation_info(platform, params: Params, verbose):
         headless_string = TerminalFormatter.color_text('enabled', color='green') if headless_md else TerminalFormatter.color_text('disabled', color='red')
         print(f"{TerminalFormatter.color_text('   Headless mode:', bold=True)} {headless_string}")
         if headless_md and params['simulation_tool'] == 'isaac-sim':
-            hostname = f"{os.uname()[1]}.local"
-            link_webrtc = TerminalFormatter.clickable_link(f"http://{hostname}:8211/streaming/webrtc-client/")
-            print(f"{TerminalFormatter.color_text('   WebRTC:', bold=True)} {link_webrtc}")
+            link_livestream = TerminalFormatter.clickable_link("https://docs.isaacsim.omniverse.nvidia.com/latest/installation/manual_livestream_clients.html")
+            print(f"{TerminalFormatter.color_text('   Livestream:', bold=True)} {link_livestream}")
 
     # Check if any simulation tools are installed
     if not is_simulation_tool_installed():
