@@ -36,9 +36,22 @@ from nanosaur.ros import get_ros2_path
 from nanosaur.docker import docker_simulator_start
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, RobotList
+from packaging.version import parse
+import operator
 
 # Set up the logger
 logger = logging.getLogger(__name__)
+
+
+# Define a mapping of operators to functions
+MAP_OPERATOR_VERSION = {
+    '>=': operator.ge,
+    '<=': operator.le,
+    '>': operator.gt,
+    '<': operator.lt,
+    '==': operator.eq,
+    '!=': operator.ne,
+}
 
 # Regex to separate operator and version
 PATTERN_VERSION = re.compile(r'(>=|<=|>|<|==|!=)\s*([\d\.]+)')
@@ -125,7 +138,7 @@ def validate_isaac_sim(isaac_sim_path, required):
     # Extract conditions properly
     conditions = PATTERN_VERSION.findall(required)
     if version := check_isaac_sim(isaac_sim_path):
-        return all(eval(f"parse('{version}') {op} parse('{ver}')") for op, ver in conditions)
+        return all(MAP_OPERATOR_VERSION[op](parse(version), parse(ver)) for op, ver in conditions)
     return False
 
 
