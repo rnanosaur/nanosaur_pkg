@@ -81,19 +81,40 @@ def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Param
 
 
 def find_all_isaac_sim():
-    # Path where Isaac Sim is usually installed
-    base_path = os.path.expanduser("~/.local/share/ov/pkg")
+    # Paths where Isaac Sim is usually installed
+    base_paths = [
+        os.path.expanduser("~/.local/share/ov/pkg"),
+        os.path.expanduser("~")
+    ]
     isaac_sim_folders = {}
 
-    if os.path.exists(base_path):
-        # Look for directories that contain "isaac-sim" in their names
-        for folder in os.listdir(base_path):
-            if "isaac-sim" in folder:
-                version = folder.split("isaac-sim-")[-1]  # Extract version after "isaac-sim-"
+    for base_path in base_paths:
+        if os.path.exists(base_path):
+            # Look for directories in the base path
+            for folder in os.listdir(base_path):
                 full_path = os.path.join(base_path, folder)
-                isaac_sim_folders[version] = full_path
-    # Return a dictionary with the version as key and the full path as value
-    return isaac_sim_folders
+                if version := validate_isaac_sim(full_path):
+                    isaac_sim_folders[version] = full_path
+    # Return a dictionary with the version as key and the full path as value, sorted by latest version
+    return dict(sorted(isaac_sim_folders.items(), key=lambda item: item[0], reverse=True))
+
+
+def validate_isaac_sim(full_path):
+    """
+    Validate if the given path contains a valid Isaac Sim installation.
+
+    :param full_path: The full path to the directory to validate.
+    :type full_path: str
+    :return: The version of Isaac Sim if valid, otherwise None.
+    :rtype: str or None
+    """
+    version_file = os.path.join(full_path, "VERSION")
+    isaac_sim_script = os.path.join(full_path, "isaac-sim.sh")
+    python_script = os.path.join(full_path, "python.sh")
+    if os.path.isfile(version_file) and os.path.isfile(isaac_sim_script) and os.path.isfile(python_script):
+        with open(version_file, 'r') as vf:
+            return vf.read().strip().split('-')[0]
+    return None
 
 
 def is_gazebo_installed(folder="/usr/share/gazebo"):
@@ -127,7 +148,10 @@ def simulation_info(platform, params: Params, verbose):
     def print_simulation_tool():
         isaac_sim_version = ""
         if 'isaac_sim_path' in params and params['simulation_tool'] == 'isaac-sim' and params['isaac_sim_path']:
-            isaac_sim_version = params['isaac_sim_path'].split("isaac-sim-")[-1]  # Extract version after "isaac-sim-"
+            version_file = os.path.join(params['isaac_sim_path'], "VERSION")
+            if os.path.isfile(version_file):
+                with open(version_file, 'r') as vf:
+                    isaac_sim_version = vf.read().strip().split('-')[0]  # Read the version from the VERSION file and cut after the first '-'
         text_message = f"{TerminalFormatter.color_text('   selected:', bold=True)} {params['simulation_tool']} {isaac_sim_version}"
         print(text_message)
         headless_md = params.get('simulation_headless', False)
@@ -325,9 +349,15 @@ def simulation_set(platform, params: Params, args):
         inquirer.List(
             'isaac-sim',
             message="Select Isaac Sim version for run on host",
-            choices=list(isaac_sim_list.keys()),
+            choices=list(isaac_sim_list.keys()) + ["Custom Path"],
             default=version,
             ignore=lambda answers: answers['simulation_tool'] != 'Isaac-sim' or not isaac_sim_list
+        ),
+        inquirer.Path(
+            'custom_isaac_sim_path',
+            message="Enter the custom path for Isaac Sim",
+            path_type=inquirer.Path.DIRECTORY,
+            ignore=lambda answers: answers.get('isaac-sim') != 'Custom Path'
         )
     ]
     # Ask the user to select a simulation tool
@@ -337,8 +367,17 @@ def simulation_set(platform, params: Params, args):
     # Save the selected simulation tool
     params['simulation_tool'] = answers['simulation_tool'].lower()
     if params['simulation_tool'] == 'isaac-sim' and answers['isaac-sim'] is not None:
-        params['isaac_sim_path'] = isaac_sim_list[answers['isaac-sim']]
-        print(TerminalFormatter.color_text(f"Selected Isaac Sim version: {answers['isaac-sim']}", color='green'))
+        if answers['isaac-sim'] == "Custom Path":
+            if version := validate_isaac_sim(answers['custom_isaac_sim_path']):
+                print(TerminalFormatter.color_text(f"Selected Isaac Sim version: {version}", color='green'))
+                params['isaac_sim_path'] = answers['custom_isaac_sim_path']
+            else:
+                print(TerminalFormatter.color_text("Invalid Isaac Sim path", color='red'))
+                return False
+        else:
+            print(TerminalFormatter.color_text(f"Selected Isaac Sim version: {answers['isaac-sim']}", color='green'))
+            params['isaac_sim_path'] = isaac_sim_list[answers['isaac-sim']]
+        
     else:
         print(TerminalFormatter.color_text(f"Selected {answers['simulation_tool']}", color='green'))
     return True
