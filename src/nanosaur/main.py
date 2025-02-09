@@ -245,7 +245,7 @@ def main():
         description=f"Nanosaur CLI - A command-line interface for the {nanosaur_green} robot.")
     # Add arguments
     parser.add_argument('--version', '-v', action='version', version=__version__)
-    
+
     current_mode = params.get('mode', 'simple')
     color = NANOSAUR_INSTALL_OPTIONS_RULES[current_mode]['color']
     current_mode_string = TerminalFormatter.color_text(current_mode, color=color, bold=True)
