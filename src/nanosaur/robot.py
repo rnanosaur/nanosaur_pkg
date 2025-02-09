@@ -42,29 +42,35 @@ logger = logging.getLogger(__name__)
 def add_robot_config_subcommands(platform, subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     # Get the robot data
     robot_data = RobotList.current_robot(params)
-    parser_robot_config = subparsers.add_parser('config', help=f"Configure the robot settings [{robot_data.name}]")
+    robot_name = TerminalFormatter.color_text(robot_data.name, color='green', bold=True)
+    parser_robot_config = subparsers.add_parser('config', help=f"Configure the robot settings [{robot_name}]")
     config_subparsers = parser_robot_config.add_subparsers(dest='config_type', help="Configuration options")
     # Add robot name subcommand
-    parser_robot_name = config_subparsers.add_parser('name', help=f"Set robot name [{robot_data.name}]")
+    parser_robot_name = config_subparsers.add_parser('name', help=f"Set robot name [{robot_name}]")
     parser_robot_name.set_defaults(func=robot_set_name)
     # Add robot domain id subcommand
-    parser_robot_domain_id = config_subparsers.add_parser('domain_id', help=f"Set robot domain ID [{robot_data.domain_id}]")
+    domain_id = TerminalFormatter.color_text(robot_data.domain_id, bold=True)
+    parser_robot_domain_id = config_subparsers.add_parser('domain_id', help=f"Set robot domain ID [{domain_id}]")
     parser_robot_domain_id.set_defaults(func=robot_set_domain_id)
     # Add robot simulation subcommand
     device_type = "robot" if platform['Machine'] == 'aarch64' else "desktop"
     if device_type == 'desktop':
-        parser_robot_simulation = config_subparsers.add_parser('simulation', help=f"Set robot real or simulation [{'simulation' if robot_data.simulation else 'real'}]")
+        simulation = TerminalFormatter.color_text('simulation' if robot_data.simulation else 'real', bold=True)
+        parser_robot_simulation = config_subparsers.add_parser('simulation', help=f"Set robot real or simulation [{simulation}]")
         parser_robot_simulation.set_defaults(func=robot_set_simulation)
     # Add robot camera subcommand
-    parser_robot_camera = config_subparsers.add_parser('camera', help=f"Set robot camera type [{robot_data.camera_type or 'NOT SELECTED'}]")
+    camera_type = TerminalFormatter.color_text(robot_data.camera_type or 'NOT SELECTED', bold=True)
+    parser_robot_camera = config_subparsers.add_parser('camera', help=f"Set robot camera type [{camera_type}]")
     parser_robot_camera.add_argument('--new', type=str, help=f"Specify the new camera type (options: {', '.join(CAMERA_CHOICES)})")
     parser_robot_camera.set_defaults(func=robot_set_camera)
     # Add robot lidar subcommand
-    parser_robot_lidar = config_subparsers.add_parser('lidar', help=f"Set robot lidar type [{robot_data.lidar_type or 'NOT SELECTED'}]")
+    lidar_type = TerminalFormatter.color_text(robot_data.lidar_type or 'NOT SELECTED', bold=True)
+    parser_robot_lidar = config_subparsers.add_parser('lidar', help=f"Set robot lidar type [{lidar_type}]")
     parser_robot_lidar.add_argument('--new', type=str, choices=LIDAR_CHOICES, help=f"Specify the new lidar type (options: {', '.join(LIDAR_CHOICES)})")
     parser_robot_lidar.set_defaults(func=robot_set_lidar)
     # Add robot engines subcommand
-    engines_help = f"Configure robot engines [{', '.join(robot_data.engines) if robot_data.engines else 'NO ENGINES'}]"
+    engines = TerminalFormatter.color_text(', '.join(robot_data.engines) if robot_data.engines else 'NO ENGINES', bold=True)
+    engines_help = f"Configure robot engines [{engines}]"
     parser_robot_engines = config_subparsers.add_parser('engines', help=engines_help)
     parser_robot_engines.add_argument('--new', type=str, help="Specify the new engine configuration")
     parser_robot_engines.set_defaults(func=robot_configure_engines)
@@ -78,13 +84,14 @@ def add_robot_config_subcommands(platform, subparsers: argparse._SubParsersActio
 def parser_robot_menu(platform, subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
     try:
         robot_data = RobotList.current_robot(params)
-        parser_robot = subparsers.add_parser('robot', help=f"Manage the Nanosaur robot [{robot_data.name}]")
+        robot_name = TerminalFormatter.color_text(robot_data.name, color='green', bold=True)
+        parser_robot = subparsers.add_parser('robot', help=f"Manage the Nanosaur robot [{robot_name}]")
         robot_subparsers = parser_robot.add_subparsers(dest='robot_type', help="Robot operations")
         # Add robot display subcommand
-        parser_robot_display = robot_subparsers.add_parser('display', help="Show the robot")
+        parser_robot_display = robot_subparsers.add_parser('rviz', help="Show the robot on rviz")
         parser_robot_display.set_defaults(func=robot_display)
         # Add robot drive subcommand
-        parser_robot_drive = robot_subparsers.add_parser('drive', help="Control the robot")
+        parser_robot_drive = robot_subparsers.add_parser('drive', help="Control the robot with keyboard")
         parser_robot_drive.set_defaults(func=control_keyboard)
         # Add robot start subcommand
         parser_robot_start = robot_subparsers.add_parser('start', help="Activate the robot")

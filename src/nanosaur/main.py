@@ -245,9 +245,15 @@ def main():
         description=f"Nanosaur CLI - A command-line interface for the {nanosaur_green} robot.")
     # Add arguments
     parser.add_argument('--version', '-v', action='version', version=__version__)
-    parser.add_argument('--mode', type=str, help="Specify the mode of operation")
+    
+    current_mode = params.get('mode', 'simple')
+    color = NANOSAUR_INSTALL_OPTIONS_RULES[current_mode]['color']
+    current_mode_string = TerminalFormatter.color_text(current_mode, color=color, bold=True)
+    parser.add_argument('--mode', type=str, help=f"Specify the mode of operation [{current_mode_string}]")
     if ros2_installed is not None:
-        parser.add_argument('--default-debug', '-dd', type=str, choices=['host', 'docker'], help="Select the debug mode if on host or in docker")
+        current_ws_debug = params.get('ws_debug', 'NO SELECTED')
+        current_ws_debug_string = TerminalFormatter.color_text(current_ws_debug, bold=True)
+        parser.add_argument('--default-debug', '-dd', type=str, choices=['host', 'docker'], help=f"Select the debug mode [{current_ws_debug_string}]")
 
     if 'mode' in params and params['mode'] in ['Raffo']:
         help_message = "Set the log level (default: INFO)"
