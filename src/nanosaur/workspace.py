@@ -181,6 +181,7 @@ def parser_workspace_menu(subparsers: argparse._SubParsersAction, params: utilit
     parser_deploy = add_workspace_subcommand('deploy', "Deploy workspace to docker image", deploy)
     parser_deploy.add_argument('image_name', type=str, nargs='?', help="Specify the image name")
     parser_debug.add_argument('image_name', type=str, nargs='?', help="Specify the image name")
+    parser_debug.add_argument('options', type=str, nargs='*', help="Specify extra arguments")
     return parser_workspace
 
 
@@ -367,6 +368,8 @@ def debug(platform, params: utilities.Params, args):
     # Get the ROS 2 installation path if available
     ros2_installed = ros.get_ros2_path(ros_distro_name)
     debug_mode = 'docker' if ros2_installed is None else debug_mode
+    # Get the debug options
+    options = args.options
 
     def debug_simulation(params: utilities.Params, args):
         # Get the selected launcher
@@ -390,20 +393,21 @@ def debug(platform, params: utilities.Params, args):
             return False
         selected_launcher = answers['launcher'] if args.image_name is None else args.image_name
         selected_location = answers['location'] if debug_mode is None else debug_mode
+        options_str = f"with args {' '.join(options)}" if options else ''
         # Create the Nanosaur home folder
         nanosaur_home_path = utilities.get_nanosaur_home()
         nanosaur_shared_src = os.path.join(nanosaur_home_path, "shared_src")
         simulation_ws_path = get_workspace_path(params, 'ws_simulation_name')
 
-        print(TerminalFormatter.color_text(f"Debugging {selected_launcher} in {selected_location}", bold=True))
+        print(TerminalFormatter.color_text(f"Debugging {selected_launcher} in {selected_location} {options_str}", bold=True))
         # Debug the simulation workspace
         if selected_location == 'host':
             # Debug locally
             if selected_launcher == 'nanosaur':
-                return simulation_robot_start_debug(params)
+                return simulation_robot_start_debug(params, options)
             isaac_sim_path = params.get('isaac_sim_path', None)
             headless = params.get('simulation_headless', False)
-            return simulation_start_debug(simulation_ws_path, selected_launcher, headless, isaac_sim_path=isaac_sim_path)
+            return simulation_start_debug(simulation_ws_path, selected_launcher, headless, isaac_sim_path, options)
         elif selected_location == 'docker':
             # Set the volumes
             volumes = [

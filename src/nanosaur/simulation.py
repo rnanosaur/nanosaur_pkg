@@ -36,7 +36,7 @@ from nanosaur.ros import get_ros2_path
 from nanosaur.docker import docker_simulator_start
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, RobotList
-from packaging.version import parse
+from packaging.version import parse # type: ignore
 import operator
 
 # Set up the logger
@@ -209,7 +209,7 @@ def simulation_info(platform, params: Params, verbose):
             print(TerminalFormatter.color_text("   Gazebo is installed", bold=True))
 
 
-def simulation_robot_start_debug(params):
+def simulation_robot_start_debug(params, args):
     nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
     bash_file = os.path.join(nanosaur_ws_path, 'install', 'setup.bash')
     # Check if the install folder exists
@@ -226,13 +226,14 @@ def simulation_robot_start_debug(params):
     robot = RobotList.current_robot(params)
     print(TerminalFormatter.color_text(f"Starting {robot}", color='green'))
 
+    exec_command = f"ROS_DOMAIN_ID={robot.domain_id} {command} {robot.config_to_ros()} {' '.join(args)}"
     # Print the command to be run
-    print(f"ROS_DOMAIN_ID={robot.domain_id} {command} {robot.config_to_ros()}")
+    print(exec_command)
 
     try:
         # Combine sourcing the bash file with running the command
         process = subprocess.Popen(
-            f"source {bash_file} && ROS_DOMAIN_ID={robot.domain_id} {command} {robot.config_to_ros()}",
+            f"source {bash_file} && {exec_command}",
             shell=True,
             executable="/bin/bash",
             stdout=subprocess.PIPE,
@@ -259,7 +260,7 @@ def simulation_robot_start_debug(params):
         return False
 
 
-def simulation_start_debug(simulation_ws_path, simulation_tool, headless, isaac_sim_path=None):
+def simulation_start_debug(simulation_ws_path, simulation_tool, headless, isaac_sim_path, args=None):
     """Install the simulation tools."""
 
     bash_file = f'{simulation_ws_path}/install/setup.bash'
@@ -273,6 +274,10 @@ def simulation_start_debug(simulation_ws_path, simulation_tool, headless, isaac_
     # add isaac_sim_path if available
     if isaac_sim_path:
         command = f"{command} isaac_sim_path:={isaac_sim_path}"
+    # add additional arguments
+    if args:
+        command = f"{command} {' '.join(args)}"
+    # Print the command to be run
     logger.debug(command)
     try:
         # Combine sourcing the bash file with running the command
@@ -333,7 +338,7 @@ def simulation_start(platform, params: Params, args):
         nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
         simulator_tool = params['simulation_tool']
         headless = params.get('simulation_headless', False)
-        return simulation_start_debug(nanosaur_ws_path, simulator_tool, headless, isaac_sim_path=params.get('isaac_sim_path', None))
+        return simulation_start_debug(nanosaur_ws_path, simulator_tool, headless, params.get('isaac_sim_path', None))
     elif debug_mode == 'docker':
         # Run from docker container
         return docker_simulator_start(platform, params, args)
