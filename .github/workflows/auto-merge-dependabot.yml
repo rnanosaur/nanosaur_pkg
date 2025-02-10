@@ -26,9 +26,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Enable auto-merge
-        if: github.actor == 'dependabot[bot]'
+      - name: Find PR number
+        id: find_pr
         run: |
-          gh pr merge --auto --squash "$GITHUB_REF"
+          PR_NUMBER=$(gh pr list --state open --author "dependabot[bot]" --json number --jq '.[0].number')
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge
+        if: steps.find_pr.outputs.PR_NUMBER != ''
+        run: gh pr merge --auto --squash "$PR_NUMBER"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
