@@ -30,9 +30,16 @@ jobs:
         id: find_pr
         run: |
           PR_NUMBER=$(gh pr list --state open --author "dependabot[bot]" --json number --jq '.[0].number')
+          echo "PR_NUMBER=$PR_NUMBER"
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Debug PR Number
+        run: |
+          echo "Retrieved PR_NUMBER: $PR_NUMBER"
+        env:
+          PR_NUMBER: ${{ env.PR_NUMBER }}
 
       - name: Enable auto-merge
         if: steps.find_pr.outputs.PR_NUMBER != ''
