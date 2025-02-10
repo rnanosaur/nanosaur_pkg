@@ -1,0 +1,29 @@
+name: Auto-approve and merge Dependabot PRs
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  auto-approve:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-approve Dependabot PR
+        if: github.actor == 'dependabot[bot]'
+        uses: hmarr/auto-approve-action@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  auto-merge:
+    needs: auto-approve
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable auto-merge
+        if: github.actor == 'dependabot[bot]'
+        run: |
+          gh pr merge --auto --squash "$GITHUB_REF"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
