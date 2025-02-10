@@ -36,7 +36,7 @@ from nanosaur.ros import get_ros2_path
 from nanosaur.docker import docker_simulator_start
 from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.utilities import Params, RobotList
-from packaging.version import parse # type: ignore
+from packaging.version import parse  # type: ignore
 import operator
 
 # Set up the logger
