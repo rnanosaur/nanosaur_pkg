@@ -5,6 +5,8 @@ on: [push]
 jobs:
   autostyle:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
     - name: Checkout code
