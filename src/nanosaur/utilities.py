@@ -376,9 +376,8 @@ def get_nanosaur_docker_user(params: Params) -> str:
     return params.get('nanosaur_docker_user', NANOSAUR_DOCKER_USER)
 
 
-def get_nanosaur_raw_github_url(params: Params) -> str:
+def get_nanosaur_raw_github_url(params: Params, nanosaur_branch) -> str:
     nanosaur_github_url = params.get('nanosaur_github', NANOSAUR_MAIN_GITHUB_URL)
-    nanosaur_branch = params['nanosaur_branch']
     # Replace 'github.com' with 'raw.githubusercontent.com' in the URL
     nanosaur_github_url = nanosaur_github_url.replace('www.github.com', 'raw.githubusercontent.com')
     nanosaur_github_url = nanosaur_github_url.replace('github.com', 'raw.githubusercontent.com')

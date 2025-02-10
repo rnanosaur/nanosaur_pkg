@@ -235,8 +235,10 @@ def update(platform, params: utilities.Params, args):
     """ Update the workspace """
     # Get the Nanosaur home folder
     nanosaur_home_path = utilities.get_nanosaur_home()
-    # Get the Nanosaur home folder and branch
-    nanosaur_raw_url = utilities.get_nanosaur_raw_github_url(params)
+    # Get nanosaur raw url
+    nanosaur_version = params['nanosaur_version']
+    nanosaur_branch = params.get('nanosaur_branch', NANOSAUR_DISTRO_MAP[nanosaur_version]['nanosaur_branch'])
+    nanosaur_raw_url = utilities.get_nanosaur_raw_github_url(params, nanosaur_branch)
     # Update shared workspace
 
     def update_shared_workspace(force):
@@ -287,7 +289,7 @@ def update(platform, params: utilities.Params, args):
     }
     if args.all:
         print(TerminalFormatter.color_text("Updating isaac_ros_common repository", bold=True))
-        isaac_ros_branch = params['isaac_ros_branch']
+        isaac_ros_branch = params.get('isaac_ros_branch', NANOSAUR_DISTRO_MAP[nanosaur_version]['isaac_ros_release'])
         ros.manage_isaac_ros_common_repo(nanosaur_home_path, isaac_ros_branch, args.force)
         print(TerminalFormatter.color_text("Updating all workspaces", bold=True))
         update_shared_workspace(args.force)
@@ -300,7 +302,7 @@ def update(platform, params: utilities.Params, args):
         return False
     # Update the workspace
     print(TerminalFormatter.color_text("Updating isaac_ros_common repository", bold=True))
-    isaac_ros_branch = params['isaac_ros_branch']
+    isaac_ros_branch = params.get('isaac_ros_branch', NANOSAUR_DISTRO_MAP[nanosaur_version]['isaac_ros_release'])
     ros.manage_isaac_ros_common_repo(nanosaur_home_path, isaac_ros_branch, args.force)
     print(TerminalFormatter.color_text(f"Updating {workspace}", bold=True))
     if action := workspace_actions.get(workspace):
@@ -650,7 +652,9 @@ def create_simple(platform, params: utilities.Params, args) -> bool:
     workspace_type = "robot" if platform['Machine'] == 'aarch64' else "simulation"
     docker_compose = f"docker-compose.{workspace_type}.yml"
     # Get the Nanosaur home folder and branch
-    nanosaur_raw_url = utilities.get_nanosaur_raw_github_url(params)
+    nanosaur_version = params['nanosaur_version']
+    nanosaur_branch = params.get('nanosaur_branch', NANOSAUR_DISTRO_MAP[nanosaur_version]['nanosaur_branch'])
+    nanosaur_raw_url = utilities.get_nanosaur_raw_github_url(params, nanosaur_branch)
     url = f"{nanosaur_raw_url}/nanosaur/compose/{docker_compose}"
     # Download the docker-compose file
     return utilities.download_file(url, nanosaur_home_path, docker_compose, force=args.force) is not None
@@ -689,7 +693,7 @@ def create_maintainer_workspace(platform, params: utilities.Params, args, passwo
     # Store nanosaur distro and Isaac ROS distro
     nanosaur_branch = NANOSAUR_DISTRO_MAP[nanosaur_version]['nanosaur_branch']
     params['nanosaur_branch'] = params.get('nanosaur_branch', nanosaur_branch)
-    isaac_ros_branch = NANOSAUR_DISTRO_MAP[nanosaur_version]['isaac_ros']
+    isaac_ros_branch = NANOSAUR_DISTRO_MAP[nanosaur_version]['isaac_ros_release']
     params['isaac_ros_branch'] = params.get('isaac_ros_branch', isaac_ros_branch)
     # Create the shared source folder
     create_shared_workspace()
