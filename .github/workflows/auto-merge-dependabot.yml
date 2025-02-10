@@ -10,6 +10,7 @@ on:
 jobs:
   auto-approve:
     runs-on: ubuntu-latest
+
     steps:
       - name: Auto-approve Dependabot PR
         if: github.actor == 'dependabot[bot]'
@@ -20,7 +21,11 @@ jobs:
   auto-merge:
     needs: auto-approve
     runs-on: ubuntu-latest
+
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
       - name: Enable auto-merge
         if: github.actor == 'dependabot[bot]'
         run: |
