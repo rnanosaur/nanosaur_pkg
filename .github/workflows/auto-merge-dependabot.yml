@@ -38,11 +38,12 @@ jobs:
       - name: Debug PR Number
         run: |
           echo "Retrieved PR_NUMBER: $PR_NUMBER"
+          echo "Retrieved steps.find_pr.outputs.PR_NUMBER: ${{ steps.find_pr.outputs.PR_NUMBER }}"
         env:
           PR_NUMBER: ${{ env.PR_NUMBER }}
 
       - name: Enable auto-merge
-        if: steps.find_pr.outputs.PR_NUMBER != ''
+        if: ${{ steps.find_pr.outputs.PR_NUMBER != '' }}
         run: gh pr merge --auto --squash "$PR_NUMBER"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
