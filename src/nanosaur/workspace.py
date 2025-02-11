@@ -588,6 +588,12 @@ def get_workspace_path(params: utilities.Params, ws_name) -> str:
         return None
 
 
+def get_shared_workspace_path() -> str:
+    # Create the Nanosaur home folder
+    nanosaur_home_path = utilities.create_nanosaur_home()
+    return os.path.join(nanosaur_home_path, "shared_src")
+
+
 def create_workspace(nanosaur_home_path, ws_name, skip_create_colcon_setting=False) -> str:
     ws_name_path = os.path.join(nanosaur_home_path, ws_name)
     ws_name_path_src = os.path.join(ws_name_path, "src")
