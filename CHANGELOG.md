@@ -1,12 +1,19 @@
 # Changelog
 
+## [0.1.1] - 2025-02-12
+
+### Fixes
+
+- Fix Lint CI for release
+- Add publish message on Discord
+
 ## [0.1.0] - 2025-02-12
 
 First functional release of nanosaur CLI
 
 ### Features
 
-- Update CLI to works with nanosaur is simulation
+- Update CLI to works with nanosaur in simulation
 - swarm control
 - robot configuration
 - Start simulation for Gazebo and Isaac Sim

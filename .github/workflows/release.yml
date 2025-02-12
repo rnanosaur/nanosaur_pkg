@@ -51,3 +51,19 @@ jobs:
           body_path: release_notes.txt  # This is where the file is referenced
           draft: false
           prerelease: false
+
+  notify:
+    name: "Notify socials"
+    needs: [publish]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract tag
+        id: extract_tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Discord notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        uses: Ilshidur/action-discord@master
+        with:
+          args: "nanosaur-cli **${{ steps.extract_tag.outputs.tag }}** has been deployed!\nTo install follow the documentation: https://nanosaur.ai"

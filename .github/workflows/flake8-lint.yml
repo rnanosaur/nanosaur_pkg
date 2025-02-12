@@ -1,6 +1,10 @@
 name: Lint and Fix
 
-on: [push, pull_request]
+on:
+  push:
+    branches-ignore:
+      - 'refs/tags/*'
+  pull_request:
 
 jobs:
   autostyle:
