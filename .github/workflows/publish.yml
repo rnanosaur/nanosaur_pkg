@@ -3,7 +3,7 @@ name: Publish Python Package
 on:
   push:
     tags:
-      - "v*.*.*"  # Triggers the workflow on version tags, e.g., v1.0.0, v2.1.3
+      - "*.*.*"  # Trigger when a tag with format X.X.X is pushed
 
 jobs:
   publish:

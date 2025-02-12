@@ -31,9 +31,16 @@ __cr__ = "(c) 2025, RB"
 __copyright__ = "(c) 2025, Raffaello Bonghi"
 # Version package
 # https://packaging.python.org/guides/distributing-packages-using-setuptools/#choosing-a-versioning-scheme
-__version__ = "0.0.2"
+__version__ = "0.1.0"
 
 from .utilities import Params, RobotList, Robot, get_nanosaur_home, get_nanosaur_docker_user  # noqa: F401
-from .workspace import get_selected_workspace, get_workspaces_path, get_shared_workspace_path, deploy, NANOSAUR_DOCKER_PACKAGE  # noqa: F401
+from .workspace import (
+    get_selected_workspace,
+    get_workspaces_path,
+    get_shared_workspace_path,
+    deploy,
+    NANOSAUR_DISTRO_MAP,
+    NANOSAUR_CURRENT_DISTRO,
+    NANOSAUR_DOCKER_PACKAGE)  # noqa: F401
 from .prompt_colors import TerminalFormatter  # noqa: F401
 # EOF
