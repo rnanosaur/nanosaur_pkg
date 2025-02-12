@@ -63,4 +63,4 @@ jobs:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         uses: Ilshidur/action-discord@master
         with:
-          args: "nanosaur-cli **${{ github.ref_name }}** has been deployed!\nTo install follow the documentation: https://nanosaur.ai"
+          args: "**nanosaur-cli ${{ github.ref_name }}** has been deployed!\nTo install follow `pip3 install nanosaur==${{ github.ref_name }}`"

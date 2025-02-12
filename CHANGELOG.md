@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.2] - 2025-02-12
+
+### Fixes
+
+- Improve Discord notification message
+
 ## [0.1.1] - 2025-02-12
 
 ### Fixes
