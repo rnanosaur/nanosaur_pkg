@@ -114,7 +114,7 @@ def requirements_info(params: utilities.Params, verbose: bool):
         print(TerminalFormatter.color_text(f"{nanosaur_version_string} {printed_version}", color='yellow'))
     else:
         print(TerminalFormatter.color_text(f"{nanosaur_version_string} {tag_version}"))
-    
+
     if tag_version:
         print(TerminalFormatter.color_text(f"  Warning: You are using a tagged version based on {nanosaur_version}", color='yellow'))
 
