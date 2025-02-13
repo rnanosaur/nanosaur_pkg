@@ -152,7 +152,7 @@ def run_docker_isaac_ros(workspace_path, auto_commands=[]):
     print(TerminalFormatter.color_text("Dev script finished", color='green'))
 
 
-def rosinstall_reader(workspace_path, rosinstall_path, src_folder="src") -> bool:
+def rosinstall_reader(workspace_path, rosinstall_path, src_folder="src", tag_version=None) -> bool:
     folder_path = os.path.join(workspace_path, src_folder)
     if not os.path.exists(folder_path):
         print(TerminalFormatter.color_text(f"Error: Folder {folder_path} does not exist.", color='red'))
@@ -166,6 +166,9 @@ def rosinstall_reader(workspace_path, rosinstall_path, src_folder="src") -> bool
             # Fetch the details from the YAML
             local_name = git_info.get('local-name')
             version = git_info.get('version', 'main')  # Default to 'main' if no version is provided
+            if tag_version:
+                version = tag_version
+                print(TerminalFormatter.color_text(f"Warning: Overriding tag version with {tag_version}", color='yellow'))
             uri = git_info.get('uri')
 
             # Ensure that local_name is always defined

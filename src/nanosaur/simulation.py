@@ -31,6 +31,7 @@ from inquirer.themes import GreenPassion
 import argparse
 import subprocess
 import logging
+import nanosaur.variables as nsv
 from nanosaur import workspace
 from nanosaur.ros import get_ros2_path
 from nanosaur.docker import docker_simulator_start
@@ -312,7 +313,7 @@ def simulation_start_debug(simulation_ws_path, simulation_tool, headless, isaac_
 def simulation_start(platform, params: Params, args):
     # Get the Nanosaur version
     nanosaur_version = params['nanosaur_version']
-    ros_distro = workspace.NANOSAUR_DISTRO_MAP[nanosaur_version]['ros']
+    ros_distro = nsv.NANOSAUR_DISTRO_MAP[nanosaur_version]['ros']
     # Check if debug mode is enabled
     debug_mode = None
     if 'ws_debug' in params:
@@ -368,7 +369,7 @@ def simulation_set(platform, params: Params, args):
         print(TerminalFormatter.color_text("No simulation tools available. Please install a simulator first.", color='red'))
         return False
     # Get the Isaac Sim version required for the selected Nanosaur version
-    isaac_sim_required = workspace.NANOSAUR_DISTRO_MAP[params['nanosaur_version']]['isaac_sim']
+    isaac_sim_required = nsv.NANOSAUR_DISTRO_MAP[params['nanosaur_version']]['isaac_sim']
     # Filter the list with only the valid Isaac Sim versions
     isaac_sim_list = {ver: path for ver, path in isaac_sim_list.items() if validate_isaac_sim(path, isaac_sim_required)}
     # Ask the user to select a simulation tool

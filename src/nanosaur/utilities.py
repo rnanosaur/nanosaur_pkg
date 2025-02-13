@@ -30,6 +30,7 @@ import pexpect
 import getpass
 import requests
 import logging
+import nanosaur.variables as nsv
 from nanosaur.prompt_colors import TerminalFormatter
 
 # Set up the logger
@@ -342,6 +343,13 @@ def build_env_file(params):
             env_file.write(f"SIMULATION={simulation_tool}\n")
         if 'simulation_headless' in params:
             env_file.write(f"SIMULATION_HEADLESS={params['simulation_headless']}\n")
+        # Pass the nanosaur version
+        nanosaur_version = params['nanosaur_version']
+        if nsv.NANOSAUR_CURRENT_DISTRO != nanosaur_version:
+            if '-' in nanosaur_version:
+                nanosaur_version = nanosaur_version.split('-')[0]
+            env_file.write(f"NANOSAUR_VERSION=-{nsv.NANOSAUR_CURRENT_DISTRO}\n")
+
         # Pass robot ros commands
         env_file.write(f"COMMANDS={robot.config_to_ros()}\n")
 

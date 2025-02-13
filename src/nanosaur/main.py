@@ -33,6 +33,7 @@ from inquirer.themes import GreenPassion
 from jtop import jtop, JtopException
 
 from nanosaur import __version__
+import nanosaur.variables as nsv
 from nanosaur.logger_config import setup_logger
 from nanosaur.docker import docker_info, is_docker_installed, docker_robot_start, docker_robot_stop
 from nanosaur.robot import parser_robot_menu, wizard
@@ -42,6 +43,7 @@ from nanosaur.prompt_colors import TerminalFormatter
 from nanosaur.ros import get_ros2_path
 from nanosaur.utilities import Params, RobotList, package_info
 from nanosaur.workspace import (
+    get_nanosaur_version,
     workspaces_info,
     parser_workspace_menu,
     create_simple,
@@ -49,8 +51,6 @@ from nanosaur.workspace import (
     create_maintainer_workspace,
     get_workspaces_path,
     requirements_info,
-    NANOSAUR_DISTRO_MAP,
-    NANOSAUR_CURRENT_DISTRO,
 )
 
 
@@ -193,6 +193,33 @@ def install(platform, params: Params, args):
     return True
 
 
+def release_control(platform, params: Params, args):
+    
+    # Get current nanosaur version
+    nanosaur_version = params.get('nanosaur_version', nsv.NANOSAUR_CURRENT_DISTRO)
+    # Ask the user to select a Nanosaur release version
+    release_versions = list(nsv.NANOSAUR_DISTRO_MAP.keys())
+    questions = [
+        inquirer.List(
+            'tag_version',
+            message="Select the Nanosaur release version",
+            choices=release_versions,
+            default=args.name or nanosaur_version,
+            ignore=lambda answers: args.name is not None,
+        ),
+        inquirer.Text(
+            'tag_name',
+            message="Confirm tag name",
+            default=lambda answers: answers['tag_version'],
+        )
+    ]
+    if answers := inquirer.prompt(questions, theme=GreenPassion()):
+        selected_tag = answers['tag_name']
+        params.set('nanosaur_version', selected_tag)
+        print(TerminalFormatter.color_text(f"Selected Nanosaur version: {selected_tag}", bold=True))
+    return True
+
+
 def nanosaur_wake_up(platform, params: Params, args):
     args.detach = False
     # Start the container in detached mode
@@ -215,12 +242,9 @@ def main():
     # Load the parameters
     params = Params.load(DEFAULT_PARAMS)
     # Get current nanosaur version
-    nanosaur_version = params.get('nanosaur_version', NANOSAUR_CURRENT_DISTRO)
-    if nanosaur_version not in NANOSAUR_DISTRO_MAP:
-        print(TerminalFormatter.color_text(f"Error: {nanosaur_version} is not a valid Nanosaur version", color='red'))
-        sys.exit(1)
+    nanosaur_version = get_nanosaur_version(params, verbose=True)
     # Get the ROS distro
-    ros_distro = NANOSAUR_DISTRO_MAP[nanosaur_version]['ros']
+    ros_distro = nsv.NANOSAUR_DISTRO_MAP[nanosaur_version]['ros']
     # Get the ROS 2 installation path if available
     ros2_installed = get_ros2_path(ros_distro)
 
@@ -243,18 +267,20 @@ def main():
     # Create the argument parser
     parser = argparse.ArgumentParser(
         description=f"Nanosaur CLI - A command-line interface for the {nanosaur_green} robot.")
-    # Add arguments
+    # Add version argument
     parser.add_argument('--version', '-v', action='version', version=__version__)
-
+    # Add hidden arguments
     current_mode = params.get('mode', 'simple')
     color = NANOSAUR_INSTALL_OPTIONS_RULES[current_mode]['color']
     current_mode_string = TerminalFormatter.color_text(current_mode, color=color, bold=True)
+    # Specify the mode of operation of the nanosaur cli
     parser.add_argument('--mode', type=str, help=f"Specify the mode of operation [{current_mode_string}]")
+    # Specify if the debug running by default in host or docker otherwise is always asked
     if ros2_installed is not None:
         current_ws_debug = params.get('ws_debug', 'NO SELECTED')
         current_ws_debug_string = TerminalFormatter.color_text(current_ws_debug, bold=True)
         parser.add_argument('--default-debug', '-dd', type=str, choices=['host', 'docker'], help=f"Select the debug mode [{current_ws_debug_string}]")
-
+    # Add the log level argument, in Raffo mode is always showed otherwise is hidden
     if 'mode' in params and params['mode'] in ['Raffo']:
         help_message = "Set the log level (default: INFO)"
     else:
@@ -285,6 +311,12 @@ def main():
     parser_install.add_argument('-y', '--yes', action='store_true', help="Skip confirmation prompt")
     parser_install.add_argument('name', type=str, nargs='?', help="Specify the name for the installation")
     parser_install.set_defaults(func=install)
+    # Subcommand: release control
+    if 'mode' in params:
+        nanosaur_version_str = TerminalFormatter.color_text(nanosaur_version, bold=True)
+        parser_release = subparsers.add_parser('release', help=f"Control the release version [{nanosaur_version_str}]")
+        parser_release.add_argument('name', type=str, nargs='?', help="Specify the release name")
+        parser_release.set_defaults(func=release_control)
 
     # Subcommand: workspace (with a sub-menu for workspace operations)
     if get_workspaces_path(params):

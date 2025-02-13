@@ -1,4 +1,4 @@
-# Copyright (C) 2024, Raffaello Bonghi <raffaello@rnext.it>
+# Copyright (C) 2025, Raffaello Bonghi <raffaello@rnext.it>
 # All rights reserved
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -23,24 +23,39 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# flake8: noqa
 
-__author__ = "Raffaello Bonghi"
-__email__ = "raffaello@rnext.it"
-__cr__ = "(c) 2025, RB"
-__copyright__ = "(c) 2025, Raffaello Bonghi"
-# Version package
-# https://packaging.python.org/guides/distributing-packages-using-setuptools/#choosing-a-versioning-scheme
-__version__ = "0.1.2"
+NANOSAUR_DISTRO_MAP = {
+    '2.0.0': {
+        'nanosaur_branch': 'nanosaur2',
+        'ros': 'humble',
+        'isaac_ros_release': 'release-3.2',
+        'isaac_ros_distro': 'ros2_humble',
+        'isaac_sim': '>=4.1, <=4.5',
+    },
+}
+NANOSAUR_CURRENT_DISTRO = '2.0.0'
 
-from .utilities import Params, RobotList, Robot, get_nanosaur_home, get_nanosaur_docker_user  # noqa: F401
-from .workspace import (
-    get_selected_workspace,
-    get_workspaces_path,
-    get_shared_workspace_path,
-    deploy)  # noqa: F401
-from .prompt_colors import TerminalFormatter  # noqa: F401
-from .variables import (NANOSAUR_DISTRO_MAP,
-    NANOSAUR_CURRENT_DISTRO,
-    NANOSAUR_DOCKER_PACKAGE)  # noqa: F401
-# EOF
+ISAAC_ROS_DOCKER_CAMERA_LIST = ["realsense", "zed"]
+NANOSAUR_DOCKERFILE_SUFFIX = "nanosaur"
+
+DEFAULT_WORKSPACE_PERCEPTION = 'perception_ws'
+DEFAULT_WORKSPACE_SIMULATION = 'simulation_ws'
+DEFAULT_WORKSPACE_ROBOT = 'robot_ws'
+DEFAULT_WORKSPACE_DEVELOPER = 'ros_ws'
+
+NANOSAUR_SIMULATION_IMAGES = ['gazebo', 'isaac-sim', 'nanosaur']
+
+NANOSAUR_DOCKER_PACKAGE = {
+    'simulation': {
+        'x86_64': ['simulation:gazebo', 'simulation:isaac-sim', 'nanosaur:simulation'],
+        'aarch64': [],
+    },
+    'perception': {
+        'x86_64': ['perception:simulation'],
+        'aarch64': ['perception:realsense', 'perception:zed'],
+    },
+    'robot': {
+        'x86_64': [],
+        'aarch64': ['nanosaur:robot'],
+    }
+}
