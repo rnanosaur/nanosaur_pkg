@@ -183,7 +183,7 @@ def rosinstall_reader(workspace_path, rosinstall_path, src_folder="src", tag_ver
             print(f"Cloning {repo_path}...")
             new_uri = uri
             if token is not None:
-                print("Using token for authentication")
+                print(TerminalFormatter.color_text("Using token for authentication", color='yellow'))
                 new_uri = uri.replace("https://", f"https://{token['username']}:{token['password']}@", 1)
             # Clone the repository
             repo_dir = Repo.clone_from(new_uri, repo_path, branch=version)
@@ -196,7 +196,7 @@ def rosinstall_reader(workspace_path, rosinstall_path, src_folder="src", tag_ver
                 repo_dir = Repo(repo_path)
                 original_remote_url = repo_dir.remotes.origin.url
                 if token is not None:
-                    print("Using token for authentication")
+                    print(TerminalFormatter.color_text("Using token for authentication", color='yellow'))
                     authenticated_remote_url = original_remote_url.replace("https://", f"https://{token['username']}:{token['password']}@", 1)
                 else:
                     authenticated_remote_url = original_remote_url
