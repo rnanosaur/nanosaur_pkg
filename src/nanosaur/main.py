@@ -194,7 +194,7 @@ def install(platform, params: Params, args):
 
 
 def release_control(platform, params: Params, args):
-    
+
     # Get current nanosaur version
     nanosaur_version = params.get('nanosaur_version', nsv.NANOSAUR_CURRENT_DISTRO)
     # Ask the user to select a Nanosaur release version

@@ -53,7 +53,7 @@ def get_nanosaur_version(params: utilities.Params, verbose=False) -> str:
     nanosaur_version = params.get('nanosaur_version', nsv.NANOSAUR_CURRENT_DISTRO)
     if '-' in nanosaur_version:
         version, tag = nanosaur_version.split('-')
-        #tag_str = TerminalFormatter.color_text(tag, bold=True)
+        # tag_str = TerminalFormatter.color_text(tag, bold=True)
         if version not in nsv.NANOSAUR_DISTRO_MAP:
             print(TerminalFormatter.color_text(f"Error: {nanosaur_version} is not a valid Nanosaur version", color='red'))
             sys.exit(1)
@@ -113,7 +113,7 @@ def requirements_info(params: utilities.Params, verbose: bool):
         print(TerminalFormatter.color_text(f"{nanosaur_version_string} {tag_version}", color='yellow'))
     else:
         print(TerminalFormatter.color_text(f"{nanosaur_version_string} {tag_version}"))
-    
+
     if tag_version:
         print(TerminalFormatter.color_text(f"  Warning: You are using a tagged version based on {nanosaur_version}", color='yellow'))
 
