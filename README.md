@@ -17,6 +17,9 @@ Meet nanosaur:
 * 🐳 nanosaur [Docker Hub](https://hub.docker.com/u/nanosaur)
 * ⁉️ Something wrong? Open an [issue](https://github.com/rnanosaur/nanosaur/issues)
 <!-- INTRO END -->
+<!-- DISTRO START -->
+
+<!-- DISTRO END -->
 <!-- CI START -->
 ## CI & CD
 
@@ -35,25 +38,7 @@ Website: [![pages-build-deployment](https://github.com/rnanosaur/rnanosaur.githu
 <!-- CI END -->
 ## Description
 
-Nanosaur is a small, open-source robotic platform designed for educational and research purposes. This package contains all the necessary software to operate and control the Nanosaur robot.
-
-## Develop
-
-Install this package in develop mode
-
-```console
-mkdir -p $HOME/nanosaur
-cd $HOME/nanosaur
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e nanosaur_cli[dev]
-```
-
-Test this package
-
-```console
-nanosaur info
-```
+The nanosaur-cli is a command interface to control and develop on nanosaur.
 
 <!-- LICENSE START -->
 ## License
