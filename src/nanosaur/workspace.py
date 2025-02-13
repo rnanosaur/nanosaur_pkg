@@ -693,7 +693,7 @@ def create_maintainer_workspace(platform, params: utilities.Params, args, passwo
     # Get the ROS distro name
     ros_distro_name = nsv.NANOSAUR_DISTRO_MAP[nanosaur_version]['ros']
     # Check if ROS 2 is installed
-    ros2_installed = ros.get_ros2_path(ros_distro_name)
+    ros.get_ros2_path(ros_distro_name)
     # determine the device type
     device_type = "robot" if platform['Machine'] == 'aarch64' else "desktop"
     # Create the Nanosaur home folder
