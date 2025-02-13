@@ -109,11 +109,12 @@ def requirements_info(params: utilities.Params, verbose: bool):
         tag_version = params['nanosaur_version']
     # Get the nanosaur branch
     nanosaur_version_string = TerminalFormatter.color_text("Nanosaur Version:", bold=True)
+    printed_version = tag_version or nanosaur_version
     if nanosaur_version != nsv.NANOSAUR_CURRENT_DISTRO:
-        print(TerminalFormatter.color_text(f"{nanosaur_version_string} {tag_version}", color='yellow'))
+        print(TerminalFormatter.color_text(f"{nanosaur_version_string} {printed_version}", color='yellow'))
     else:
         print(TerminalFormatter.color_text(f"{nanosaur_version_string} {tag_version}"))
-
+    
     if tag_version:
         print(TerminalFormatter.color_text(f"  Warning: You are using a tagged version based on {nanosaur_version}", color='yellow'))
 
