@@ -97,6 +97,7 @@ def info(platform, params: Params, args):
     package_info(params, args.verbose)
     # Requirements information
     print()
+    print(f"{TerminalFormatter.color_text('Nanosaur-CLI Version:', bold=True)} {__version__}")
     requirements_info(params, args.verbose)
     # Print mode if it exists in params
     if 'mode' in params:
