@@ -34,6 +34,7 @@ __copyright__ = "(c) 2025, Raffaello Bonghi"
 __version__ = "0.1.2"
 
 from .main import install  # noqa: F401
+from .ros import rosinstall_reader  # noqa: F401
 from .utilities import Params, RobotList, Robot, get_nanosaur_home, get_nanosaur_docker_user  # noqa: F401
 from .workspace import (
     get_selected_workspace,

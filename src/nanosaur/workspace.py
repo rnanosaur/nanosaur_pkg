@@ -656,14 +656,14 @@ def create_simple(platform, params: utilities.Params, args) -> bool:
     nanosaur_home_path = utilities.create_nanosaur_home()
     # Store nanosaur distro and Isaac ROS distro
     params['nanosaur_version'] = params.get('nanosaur_version', nsv.NANOSAUR_CURRENT_DISTRO)
-    # Determine the device type
-    workspace_type = "robot" if platform['Machine'] == 'aarch64' else "simulation"
-    docker_compose = f"docker-compose.{workspace_type}.yml"
+
     # Get the Nanosaur home folder and branch
     nanosaur_version = params['nanosaur_version']
     nanosaur_branch = params.get('nanosaur_branch', nsv.NANOSAUR_DISTRO_MAP[nanosaur_version]['nanosaur_branch'])
     nanosaur_raw_url = utilities.get_nanosaur_raw_github_url(params, nanosaur_branch)
-    url = f"{nanosaur_raw_url}/nanosaur/compose/{docker_compose}"
+    # Determine the device type
+    docker_compose = "docker-compose.yml"
+    url = f"{nanosaur_raw_url}/{docker_compose}"
     # Download the docker-compose file
     return utilities.download_file(url, nanosaur_home_path, docker_compose, force=args.force) is not None
 
@@ -735,7 +735,7 @@ def create_maintainer_workspace(platform, params: utilities.Params, args, passwo
             os.rename(docker_compose_path, old_path)
             print(TerminalFormatter.color_text(f"Renamed existing {docker_compose_file} to {old_path}", color='yellow'))
         # Create a symlink to the new docker-compose file
-        new_path = os.path.join(nanosaur_home_path, 'shared_src', 'nanosaur', 'nanosaur', 'compose', docker_compose_file)
+        new_path = os.path.join(nanosaur_home_path, 'shared_src', 'nanosaur', docker_compose_file)
         if not os.path.exists(new_path):
             print(TerminalFormatter.color_text(f"Could not find {docker_compose_file} in {new_path}", color='red'))
             return False
@@ -746,13 +746,5 @@ def create_maintainer_workspace(platform, params: utilities.Params, args, passwo
         return True
 
     # Check if docker-compose files exist
-    # sourcery skip: merge-nested-ifs
-    if device_type == "robot" or args.all:
-        if not handle_docker_compose_file('docker-compose.robot.yml'):
-            return False
-    if device_type == "desktop" or args.all:
-        if not handle_docker_compose_file('docker-compose.simulation.yml'):
-            return False
-
-    return True
+    return bool(handle_docker_compose_file('docker-compose.yml'))
 # EOF

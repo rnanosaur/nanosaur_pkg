@@ -152,7 +152,7 @@ def run_docker_isaac_ros(workspace_path, auto_commands=[]):
     print(TerminalFormatter.color_text("Dev script finished", color='green'))
 
 
-def rosinstall_reader(workspace_path, rosinstall_path, src_folder="src", tag_version=None) -> bool:
+def rosinstall_reader(workspace_path, rosinstall_path, src_folder="src", tag_version=None, token=None) -> bool:
     folder_path = os.path.join(workspace_path, src_folder)
     if not os.path.exists(folder_path):
         print(TerminalFormatter.color_text(f"Error: Folder {folder_path} does not exist.", color='red'))
@@ -181,21 +181,37 @@ def rosinstall_reader(workspace_path, rosinstall_path, src_folder="src", tag_ver
         print(f"=== {os.path.abspath(local_name)} ({uri}) ===")
         if not os.path.exists(repo_path):
             print(f"Cloning {repo_path}...")
-            Repo.clone_from(uri, repo_path, branch=version)
+            new_uri = uri
+            if token is not None:
+                print("Using token for authentication")
+                new_uri = uri.replace("https://", f"https://{token['username']}:{token['password']}@", 1)
+            # Clone the repository
+            repo_dir = Repo.clone_from(new_uri, repo_path, branch=version)
+            if token is not None:
+                # Remove the token from the URL
+                repo_dir.remotes.origin.set_url(uri)
         else:
-            # Open the existing repo and fetch the latest changes
-            repo_dir = Repo(repo_path)
-            # Fetch the latest changes
-            origin = repo_dir.remotes.origin
-            origin.fetch()
-            # Checkout the specified version (branch or tag)
             try:
+                # Open the existing repo and fetch the latest changes
+                repo_dir = Repo(repo_path)
+                original_remote_url = repo_dir.remotes.origin.url
+                if token is not None:
+                    print("Using token for authentication")
+                    authenticated_remote_url = original_remote_url.replace("https://", f"https://{token['username']}:{token['password']}@", 1)
+                else:
+                    authenticated_remote_url = original_remote_url
+                # Fetch the latest changes
+                repo_dir.git.fetch(authenticated_remote_url)
+                # Checkout the specified version (branch or tag)
                 repo_dir.git.checkout(version)
                 # Check if there are any modified files
                 if modified_files := repo_dir.git.diff('--name-only'):
                     print(f"\nAlready on '{version}'")
                     for file in modified_files.splitlines():
                         print(TerminalFormatter.color_text(f"M\t{file}", color='yellow'))
+                if token is not None:
+                    # Remove the token from the URL
+                    repo_dir.remotes.origin.set_url(original_remote_url)
                 else:
                     print(f"\nAlready on '{version}'")
                 print(f"Your branch is up to date with 'origin/{version}'.")

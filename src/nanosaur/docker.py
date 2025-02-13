@@ -97,12 +97,10 @@ def docker_service_run_command(platform, params: Params, service, command=None, 
         command = []
     if volumes is None:
         volumes = []
-    workspace_type = "robot" if platform['Machine'] == 'aarch64' else "simulation"
-    docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()
     # Create the full file path
     robot = RobotList.current_robot(params)
-    docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
+    docker_compose_path = os.path.join(nanosaur_home_path, "docker-compose.yml")
     env_file_path = os.path.join(nanosaur_home_path, f'{robot.name}.env')
 
     # Build env file
@@ -120,12 +118,10 @@ def docker_service_run_command(platform, params: Params, service, command=None, 
 
 def docker_robot_start(platform, params: Params, args):
     """Start the docker container."""
-    workspace_type = "robot" if platform['Machine'] == 'aarch64' else "simulation"
-    docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()
     # Create the full file path
     robot = RobotList.current_robot(params)
-    docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
+    docker_compose_path = os.path.join(nanosaur_home_path, "docker-compose.yml")
     env_file_path = os.path.join(nanosaur_home_path, f'{robot.name}.env')
 
     # Check which simulation tool is selected only if robot.simulation is true
@@ -156,12 +152,10 @@ def docker_robot_start(platform, params: Params, args):
 
 def docker_simulator_start(platform, params: Params, args):
     """Start the simulation tools."""
-    workspace_type = "robot" if platform['Machine'] == 'aarch64' else "simulation"
-    docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()
     # Create the full file path
     robot = RobotList.current_robot(params)
-    docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
+    docker_compose_path = os.path.join(nanosaur_home_path, "docker-compose.yml")
     env_file_path = os.path.join(nanosaur_home_path, f'{robot.name}.env')
 
     # Start the container in detached mode
@@ -187,12 +181,10 @@ def docker_simulator_start(platform, params: Params, args):
 
 def docker_robot_stop(platform, params: Params, args):
     """Stop the docker container."""
-    workspace_type = "robot" if platform['Machine'] == 'aarch64' else "simulation"
-    docker_compose = f"docker-compose.{workspace_type}.yml"
     nanosaur_home_path = get_nanosaur_home()
     # Create the full file path
     robot = RobotList.current_robot(params)
-    docker_compose_path = os.path.join(nanosaur_home_path, docker_compose)
+    docker_compose_path = os.path.join(nanosaur_home_path, "docker-compose.yml")
     env_file_path = os.path.join(nanosaur_home_path, f'{robot.name}.env')
 
     # Create a DockerClient object with the docker-compose file
