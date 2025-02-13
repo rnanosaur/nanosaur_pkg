@@ -723,8 +723,8 @@ def create_maintainer_workspace(platform, params: utilities.Params, args, passwo
     if not update(platform, params, args):
         return False
     # Build all workspaces
-    if ros2_installed is not None:
-        build(platform, params, args)
+    # if ros2_installed is not None:
+    #    build(platform, params, args)
 
     # Check if docker-compose files exist
     def handle_docker_compose_file(docker_compose_file):
