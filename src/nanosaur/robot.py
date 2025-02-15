@@ -158,7 +158,7 @@ def robot_set_name(platform, params: Params, args):
     if new_name != robot.name:
         robot.name = new_name
         RobotList.update_robot(params, robot)
-        print(TerminalFormatter.color_text(f"Robot name set to: {robot.name}", color='green'))
+        logger.debug(TerminalFormatter.color_text(f"Robot name set to: {robot.name}", color='green'))
     else:
         logger.debug(TerminalFormatter.color_text(f"Robot name {new_name} is already set", color='yellow'))
     return True
@@ -189,7 +189,7 @@ def robot_set_domain_id(platform, params: Params, args):
     if new_domain_id != robot.domain_id:
         robot.domain_id = new_domain_id
         RobotList.update_robot(params, robot)
-        print(TerminalFormatter.color_text(f"Domain ID set to: {robot.domain_id}", color='green'))
+        logger.debug(TerminalFormatter.color_text(f"Domain ID set to: {robot.domain_id}", color='green'))
     else:
         logger.debug(TerminalFormatter.color_text(f"Domain ID {new_domain_id} is already set", color='yellow'))
     return True
@@ -214,7 +214,7 @@ def robot_set_simulation(platform, params: Params, args):
     is_simulation = answers['simulation'] == 'simulation'
     robot.simulation = is_simulation
     RobotList.update_robot(params, robot)
-    print(TerminalFormatter.color_text(f"Simulator set to: {answers['simulation']}", color='green'))
+    logger.debug(TerminalFormatter.color_text(f"Simulator set to: {answers['simulation']}", color='green'))
     return True
 
 
@@ -251,7 +251,7 @@ def robot_set_camera(platform, params: Params, args):
     if selected_camera != robot.camera_type:
         robot.camera_type = selected_camera
         RobotList.update_robot(params, robot)
-        print(TerminalFormatter.color_text(f"Camera set to: {robot.camera_type or 'No camera'}", color='green'))
+        logger.debug(TerminalFormatter.color_text(f"Camera set to: {robot.camera_type or 'No camera'}", color='green'))
     else:
         logger.debug(TerminalFormatter.color_text(f"Camera {selected_camera or 'No camera'} is already selected", color='yellow'))
     return True
@@ -267,9 +267,9 @@ def robot_set_lidar(platform, params: Params, args):
         if args.new not in all_lidars:
             robot.lidar_type = args.new
             RobotList.update_robot(params, robot)
-            print(TerminalFormatter.color_text(f"New lidar {args.new} selected", color='green'))
+            logger.debug(TerminalFormatter.color_text(f"New lidar {args.new} selected", color='green'))
         else:
-            print(TerminalFormatter.color_text(f"Lidar {args.new} is already exist", color='yellow'))
+            logger.debug(TerminalFormatter.color_text(f"Lidar {args.new} is already exist", color='yellow'))
         return True
 
     options = [
@@ -290,7 +290,7 @@ def robot_set_lidar(platform, params: Params, args):
     if selected_lidar != robot.lidar_type:
         robot.lidar_type = selected_lidar
         RobotList.update_robot(params, robot)
-        print(TerminalFormatter.color_text(f"Lidar set to: {robot.lidar_type or 'No lidar'}", color='green'))
+        logger.debug(TerminalFormatter.color_text(f"Lidar set to: {robot.lidar_type or 'No lidar'}", color='green'))
     else:
         logger.debug(TerminalFormatter.color_text(f"Lidar {selected_lidar or 'No lidar'} is already selected", color='yellow'))
     return True
@@ -324,7 +324,7 @@ def robot_configure_engines(platform, params: Params, args):
     robot.engines = answers['engines']
     RobotList.update_robot(params, robot)
     if robot.engines:
-        print(TerminalFormatter.color_text(f"Engines updated: {', '.join(robot.engines)}", color='green'))
+        logger.debug(TerminalFormatter.color_text(f"Engines updated: {', '.join(robot.engines)}", color='green'))
     else:
         logger.debug(TerminalFormatter.color_text("No engines selected", color='yellow'))
     return True

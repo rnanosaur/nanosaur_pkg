@@ -402,7 +402,7 @@ def create_nanosaur_home() -> str:
     # Check if folder exists, if not, create it
     if not os.path.exists(nanosaur_home_path):
         os.makedirs(nanosaur_home_path)
-        print(TerminalFormatter.color_text(f"Folder '{nanosaur_home_path}' created.", color='green'))
+        logger.debug(TerminalFormatter.color_text(f"Folder '{nanosaur_home_path}' created.", color='green'))
     return nanosaur_home_path
 
 
