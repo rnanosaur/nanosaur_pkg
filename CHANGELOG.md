@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.3] - 2025-02-15
+
+### Features
+
+- Show nanosaur CLI version in `nanosaur info`
+- ROS 2 build is disable in maintainer install
+- Only one `docker-compose.yml` for simulation and real robot
+- now `rosinstall_reader(.)` clone also from private repository
+
+### Fixes
+
+- Minor fixes
+
 ## [0.1.2] - 2025-02-12
 
 ### Fixes
