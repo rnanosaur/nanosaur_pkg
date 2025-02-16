@@ -89,7 +89,7 @@ def get_starting_location(params: utilities.Params) -> str:
         inquirer.List(
             'location',
             message="Run locally or on docker?",
-            choices=['host', 'docker'],
+            choices=['docker', 'host'],
             ignore=lambda answers: debug_mode,
         ),
     ]
@@ -188,6 +188,9 @@ def get_selected_workspace(params, workspace_actions, args):
     # Get the workspaces
     workspaces = get_workspaces_path(params)
     workspaces = {k: v for k, v in workspaces.items() if k in workspace_actions}
+    # Add extra workspace diagnostic if exist
+    if params['mode'] in ['maintainer', 'Raffo'] and 'diagnostic' in workspace_actions:
+        workspaces['diagnostic'] = workspace_actions['diagnostic']
     # Check if there are any workspaces
     if not workspaces:
         print(TerminalFormatter.color_text("No workspaces found.", color='red'))
@@ -429,11 +432,29 @@ def debug(platform, params: utilities.Params, args):
             )
 
         return False
+    
+    def debug_diagnostic():
+        # Create the Nanosaur home folder
+        nanosaur_home_path = utilities.get_nanosaur_home()
+        nanosaur_shared_src = os.path.join(nanosaur_home_path, "shared_src")
+        # Set the volumes
+        volumes = [
+            (nanosaur_shared_src, '/shared_src'),
+        ]
+        # Get the robot object
+        robot = utilities.RobotList.current_robot(params)
+        container_name = f"{robot.name}-diagnostic"
+        # diagnostic in Docker container
+        return docker_service_run_command(
+            platform, params, "diagnostic", command=['bash'],
+            name=container_name, volumes=volumes
+        )
 
     workspace_actions = {
         'developer': lambda: ros.run_docker_isaac_ros(get_workspace_path(params, 'ws_developer_name')),
         'simulation': lambda: debug_simulation(params, args),
-        'perception': lambda: ros.run_docker_isaac_ros(get_workspace_path(params, 'ws_perception_name'))
+        'perception': lambda: ros.run_docker_isaac_ros(get_workspace_path(params, 'ws_perception_name')),
+        'diagnostic': lambda: debug_diagnostic(),
     }
     workspace = get_selected_workspace(params, workspace_actions, args)
     if workspace is None:
@@ -525,6 +546,16 @@ def deploy(platform, params: utilities.Params, args):
                 return False
         return True
 
+    def deploy_diagnostic():
+        # Get the path to the simulation workspace
+        shared_path = get_workspace_path(params, 'shared')
+        # Define tag image name and dockerfile path
+        tag_image = f"{nanosaur_docker_user}/nanosaur:diagnostic"
+        dockerfile_path = f"{shared_path}/Dockerfile"
+        platforms = ["linux/amd64", "linux/arm64"]
+        # Deploy the diagnostic workspace to the docker image for both platforms
+        return ros.deploy_docker_image(dockerfile_path, tag_image)
+
     # Get the deploy action
     workspace_actions = {
         'developer': lambda: ros.deploy_docker_isaac_ros(
@@ -534,6 +565,7 @@ def deploy(platform, params: utilities.Params, args):
         ),
         'simulation': lambda: deploy_simulation(args.image_name),
         'perception': lambda: deploy_perception(args.image_name),
+        'diagnostic': lambda: deploy_diagnostic(),
     }
     if args.all and args.image_name is not None:
         workspaces = get_workspaces_path(params)
@@ -573,7 +605,8 @@ def get_workspace_path(params: utilities.Params, ws_name) -> str:
         'ws_developer_name': params.get('ws_developer_name', nsv.DEFAULT_WORKSPACE_DEVELOPER),
         'ws_robot_name': params.get('ws_robot_name', nsv.DEFAULT_WORKSPACE_ROBOT),
         'ws_simulation_name': params.get('ws_simulation_name', nsv.DEFAULT_WORKSPACE_SIMULATION),
-        'ws_perception_name': params.get('ws_perception_name', nsv.DEFAULT_WORKSPACE_PERCEPTION)
+        'ws_perception_name': params.get('ws_perception_name', nsv.DEFAULT_WORKSPACE_PERCEPTION),
+        'shared': os.path.join('shared_src', 'nanosaur')
     }
     if ws_name not in workspaces:
         return None

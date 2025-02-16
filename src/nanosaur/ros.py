@@ -335,13 +335,16 @@ def run_colcon_build(ros2_path, folder_path) -> bool:
         return False
 
 
-def deploy_docker_image(dockerfile_path, tag_image):
+def deploy_docker_image(dockerfile_path, tag_image, platforms=None) -> bool:
     try:
         print(TerminalFormatter.color_text(f"Building Docker image {tag_image}", color='magenta', bold=True))
+        if platforms:
+            print(TerminalFormatter.color_text(f"- for platforms: {platforms}", color='magenta', bold=True))
         docker.build(
             get_nanosaur_home(),
             file=dockerfile_path,
-            tags=tag_image
+            tags=tag_image,
+            platforms=platforms,
         )
         print(TerminalFormatter.color_text("Docker image built successfully", color='green'))
         return True

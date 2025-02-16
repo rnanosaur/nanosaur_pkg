@@ -57,6 +57,10 @@ NANOSAUR_DOCKER_PACKAGE = {
     'robot': {
         'x86_64': [],
         'aarch64': ['nanosaur:robot'],
+    },
+    'diagnostic': {
+        'x86_64': ['nanosaur:diagnostic'],
+        'aarch64': [],
     }
 }
 # EOF

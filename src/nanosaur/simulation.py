@@ -311,17 +311,10 @@ def simulation_start_debug(simulation_ws_path, simulation_tool, headless, isaac_
 
 
 def simulation_start(platform, params: Params, args):
-    # Get the Nanosaur version
-    nanosaur_version = params['nanosaur_version']
-    ros_distro = nsv.NANOSAUR_DISTRO_MAP[nanosaur_version]['ros']
-    # Check if debug mode is enabled
-    debug_mode = None
-    if 'ws_debug' in params:
-        debug_mode = params['ws_debug']
-        print(TerminalFormatter.color_text(f"Default debug mode: {debug_mode}", color='yellow'))
-    # Get the ROS 2 installation path if available
-    ros2_installed = get_ros2_path(ros_distro)
-    debug_mode = 'docker' if ros2_installed is None else debug_mode
+    # Get location starting function (host or docker)
+    selected_location = workspace.get_starting_location(params)
+    if selected_location is None:
+        return False
     # Check which simulation tool is selected
     if 'simulation_tool' not in params:
         print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
@@ -335,16 +328,16 @@ def simulation_start(platform, params: Params, args):
         print(TerminalFormatter.color_text("No Isaac Sim version selected. Please run simulation set first.", color='red'))
         return False
     # Check if the debug mode is enabled
-    if debug_mode == 'host':
+    if selected_location == 'host':
         nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
         simulator_tool = params['simulation_tool']
         headless = params.get('simulation_headless', False)
         return simulation_start_debug(nanosaur_ws_path, simulator_tool, headless, params.get('isaac_sim_path', None))
-    elif debug_mode == 'docker':
+    elif selected_location == 'docker':
         # Run from docker container
         return docker_simulator_start(platform, params, args)
     else:
-        print(TerminalFormatter.color_text(f"Unknown debug mode: {debug_mode}", color='red'))
+        print(TerminalFormatter.color_text(f"Unknown debug mode: {selected_location}", color='red'))
         return False
 
 

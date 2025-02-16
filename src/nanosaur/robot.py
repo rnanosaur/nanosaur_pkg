@@ -87,12 +87,7 @@ def parser_robot_menu(platform, subparsers: argparse._SubParsersAction, params: 
         robot_name = TerminalFormatter.color_text(robot_data.name, color='green', bold=True)
         parser_robot = subparsers.add_parser('robot', help=f"Manage the Nanosaur robot [{robot_name}]")
         robot_subparsers = parser_robot.add_subparsers(dest='robot_type', help="Robot operations")
-        # Add robot display subcommand
-        parser_robot_display = robot_subparsers.add_parser('rviz', help="Show the robot on rviz")
-        parser_robot_display.set_defaults(func=robot_display)
-        # Add robot drive subcommand
-        parser_robot_drive = robot_subparsers.add_parser('drive', help="Control the robot with keyboard")
-        parser_robot_drive.set_defaults(func=control_keyboard)
+
         # Add robot start subcommand
         parser_robot_start = robot_subparsers.add_parser('start', help="Activate the robot")
         parser_robot_start.add_argument(
@@ -103,7 +98,15 @@ def parser_robot_menu(platform, subparsers: argparse._SubParsersAction, params: 
         # Add robot stop subcommand
         parser_robot_stop = robot_subparsers.add_parser('stop', help="Deactivate the robot")
         parser_robot_stop.set_defaults(func=docker.docker_robot_stop)
-
+        # Add robot display subcommand
+        parser_robot_display = robot_subparsers.add_parser('rviz', help="Show the robot on rviz")
+        parser_robot_display.set_defaults(func=robot_display)
+        # Add robot drive subcommand
+        parser_robot_drive = robot_subparsers.add_parser('drive', help="Control the robot with keyboard")
+        parser_robot_drive.set_defaults(func=control_keyboard)
+        # Add robot terminal subcommand
+        parser_robot_terminal = robot_subparsers.add_parser('terminal', help="Access the robot with terminal (only docker)")
+        parser_robot_terminal.set_defaults(func=control_terminal)
         # Add robot config subcommand
         parser_config = add_robot_config_subcommands(platform, robot_subparsers, params)
 
@@ -338,14 +341,30 @@ def robot_reset(platform, params: Params, args):
     return True
 
 
+def control_terminal(platform, params: Params, args):
+    """Control the robot using the terminal."""
+    # Get the robot
+    robot = RobotList.current_robot(params)
+    if robot.simulation and 'simulation_tool' not in params:
+        print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
+        return False
+    # Run from docker container
+    docker.docker_service_run_command(platform, params, "diagnostic", ["bash"], name=f"{robot.name}-terminal")
+    return True
+
+
 def control_keyboard(platform, params: Params, args):
     """Control the robot using the keyboard."""
+    # Get the robot
+    robot = RobotList.current_robot(params)
+    if robot.simulation and 'simulation_tool' not in params:
+        print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
+        return False
     # Get location starting function (host or docker)
     selected_location = workspace.get_starting_location(params)
     if selected_location is None:
         return False
-    # Get the robot
-    robot = RobotList.current_robot(params)
+    # Command to run
     command = f"ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args --remap /cmd_vel:=/{robot.name}/key_vel"
     # Run from local machine
     if selected_location == 'host':
@@ -357,8 +376,7 @@ def control_keyboard(platform, params: Params, args):
         return True
     elif selected_location == 'docker':
         # Run from docker container
-        service = 'gazebo'  # TODO: Change to the correct service
-        docker.docker_service_run_command(platform, params, service, shlex.split(command), name=f"{robot.name}-keyboard")
+        docker.docker_service_run_command(platform, params, "diagnostic", shlex.split(command), name=f"{robot.name}-keyboard")
         return True
     else:
         print(TerminalFormatter.color_text(f"Unknown debug mode: {selected_location}", color='red'))
@@ -386,8 +404,7 @@ def robot_display(platform, params: Params, args):
         return True
     elif selected_location == 'docker':
         # Run from docker container
-        service = 'gazebo'  # TODO: Change to the correct service
-        docker.docker_service_run_command(platform, params, service, shlex.split(command), name=f"{robot.name}-rviz")
+        docker.docker_service_run_command(platform, params, "diagnostic", shlex.split(command), name=f"{robot.name}-rviz")
         return True
     else:
         print(TerminalFormatter.color_text(f"Unknown debug mode: {selected_location}", color='red'))

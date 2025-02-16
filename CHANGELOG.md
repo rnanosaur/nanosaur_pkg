@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.4]
+
+### Features
+
+- Redesign the simulation tool
+- New diagnostic docker
+- Added new function in `nanosaur robot terminal` to launch a terminal from docker
+
 ## [0.1.3] - 2025-02-15
 
 ### Features
