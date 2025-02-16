@@ -432,7 +432,7 @@ def debug(platform, params: utilities.Params, args):
             )
 
         return False
-    
+
     def debug_diagnostic():
         # Create the Nanosaur home folder
         nanosaur_home_path = utilities.get_nanosaur_home()
@@ -552,7 +552,6 @@ def deploy(platform, params: utilities.Params, args):
         # Define tag image name and dockerfile path
         tag_image = f"{nanosaur_docker_user}/nanosaur:diagnostic"
         dockerfile_path = f"{shared_path}/Dockerfile"
-        platforms = ["linux/amd64", "linux/arm64"]
         # Deploy the diagnostic workspace to the docker image for both platforms
         return ros.deploy_docker_image(dockerfile_path, tag_image)
 
