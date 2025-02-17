@@ -223,8 +223,10 @@ def release_control(platform, params: Params, args):
 
 def nanosaur_wake_up(platform, params: Params, args):
     args.detach = False
+    # Get the simulation data from the parameters
+    simulation_data = params.get('simulation', {})
     # Start the container in detached mode
-    simulation_tool = params.get('simulation_tool', '').lower().replace(' ', '-')
+    simulation_tool = simulation_data.get('tool', '').lower().replace(' ', '-')
     args.profile = simulation_tool
     return docker_robot_start(platform, params, args)
 

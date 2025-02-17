@@ -338,11 +338,13 @@ def build_env_file(params):
             perception_tag = "none"
         env_file.write(f"PERCEPTION_TAG={perception_tag}\n")
         # Check which simulation tool is selected and save it in the .env file
-        if 'simulation_tool' in params:
-            simulation_tool = params['simulation_tool'].lower().replace(' ', '-')
+        # Get the simulation data from the parameters
+        simulation_data = params.get('simulation', {})
+        if 'tool' in simulation_data:
+            simulation_tool = simulation_data['tool'].lower().replace(' ', '-')
             env_file.write(f"SIMULATION={simulation_tool}\n")
-        if 'simulation_headless' in params:
-            env_file.write(f"SIMULATION_HEADLESS={params['simulation_headless']}\n")
+        if 'headless' in simulation_data:
+            env_file.write(f"SIMULATION_HEADLESS={simulation_data['headless']}\n")
         # Pass the nanosaur version
         nanosaur_version = params['nanosaur_version']
         if nsv.NANOSAUR_CURRENT_DISTRO != nanosaur_version:

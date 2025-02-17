@@ -70,8 +70,10 @@ simulation_tools = {
 
 
 def parser_simulation_menu(subparsers: argparse._SubParsersAction, params: Params) -> argparse.ArgumentParser:
+    # Get the simulation data from the parameters
+    simulation_data = params.get('simulation', {})
     # Get the simulation tool from the parameters
-    simulation_type = params.get('simulation_tool', "NOT SELECTED")
+    simulation_type = simulation_data.get('tool', "NOT SELECTED")
     # Add simulation subcommand
     parser_simulation = subparsers.add_parser(
         'simulation', aliases=["sim"], help=f"Work with simulation tools [{simulation_type}]")
@@ -169,20 +171,22 @@ def simulation_info(platform, params: Params, verbose):
     """
     Print information about the installed simulation tools.
     """
+    # Get the simulation data from the parameters
+    simulation_data = params.get('simulation', {})
 
     def print_simulation_tool():
         isaac_sim_version = ""
-        if 'isaac_sim_path' in params and params['simulation_tool'] == 'isaac-sim' and params['isaac_sim_path']:
-            version_file = os.path.join(params['isaac_sim_path'], "VERSION")
+        if 'isaac_sim_path' in simulation_data and simulation_data['tool'] == 'isaac-sim' and simulation_data['isaac_sim_path']:
+            version_file = os.path.join(simulation_data['isaac_sim_path'], "VERSION")
             if os.path.isfile(version_file):
                 with open(version_file, 'r') as vf:
                     isaac_sim_version = vf.read().strip().split('-')[0]  # Read the version from the VERSION file and cut after the first '-'
-        text_message = f"{TerminalFormatter.color_text('   selected:', bold=True)} {params['simulation_tool']} {isaac_sim_version}"
+        text_message = f"{TerminalFormatter.color_text('   selected:', bold=True)} {simulation_data['tool']} {isaac_sim_version}"
         print(text_message)
-        headless_md = params.get('simulation_headless', False)
+        headless_md = simulation_data.get('headless', False)
         headless_string = TerminalFormatter.color_text('enabled', color='green') if headless_md else TerminalFormatter.color_text('disabled', color='red')
         print(f"{TerminalFormatter.color_text('   Headless mode:', bold=True)} {headless_string}")
-        if headless_md and params['simulation_tool'] == 'isaac-sim':
+        if headless_md and simulation_data['tool'] == 'isaac-sim':
             link_livestream = TerminalFormatter.clickable_link("https://docs.isaacsim.omniverse.nvidia.com/latest/installation/manual_livestream_clients.html")
             print(f"{TerminalFormatter.color_text('   Livestream:', bold=True)} {link_livestream}")
 
@@ -192,7 +196,7 @@ def simulation_info(platform, params: Params, verbose):
         return
 
     print(TerminalFormatter.color_text("Simulation:", bold=True))
-    if 'simulation_tool' in params:
+    if 'tool' in simulation_data:
         print_simulation_tool()
 
     elif platform['Machine'] != 'aarch64':
@@ -212,16 +216,17 @@ def simulation_info(platform, params: Params, verbose):
 def simulation_robot_start_debug(params, args):
     nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
     bash_file = os.path.join(nanosaur_ws_path, 'install', 'setup.bash')
+    simulation_data = params.get('simulation', {})
     # Check if the install folder exists
     if not os.path.exists(bash_file):
         print(TerminalFormatter.color_text("Workspace not built. Build before to debug", color='red'))
         return False
     # Check which simulation tool is selected
-    if 'simulation_tool' not in params:
+    if 'tool' not in simulation_data:
         print(TerminalFormatter.color_text("No simulation tool selected. Please select a simulator first.", color='red'))
         return False
     # Check if the simulation tool is valid and get the command
-    command = simulation_tools[params['simulation_tool']]['robot']
+    command = simulation_tools[simulation_data['tool']]['robot']
     # Load the robot configuration
     robot = RobotList.current_robot(params)
     print(TerminalFormatter.color_text(f"Starting {robot}", color='green'))
@@ -314,24 +319,26 @@ def simulation_start(platform, params: Params, args):
     selected_location = workspace.get_starting_location(params)
     if selected_location is None:
         return False
+    # Get the simulation data from the parameters
+    simulation_data = params.get('simulation', {})
     # Check which simulation tool is selected
-    if 'simulation_tool' not in params:
+    if 'tool' not in simulation_data:
         print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
         return False
     # Check if the simulation tool is valid
-    if params['simulation_tool'] not in simulation_tools:
-        print(TerminalFormatter.color_text(f"Unknown simulation tool: {params['simulation_tool']}", color='red'))
+    if simulation_data['tool'] not in simulation_tools:
+        print(TerminalFormatter.color_text(f"Unknown simulation tool: {simulation_data['tool']}", color='red'))
         return False
     # Check if Isaac Sim is selected but no version is set
-    if params['simulation_tool'] == 'isaac-sim' and 'isaac_sim_path' not in params:
+    if simulation_data['tool'] == 'isaac-sim' and 'isaac_sim_path' not in simulation_data:
         print(TerminalFormatter.color_text("No Isaac Sim version selected. Please run simulation set first.", color='red'))
         return False
     # Check if the debug mode is enabled
     if selected_location == 'host':
         nanosaur_ws_path = workspace.get_workspace_path(params, 'ws_simulation_name')
-        simulator_tool = params['simulation_tool']
-        headless = params.get('simulation_headless', False)
-        return simulation_start_debug(nanosaur_ws_path, simulator_tool, headless, params.get('isaac_sim_path', None))
+        simulator_tool = simulation_data['tool']
+        headless = simulation_data.get('headless', False)
+        return simulation_start_debug(nanosaur_ws_path, simulator_tool, headless, simulation_data.get('isaac_sim_path', None))
     elif selected_location == 'docker':
         # Run from docker container
         return docker_simulator_start(platform, params, args)
@@ -343,7 +350,8 @@ def simulation_start(platform, params: Params, args):
 def simulation_set(platform, params: Params, args):
     """Set the simulation tools."""
     # Get the current simulation tool
-    current_tool = params.get('simulation_tool', None)
+    simulation_data = params.get('simulation', {})
+    current_tool = simulation_data.get('tool', None)
     # Capitalize the current tool name
     if current_tool:
         current_tool = current_tool.capitalize()
@@ -354,8 +362,8 @@ def simulation_set(platform, params: Params, args):
     isaac_sim_list = find_all_isaac_sim()
     # Get the version of Isaac Sim if it is already set
     current_version = None
-    if 'isaac_sim_path' in params:
-        current_version = params['isaac_sim_path'].split("isaac-sim-")[-1]  # Extract version after "isaac-sim-"
+    if 'isaac_sim_path' in simulation_data:
+        current_version = simulation_data['isaac_sim_path'].split("isaac-sim-")[-1]  # Extract version after "isaac-sim-"
     # Check if any simulation tools are available
     if not simulation_tools:
         print(TerminalFormatter.color_text("No simulation tools available. Please install a simulator first.", color='red'))
@@ -367,7 +375,7 @@ def simulation_set(platform, params: Params, args):
     # Ask the user to select a simulation tool
     questions = [
         inquirer.List(
-            'simulation_tool',
+            'tool',
             message="Set the simulation tools",
             choices=[tool.capitalize() for tool in simulation_tools.keys()],
             default=current_tool
@@ -377,7 +385,7 @@ def simulation_set(platform, params: Params, args):
             message="Select Isaac Sim version for run on host",
             choices=list(isaac_sim_list.keys()) + ["Custom Path"],
             default=current_version,
-            ignore=lambda answers: answers['simulation_tool'] != 'Isaac-sim' or not isaac_sim_list
+            ignore=lambda answers: answers['tool'] != 'Isaac-sim' or not isaac_sim_list
         ),
         inquirer.Path(
             'custom_isaac_sim_path',
@@ -391,30 +399,33 @@ def simulation_set(platform, params: Params, args):
     if answers is None:
         return False
     # Save the selected simulation tool
-    params['simulation_tool'] = answers['simulation_tool'].lower()
-    if params['simulation_tool'] == 'isaac-sim' and answers['isaac-sim'] is not None:
+    simulation_data['tool'] = answers['tool'].lower()
+    if simulation_data['tool'] == 'isaac-sim' and answers['isaac-sim'] is not None:
         if answers['isaac-sim'] == "Custom Path":
             if version := check_isaac_sim(answers['custom_isaac_sim_path']):
                 if validate_isaac_sim(answers['custom_isaac_sim_path'], isaac_sim_required):
                     print(TerminalFormatter.color_text(f"Selected Isaac Sim version: {version}", color='green'))
                 else:
                     print(TerminalFormatter.color_text(f"Isaac Sim {version} not tested for this nanosaur version", color='yellow'))
-                params['isaac_sim_path'] = answers['custom_isaac_sim_path']
+                simulation_data['isaac_sim_path'] = answers['custom_isaac_sim_path']
             else:
                 print(TerminalFormatter.color_text("Invalid Isaac Sim path", color='red'))
                 return False
         else:
             print(TerminalFormatter.color_text(f"Selected Isaac Sim version: {answers['isaac-sim']}", color='green'))
-            params['isaac_sim_path'] = isaac_sim_list[answers['isaac-sim']]
+            simulation_data['isaac_sim_path'] = isaac_sim_list[answers['isaac-sim']]
 
     else:
-        print(TerminalFormatter.color_text(f"Selected {answers['simulation_tool']}", color='green'))
+        print(TerminalFormatter.color_text(f"Selected {answers['tool']}", color='green'))
+    # Store the new simulation data
+    params['simulation'] = simulation_data
     return True
 
 
 def simulation_set_headless(platform, params: Params, args):
     # Get the current simulation tool
-    headless_mode = params.get('simulation_headless', False)
+    simulation_data = params.get('simulation', {})
+    headless_mode = simulation_data.get('headless', False)
     # Ask the user if they want to run in headless mode
     question = [
         inquirer.List(
@@ -429,6 +440,7 @@ def simulation_set_headless(platform, params: Params, args):
     if answer is None:
         return False
     # Save the headless mode setting
-    params['simulation_headless'] = (answer['headless'] == 'Yes')
+    simulation_data['headless'] = (answer['headless'] == 'Yes')
+    params['simulation'] = simulation_data
     print(TerminalFormatter.color_text(f"Headless mode set to: {answer['headless']}", color='green'))
     return True

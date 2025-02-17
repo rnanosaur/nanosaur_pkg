@@ -125,7 +125,7 @@ def docker_robot_start(platform, params: Params, args):
     env_file_path = os.path.join(nanosaur_home_path, f'{robot.name}.env')
 
     # Check which simulation tool is selected only if robot.simulation is true
-    if robot.simulation and 'simulation_tool' not in params:
+    if robot.simulation and 'simulation' not in params:
         print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
         return False
 
@@ -158,8 +158,10 @@ def docker_simulator_start(platform, params: Params, args):
     docker_compose_path = os.path.join(nanosaur_home_path, "docker-compose.yml")
     env_file_path = os.path.join(nanosaur_home_path, f'{robot.name}.env')
 
+    # Get the simulation data from the parameters
+    simulation_data = params.get('simulation', {})
     # Start the container in detached mode
-    simulation_tool = params['simulation_tool'].lower().replace(' ', '-')
+    simulation_tool = simulation_data['tool'].lower().replace(' ', '-')
     # Create a DockerClient object with the docker-compose file
     nanosaur_compose = DockerClient(compose_files=[docker_compose_path], compose_env_files=[env_file_path])
 

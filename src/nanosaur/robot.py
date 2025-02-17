@@ -345,7 +345,7 @@ def control_terminal(platform, params: Params, args):
     """Control the robot using the terminal."""
     # Get the robot
     robot = RobotList.current_robot(params)
-    if robot.simulation and 'simulation_tool' not in params:
+    if robot.simulation and 'simulation' not in params:
         print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
         return False
     # Run from docker container
@@ -357,7 +357,7 @@ def control_keyboard(platform, params: Params, args):
     """Control the robot using the keyboard."""
     # Get the robot
     robot = RobotList.current_robot(params)
-    if robot.simulation and 'simulation_tool' not in params:
+    if robot.simulation and 'simulation' not in params:
         print(TerminalFormatter.color_text("No simulation tool selected. Please run simulation set first.", color='red'))
         return False
     # Get location starting function (host or docker)
